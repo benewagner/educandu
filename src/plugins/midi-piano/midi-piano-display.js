@@ -24,7 +24,6 @@ export default function MidiPianoDisplay({ content }) {
   const sampler = useRef(null);
   const midiAccessObj = useRef(null);
   const httpClient = new HttpClient();
-  const updateActiveNotesRef = useRef(null);
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
   const clientConfig = useService(ClientConfig);
@@ -55,11 +54,9 @@ export default function MidiPianoDisplay({ content }) {
     switch (eventType) {
       case 'Note on':
         sampler.current.triggerAttack(noteName);
-        updateActiveNotesRef.current(eventType, midiValue);
         break;
       case 'Note off':
         sampler.current.triggerRelease(noteName);
-        updateActiveNotesRef.current(eventType, midiValue);
         break;
       default:
         break;
@@ -130,26 +127,11 @@ export default function MidiPianoDisplay({ content }) {
     }
     player.current.pause();
     sampler.current.releaseAll();
-    updateActiveNotesRef.current('Pause from button');
   };
 
   const stopMidiPlayer = () => {
     player.current.stop();
     sampler.current.releaseAll();
-    updateActiveNotesRef.current('Stop from button');
-  };
-
-  const playNote = midiValue => {
-    if (!samplerHasLoaded) {
-      return;
-    }
-    sampler.current.triggerAttack(getNoteNameFromMidiValue(midiValue));
-  };
-
-  const stopNote = midiValue => {
-    setTimeout(() => {
-      sampler.current.triggerRelease(getNoteNameFromMidiValue(midiValue));
-    }, 200);
   };
 
   const getData = () => {
@@ -244,9 +226,8 @@ export default function MidiPianoDisplay({ content }) {
     <React.Fragment>
       <PianoComponent
         noteRange={noteRange}
-        playNote={playNote}
-        stopNote={stopNote}
-        updateActiveNotesRef={updateActiveNotesRef}
+        sampler={sampler}
+        samplerHasLoaded={samplerHasLoaded}
         />
       <div style={{ paddingTop: '1.5rem' }}>
         {!!sourceUrl && renderControls()}

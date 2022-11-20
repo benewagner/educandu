@@ -8,7 +8,7 @@
 .MidiPiano-midiPlayerControls {
   display: flex;
   justify-content: center;
-  padding-bottom: 1rem;
+  padding: 1rem 0;
 }
 
 .MidiPiano-pianoContainer {
@@ -19,4 +19,35 @@
 
 .MidiPiano-pianoWrapper {
   padding-top: 1rem;
+  display: flex;
+  justify-content: center;
+}
+
+.MidiPiano-key {
+  --width: 36px;
+  --dark: rgb(60, 60, 60);
+  background-color: white;
+  border: 1px solid var(--dark);
+  border-radius: 0px 0px calc(var(--width) / 12) calc(var(--width) / 12);
+}
+
+.MidiPiano-keyWhite {
+  background-color: white;
+  width: var(--width);
+  height: calc(var(--width) * 3);
+}
+
+.MidiPiano-keyBlack {
+  --scaleFactorX: 0.7;
+  --scaleFactorY: 1.8;
+  background-color: var(--dark);
+  width: calc(var(--width) * var(--scaleFactorX));
+  height: calc(var(--width) * var(--scaleFactorY));
+  margin-left: calc(var(--width) * var(--scaleFactorX) / -2);
+  margin-right: calc(var(--width) * var(--scaleFactorX) / -2);
+  z-index: 2;
+}
+
+.MidiPiano-hide {
+  display: none;
 }

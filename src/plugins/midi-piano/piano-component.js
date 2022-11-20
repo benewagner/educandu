@@ -1,49 +1,22 @@
 import PropTypes from 'prop-types';
-import { Piano } from 'react-piano';
+import midiPlayerNs from 'midi-player-js';
 import React, { useEffect, useState, useRef } from 'react';
 
 export default function PianoComponent(props) {
 
-  const defaultKeyWidth = 29.2;
+  const { noteRange, sampler, samplerHasLoaded } = props;
+  const defaultKeyWidth = 30;
   const pianoContainer = useRef(null);
   const pianoWrapperWidth = useRef(null);
   const prevContainerWidth = useRef(null);
-  const [activeNotes, setActiveNotes] = useState([]);
-  const [canRenderPiano, setCanRenderPiano] = useState(false);
-  const { noteRange, playNote, stopNote, updateActiveNotesRef } = props;
+  const { NOTES } = midiPlayerNs.Constants;
   const [pianoWrapperDimensions, setPianoWrapperDimensions] = useState({});
 
   const numberOfKeysRendered = noteRange.last - noteRange.first + 1;
 
-  const updateActiveNotes = (eventType, midiValue) => {
-    switch (eventType) {
-      case 'Note on':
-        setActiveNotes(prev => {
-          const array = [...prev, midiValue];
-          return array;
-        });
-        break;
-      case 'Note off':
-        setActiveNotes(prev => {
-          const array = [...prev];
-          array.splice(array.indexOf(midiValue), 1);
-          return array;
-        });
-        break;
-      case 'Pause from button':
-        setActiveNotes([]);
-        break;
-      case 'Stop from button':
-        setActiveNotes([]);
-        break;
-      default:
-        break;
-    }
+  const getNoteNameFromMidiValue = midiValue => {
+    return NOTES[midiValue];
   };
-
-  if (!updateActiveNotesRef.current) {
-    updateActiveNotesRef.current = updateActiveNotes;
-  }
 
   const getPianoWrapperDimensions = clientWidth => {
     let width;
@@ -83,13 +56,25 @@ export default function PianoComponent(props) {
     setPianoWrapperDimensions(obj);
   };
 
+  const playNote = midiValue => {
+    if (!samplerHasLoaded) {
+      return;
+    }
+    sampler.current.triggerAttack(getNoteNameFromMidiValue(midiValue));
+  };
+
+  const stopNote = midiValue => {
+    setTimeout(() => {
+      sampler.current.triggerRelease(getNoteNameFromMidiValue(midiValue));
+    }, 200);
+  };
+
   useEffect(() => {
     if (pianoContainer.current.clientWidth === prevContainerWidth.current) {
       return;
     }
     prevContainerWidth.current = pianoContainer.current.clientWidth;
     const obj = getPianoWrapperDimensions(pianoContainer.current.clientWidth);
-    setCanRenderPiano(true);
     setPianoWrapperDimensions(obj);
   });
 
@@ -104,13 +89,45 @@ export default function PianoComponent(props) {
   return (
     <div ref={pianoContainer} className="MidiPiano-pianoContainer">
       <div className="MidiPiano-pianoWrapper" style={{ width: pianoWrapperDimensions.width || '100%', height: pianoWrapperDimensions.height || '160px' }}>
-        {canRenderPiano
-        && (<Piano
-          noteRange={noteRange}
-          playNote={playNote}
-          stopNote={stopNote}
-          activeNotes={activeNotes}
-          />)}
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
+        <div className="MidiPiano-key MidiPiano-keyBlack" />
+        <div className="MidiPiano-key MidiPiano-keyWhite" />
       </div>
     </div>
   );
@@ -118,11 +135,10 @@ export default function PianoComponent(props) {
 
 PianoComponent.propTypes = {
   noteRange: PropTypes.object.isRequired,
-  playNote: PropTypes.func.isRequired,
-  stopNote: PropTypes.func.isRequired,
-  updateActiveNotesRef: PropTypes.object
+  sampler: PropTypes.object,
+  samplerHasLoaded: PropTypes.bool.isRequired
 };
 
 PianoComponent.defaultProps = {
-  updateActiveNotesRef: {}
+  sampler: {}
 };
