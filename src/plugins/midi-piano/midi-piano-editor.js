@@ -1,7 +1,7 @@
-import { useTranslation } from 'react-i18next';
-import validation from '../../ui/validation.js';
 import React from 'react';
 import { Form, Input, Radio } from 'antd';
+import { useTranslation } from 'react-i18next';
+import validation from '../../ui/validation.js';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
 import { CDN_URL_PREFIX, MIDI_SOURCE_TYPE } from '../../domain/constants.js';
 import ResourcePicker from '../../components/resource-picker/resource-picker.js';
