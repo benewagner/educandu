@@ -4,7 +4,7 @@ import React, { useEffect, useState, useRef } from 'react';
 
 export default function PianoComponent(props) {
 
-  const { noteRange, sampler, samplerHasLoaded } = props;
+  const { noteRange, sampler, samplerHasLoaded, canRenderPiano } = props;
   const defaultKeyWidth = 30;
   const pianoContainer = useRef(null);
   const pianoWrapperWidth = useRef(null);
@@ -12,7 +12,8 @@ export default function PianoComponent(props) {
   const { NOTES } = midiPlayerNs.Constants;
   const [pianoWrapperDimensions, setPianoWrapperDimensions] = useState({});
 
-  const numberOfKeysRendered = noteRange.last - noteRange.first + 1;
+  // const numberOfKeysRendered = noteRange.last - noteRange.first + 1;
+  const numberOfKeysRendered = 39;
 
   const getNoteNameFromMidiValue = midiValue => {
     return NOTES[midiValue];
