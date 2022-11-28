@@ -12,43 +12,40 @@
 }
 
 .MidiPiano-pianoContainer {
+  max-width: 1200px;
+  margin: 0 auto;
   display: flex;
   justify-content: center;
-  width: 100%;
-  background-color: aqua;
-}
-
-.MidiPiano-pianoWrapper {
-  padding-top: 1rem;
-  display: flex;
-  justify-content: center;
+  flex-flow: row nowrap;
+  border-collapse: collapse;
 }
 
 .MidiPiano-key {
-  --width: 36px;
-  --dark: rgb(60, 60, 60);
-  background-color: white;
-  border: 1px solid var(--dark);
-  border-radius: 0px 0px calc(var(--width) / 12) calc(var(--width) / 12);
+  box-sizing: border-box;
+  --width: 10%;
+  border: 1px solid black;
+  border-radius: 0 0 5px 5px;
 }
 
 .MidiPiano-keyWhite {
-  background-color: white;
+  position: relative;
+  // width: 10%;
   width: var(--width);
-  height: calc(var(--width) * 3);
+  height: 100px;
+  background: #fff;
 }
 
 .MidiPiano-keyBlack {
-  --scaleFactorX: 0.7;
-  --scaleFactorY: 1.8;
-  background-color: var(--dark);
-  width: calc(var(--width) * var(--scaleFactorX));
-  height: calc(var(--width) * var(--scaleFactorY));
-  margin-left: calc(var(--width) * var(--scaleFactorX) / -2);
-  margin-right: calc(var(--width) * var(--scaleFactorX) / -2);
-  z-index: 2;
+  position: absolute;
+  top: 0;
+  right: -30%;
+  width: calc(var(--width) * 5);
+  height: 60%;
+  background: #000;
+  z-index: 1;
+
 }
 
-.MidiPiano-hide {
-  display: none;
+.MidiPiano-keyWhiteWithBlack {
+
 }

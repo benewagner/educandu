@@ -25,7 +25,6 @@ export default function MidiPianoDisplay({ content }) {
   const midiAccessObj = useRef(null);
   const httpClient = new HttpClient();
   const { NOTES } = midiPlayerNs.Constants;
-  const canRenderPiano = useState(false);
   const { t } = useTranslation('midiPiano');
   const clientConfig = useService(ClientConfig);
   const [midiData, setMidiData] = useState(null);
@@ -225,12 +224,11 @@ export default function MidiPianoDisplay({ content }) {
 
   return (
     <React.Fragment>
-      {canRenderPiano && <PianoComponent
+      <PianoComponent
         noteRange={noteRange}
         sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
-        canRenderPiano={canRenderPiano}
-        />}
+        />
       <div>
         {!!sourceUrl && renderControls()}
         {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}

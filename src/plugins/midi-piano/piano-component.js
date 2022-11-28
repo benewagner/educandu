@@ -1,60 +1,22 @@
+import React from 'react';
 import PropTypes from 'prop-types';
+import KeyWhite from './keyWhite.js';
 import midiPlayerNs from 'midi-player-js';
-import React, { useEffect, useState, useRef } from 'react';
+import KeyWhiteWithBlack from './keyWhiteWithBlack.js';
 
 export default function PianoComponent(props) {
 
-  const { noteRange, sampler, samplerHasLoaded, canRenderPiano } = props;
-  const defaultKeyWidth = 30;
-  const pianoContainer = useRef(null);
-  const pianoWrapperWidth = useRef(null);
-  const prevContainerWidth = useRef(null);
   const { NOTES } = midiPlayerNs.Constants;
-  const [pianoWrapperDimensions, setPianoWrapperDimensions] = useState({});
+  const { noteRange, sampler, samplerHasLoaded } = props;
+  const numberOfKeys = noteRange.last - noteRange.first;
 
-  // const numberOfKeysRendered = noteRange.last - noteRange.first + 1;
-  const numberOfKeysRendered = 39;
+  const pianoLayout = [
+    0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,
+    0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1
+  ];
 
   const getNoteNameFromMidiValue = midiValue => {
     return NOTES[midiValue];
-  };
-
-  const getPianoWrapperDimensions = clientWidth => {
-    let width;
-    let height;
-    if (numberOfKeysRendered > 39) {
-      width = clientWidth;
-      const keyWidth = clientWidth / numberOfKeysRendered;
-      height = keyWidth * 5.5;
-      pianoWrapperWidth.current = width;
-      return { width: `${width}px`, height: `${height}px` };
-    }
-    const neededWidth = numberOfKeysRendered * defaultKeyWidth;
-    if (neededWidth > clientWidth) {
-      width = clientWidth;
-      const keyWidth = clientWidth / numberOfKeysRendered;
-      height = keyWidth * 5.5;
-    } else {
-      height = 160;
-      width = numberOfKeysRendered * defaultKeyWidth;
-    }
-    pianoWrapperWidth.current = width;
-    return { width: `${width}px`, height: `${height}px` };
-  };
-
-  const handleWindowResize = () => {
-    const neededWidth = numberOfKeysRendered * defaultKeyWidth;
-    if (pianoContainer.current.clientWidth === prevContainerWidth.current) {
-      return;
-    }
-    if (pianoContainer.current.clientWidth < prevContainerWidth.current && pianoContainer.current.clientWidth > pianoWrapperWidth.current) {
-      return;
-    }
-    if (pianoContainer.current.clientWidth > prevContainerWidth.current && neededWidth < pianoContainer.current.clientWidth) {
-      return;
-    }
-    const obj = getPianoWrapperDimensions(pianoContainer.current.clientWidth);
-    setPianoWrapperDimensions(obj);
   };
 
   const playNote = midiValue => {
@@ -70,66 +32,42 @@ export default function PianoComponent(props) {
     }, 200);
   };
 
-  useEffect(() => {
-    if (pianoContainer.current.clientWidth === prevContainerWidth.current) {
-      return;
-    }
-    prevContainerWidth.current = pianoContainer.current.clientWidth;
-    const obj = getPianoWrapperDimensions(pianoContainer.current.clientWidth);
-    setPianoWrapperDimensions(obj);
-  });
+  // const numberArr = () => {
+  //   const arr = [];
+  //   let counter = 0;
+  //   for (let i = noteRange.first; i < numberOfKeys; i += 1) {
+  //     if (i % 3 === 0 || i % 3 === 1) {
+  //       arr.push(0);
+  //     } else {
+  //       switch (counter) {
+  //         case 0:
+  //           arr.push(1);
+  //           counter = 1;
+  //           break;
+  //         case 1:
+  //           arr.push(0);
+  //           counter = 0;
+  //           break;
+  //         default:
+  //           throw Error;
+  //       }
+  //     }
+  //   }
+  //   return arr;
+  // };
 
-  useEffect(() => {
-
-    window.addEventListener('resize', handleWindowResize);
-    return function cleanUp() {
-      window.removeEventListener('resize', handleWindowResize);
-    };
-  }, []);
+  // const scheisse = pianoLayout.slice(noteRange.first - 21, noteRange.last - 21);
+  const scheisse = pianoLayout;
 
   return (
-    <div ref={pianoContainer} className="MidiPiano-pianoContainer">
-      <div className="MidiPiano-pianoWrapper" style={{ width: pianoWrapperDimensions.width || '100%', height: pianoWrapperDimensions.height || '160px' }}>
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-        <div className="MidiPiano-key MidiPiano-keyBlack" />
-        <div className="MidiPiano-key MidiPiano-keyWhite" />
-      </div>
+    <div className="MidiPiano-pianoContainer">
+      {scheisse.map((elem, index) => {
+        if (elem === 0) {
+          return <KeyWhiteWithBlack key={index} />;
+        }
+        return <KeyWhite key={index} />;
+      })}
+      <KeyWhite key={999} />
     </div>
   );
 }

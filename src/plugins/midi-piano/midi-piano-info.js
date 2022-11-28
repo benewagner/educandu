@@ -33,8 +33,8 @@ class MidiPianoInfo {
       sourceType: MIDI_SOURCE_TYPE.internal,
       sourceUrl: '',
       noteRange: {
-        first: 31,
-        last: 89
+        first: 23,
+        last: 37
       },
       hasMidiFile: false,
       midiTrackTitle: '',
