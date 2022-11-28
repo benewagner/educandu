@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import KeyWhite from './keyWhite.js';
 import midiPlayerNs from 'midi-player-js';
 import KeyWhiteWithBlack from './keyWhiteWithBlack.js';
+import { create as createId } from '../../utils/unique-id.js';
 
 export default function PianoComponent(props) {
 
+  const pianoId = createId();
+  const [keys, setKeys] = useState(null);
   const { NOTES } = midiPlayerNs.Constants;
   const { noteRange, sampler, samplerHasLoaded } = props;
-  const numberOfKeys = noteRange.last - noteRange.first;
 
   const pianoLayout = [
     0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,
@@ -32,42 +34,20 @@ export default function PianoComponent(props) {
     }, 200);
   };
 
-  // const numberArr = () => {
-  //   const arr = [];
-  //   let counter = 0;
-  //   for (let i = noteRange.first; i < numberOfKeys; i += 1) {
-  //     if (i % 3 === 0 || i % 3 === 1) {
-  //       arr.push(0);
-  //     } else {
-  //       switch (counter) {
-  //         case 0:
-  //           arr.push(1);
-  //           counter = 1;
-  //           break;
-  //         case 1:
-  //           arr.push(0);
-  //           counter = 0;
-  //           break;
-  //         default:
-  //           throw Error;
-  //       }
-  //     }
-  //   }
-  //   return arr;
-  // };
+  const keyRangeLayout = pianoLayout.slice(noteRange.first, noteRange.last);
 
-  // const scheisse = pianoLayout.slice(noteRange.first - 21, noteRange.last - 21);
-  const scheisse = pianoLayout;
+  useEffect(() => {
+
+  });
 
   return (
-    <div className="MidiPiano-pianoContainer">
-      {scheisse.map((elem, index) => {
+    <div id={pianoId} className="MidiPiano-pianoContainer">
+      {keyRangeLayout.map(elem => {
         if (elem === 0) {
-          return <KeyWhiteWithBlack key={index} />;
+          return <KeyWhiteWithBlack key={createId()} />;
         }
-        return <KeyWhite key={index} />;
+        return <KeyWhite key={createId()} />;
       })}
-      <KeyWhite key={999} />
     </div>
   );
 }

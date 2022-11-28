@@ -34,7 +34,7 @@ class MidiPianoInfo {
       sourceUrl: '',
       noteRange: {
         first: 23,
-        last: 37
+        last: 30
       },
       hasMidiFile: false,
       midiTrackTitle: '',

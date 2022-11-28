@@ -23,27 +23,31 @@
 .MidiPiano-key {
   box-sizing: border-box;
   --width: 10%;
-  border: 1px solid black;
+  --borderStrength: 1px;
+  border: var(--borderStrength) solid rgb(33, 33, 33);
   border-radius: 0 0 5px 5px;
 }
 
 .MidiPiano-keyWhite {
   position: relative;
-  // width: 10%;
-  width: var(--width);
-  height: 100px;
+  // width: var(--width);
+  width: 100%;
+  max-width: 48px;
   background: #fff;
+  aspect-ratio: 1 / 2.5;
+  box-shadow: 3px 3px 7px rgba(0, 0, 0, 0.5);
 }
 
 .MidiPiano-keyBlack {
   position: absolute;
   top: 0;
-  right: -30%;
-  width: calc(var(--width) * 5);
+  width: 52%;
   height: 60%;
-  background: #000;
-  z-index: 1;
+  right: -28%;
+  // width: calc(var(--width) * 5);
 
+  background: rgb(33, 33, 33);
+  z-index: 1;
 }
 
 .MidiPiano-keyWhiteWithBlack {
