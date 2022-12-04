@@ -11,6 +11,7 @@ import { handleApiError } from '../../ui/error-helper.js';
 import HttpClient from '../../api-clients/http-client.js';
 import React, { useEffect, useRef, useState } from 'react';
 import ClientConfig from '../../bootstrap/client-config.js';
+import { create as createId } from '../../utils/unique-id.js';
 import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
@@ -20,8 +21,12 @@ const logger = new Logger(import.meta.url);
 
 export default function MidiPianoDisplay({ content }) {
 
+  const keys = useRef(null);
+  // const pianoId = useRef(createId());
+  const [pianoId, setPianoId] = useState('default');
   const player = useRef(null);
   const sampler = useRef(null);
+  const activeNotes = useRef([]);
   const midiAccessObj = useRef(null);
   const httpClient = new HttpClient();
   const { NOTES } = midiPlayerNs.Constants;
@@ -29,7 +34,7 @@ export default function MidiPianoDisplay({ content }) {
   const clientConfig = useService(ClientConfig);
   const [midiData, setMidiData] = useState(null);
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
-  const { sourceType, sourceUrl, midiTrackTitle, noteRange, pianoId, colors } = content;
+  const { sourceType, sourceUrl, midiTrackTitle, noteRange, colors } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   const getNoteNameFromMidiValue = midiValue => {
@@ -50,7 +55,8 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
-  function handleSamplerEvent(eventType, midiValue, noteName) {
+  function handleSamplerEvent(eventType, noteName) {
+
     switch (eventType) {
       case 'Note on':
         sampler.current.triggerAttack(noteName);
@@ -63,6 +69,16 @@ export default function MidiPianoDisplay({ content }) {
     }
   }
 
+  function updateKeyStyle(eventType, midiValue) {
+    const key = keys.current[midiValue];
+    if (eventType === 'Note on') {
+      key.style.backgroundColor = colors.activeKey;
+    }
+    if (eventType === 'Note off') {
+      key.style.backgroundColor = key.dataset.defaultColor;
+    }
+  }
+
   function handleMidiDeviceEvent(message) {
     const midiValue = message.data[1];
     const noteName = getNoteNameFromMidiValue(midiValue);
@@ -70,7 +86,8 @@ export default function MidiPianoDisplay({ content }) {
     const command = message.data[0];
     const eventType = getEventTypeFromMidiCommand(command, velocity);
 
-    handleSamplerEvent(eventType, midiValue, noteName);
+    handleSamplerEvent(eventType, noteName);
+    updateKeyStyle(eventType, midiValue);
   }
 
   function onMIDISuccess(midiAccess) {
@@ -85,15 +102,28 @@ export default function MidiPianoDisplay({ content }) {
   }
 
   function handleMidiPlayerEvent(message) {
-
     if (message.name !== 'Note on' && message.name !== 'Note off') {
       return;
     }
-    const velocity = message.velocity;
     const midiValue = message.noteNumber;
-    const eventType = velocity > 0 ? 'Note on' : 'Note off';
+    const velocity = message.velocity;
     const noteName = message.noteName;
-    handleSamplerEvent(eventType, midiValue, noteName);
+    let eventType;
+    if (message.name === 'Note on') {
+      if (velocity === 0) {
+        eventType = 'Note off';
+      }
+      if (velocity > 0) {
+        eventType = 'Note on';
+      }
+    }
+    if (message.name === 'Note off') {
+      eventType = 'Note off';
+    }
+
+    // Rename
+    handleSamplerEvent(eventType, noteName);
+    updateKeyStyle(eventType, midiValue);
   }
 
   function instantiatePlayer() {
@@ -220,14 +250,37 @@ export default function MidiPianoDisplay({ content }) {
     }).toDestination();
   });
 
+  useEffect(() => {
+    const numberChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    let id = '';
+    do {
+      id = createId();
+    } while (numberChars.includes(id[0]));
+    setPianoId(id);
+  }, []);
+
+  useEffect(() => {
+    const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);
+    keys.current = [];
+    for (let i = 0; i < keyElems.length; i += 1) {
+      const index = parseInt(keyElems[i].dataset.midiValue, 10);
+      keys.current[index] = keyElems[i];
+    }
+  });
+
+  useEffect(() => {
+    window.midiPlayer = true;
+    console.log(window);
+  });
+
   return (
     <React.Fragment>
       <PianoComponent
         noteRange={noteRange}
         sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
-        pianoId={pianoId}
         colors={colors}
+        pianoId={pianoId}
         />
       <div>
         {!!sourceUrl && renderControls()}

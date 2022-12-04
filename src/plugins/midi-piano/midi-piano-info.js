@@ -33,8 +33,8 @@ class MidiPianoInfo {
       sourceType: MIDI_SOURCE_TYPE.internal,
       sourceUrl: '',
       noteRange: {
-        first: 23,
-        last: 32
+        first: 0,
+        last: 52
       },
       hasMidiFile: false,
       midiTrackTitle: '',
@@ -42,7 +42,7 @@ class MidiPianoInfo {
       colors: {
         blackKey: 'rgb(56, 56, 56)',
         activeKey: 'rgb(127, 202, 230)',
-        white: 'rgb(255, 255, 255'
+        whiteKey: 'rgb(255, 255, 255)'
       }
     };
   }
