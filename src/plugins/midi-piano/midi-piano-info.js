@@ -34,11 +34,16 @@ class MidiPianoInfo {
       sourceUrl: '',
       noteRange: {
         first: 23,
-        last: 30
+        last: 32
       },
       hasMidiFile: false,
       midiTrackTitle: '',
-      activeNotes: []
+      activeNotes: [],
+      colors: {
+        blackKey: 'rgb(56, 56, 56)',
+        activeKey: 'rgb(127, 202, 230)',
+        white: 'rgb(255, 255, 255'
+      }
     };
   }
 

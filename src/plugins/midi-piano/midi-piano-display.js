@@ -29,7 +29,7 @@ export default function MidiPianoDisplay({ content }) {
   const clientConfig = useService(ClientConfig);
   const [midiData, setMidiData] = useState(null);
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
-  const { sourceType, sourceUrl, midiTrackTitle, noteRange } = content;
+  const { sourceType, sourceUrl, midiTrackTitle, noteRange, pianoId, colors } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   const getNoteNameFromMidiValue = midiValue => {
@@ -154,9 +154,7 @@ export default function MidiPianoDisplay({ content }) {
   );
 
   useEffect(() => {
-    setTimeout(() => {
-      navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
-    }, 500);
+    navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
     return function cleanup() {
       if (!midiAccessObj.current) {
         return;
@@ -228,6 +226,8 @@ export default function MidiPianoDisplay({ content }) {
         noteRange={noteRange}
         sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
+        pianoId={pianoId}
+        colors={colors}
         />
       <div>
         {!!sourceUrl && renderControls()}
