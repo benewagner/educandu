@@ -1936,7 +1936,8 @@
     "language": "en",
     "resources": {
       "name": "Midi piano",
-      "pianoKeyRange": "Key range"
+      "pianoKeyRange": "Key range",
+      "input": "Midi Input"
     }
   },
   {
@@ -1944,7 +1945,8 @@
     "language": "de",
     "resources": {
       "name": "Midi-Klavier",
-      "pianoKeyRange": "Tastenumfang"
+      "pianoKeyRange": "Tastenumfang",
+      "input": "Midi-Eingabe"
     }
   },
   {

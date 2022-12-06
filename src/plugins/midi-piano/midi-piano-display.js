@@ -1,5 +1,5 @@
 import * as Tone from 'tone';
-import { Button } from 'antd';
+import { Button, Switch } from 'antd';
 import StopIcon from './stop-icon.js';
 import midiPlayerNs from 'midi-player-js';
 import Logger from '../../common/logger.js';
@@ -22,18 +22,20 @@ const logger = new Logger(import.meta.url);
 export default function MidiPianoDisplay({ content }) {
 
   const keys = useRef(null);
-  // const pianoId = useRef(createId());
-  const [pianoId, setPianoId] = useState('default');
   const player = useRef(null);
-  const sampler = useRef(null);
   const activeNotes = useRef([]);
-  const midiAccessObj = useRef(null);
+  const helperBool = useRef(false);
   const httpClient = new HttpClient();
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
   const clientConfig = useService(ClientConfig);
   const [midiData, setMidiData] = useState(null);
+  const [pianoId, setPianoId] = useState('default');
+  const [inputIsEnabled, setInputIsEnabled] = useState(true);
+  // const [hasMidiSuccess, setHasMidiSuccess] = useState(false);
+  const [inputSwitchState, setInputSwitchState] = useState(true);
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
+  const [midiDeviceConnected, setMidiDeviceConnected] = useState(false);
   const { sourceType, sourceUrl, midiTrackTitle, noteRange, colors } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
@@ -59,10 +61,10 @@ export default function MidiPianoDisplay({ content }) {
 
     switch (eventType) {
       case 'Note on':
-        sampler.current.triggerAttack(noteName);
+        document.toneJsSampler.triggerAttack(noteName);
         break;
       case 'Note off':
-        sampler.current.triggerRelease(noteName);
+        document.toneJsSampler.triggerRelease(noteName);
         break;
       default:
         break;
@@ -80,6 +82,10 @@ export default function MidiPianoDisplay({ content }) {
   }
 
   function handleMidiDeviceEvent(message) {
+
+    // if (!inputIsEnabled) {
+    //   return;
+    // }
     const midiValue = message.data[1];
     const noteName = getNoteNameFromMidiValue(midiValue);
     const velocity = message.data.length > 2 ? message.data[2] : 0;
@@ -91,8 +97,16 @@ export default function MidiPianoDisplay({ content }) {
   }
 
   function onMIDISuccess(midiAccess) {
-    midiAccessObj.current = midiAccess;
-    for (const input of midiAccessObj.current.inputs.values()) {
+    // setHasMidiSuccess(true);
+    if (midiAccess.inputs.size > 0) {
+      setMidiDeviceConnected(true);
+    }
+    if (!document.midiAccessObj) {
+      document.midiAccessObj = midiAccess;
+    }
+    for (const input of document.midiAccessObj.inputs.values()) {
+      console.log(input.onmidimessage);
+      input.onmidimessage = null;
       input.onmidimessage = handleMidiDeviceEvent;
     }
   }
@@ -156,12 +170,12 @@ export default function MidiPianoDisplay({ content }) {
       return;
     }
     player.current.pause();
-    sampler.current.releaseAll();
+    document.toneJsSampler.releaseAll();
   };
 
   const stopMidiPlayer = () => {
     player.current.stop();
-    sampler.current.releaseAll();
+    document.toneJsSampler.releaseAll();
   };
 
   const getData = () => {
@@ -169,6 +183,11 @@ export default function MidiPianoDisplay({ content }) {
       .then(response => {
         setMidiData(response.data);
       });
+  };
+
+  const asdf = () => {
+    setInputSwitchState(!inputSwitchState);
+    setInputIsEnabled(!inputIsEnabled);
   };
 
   const renderControls = () => (
@@ -179,24 +198,38 @@ export default function MidiPianoDisplay({ content }) {
     </div>
   );
 
+  const renderInputSwitch = () => (
+    <React.Fragment>
+      {inputIsEnabled && <Switch defaultChecked onChange={asdf} />}
+      {!inputIsEnabled && <Switch onChange={asdf} />}
+      <div>{t('input')}</div>
+    </React.Fragment>
+  );
+
   const renderMidiTrackTitle = () => (
     <div className="MidiPiano-midiTrackTitle">{midiTrackTitle}</div>
   );
 
+  const disableInput = id => {
+    if (id === pianoId) {
+      helperBool.current = !helperBool.current;
+    }
+    if (id !== pianoId) {
+      console.log(id, '->', pianoId);
+      setInputIsEnabled(false);
+    }
+  };
+
   useEffect(() => {
+    if (midiDeviceConnected) {
+      return;
+    }
+    if (typeof document.midiAccessObj !== 'undefined' && document.midiAccessObj.inputs.size > 0) {
+      setMidiDeviceConnected(true);
+      return;
+    }
     navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
-    return function cleanup() {
-      if (!midiAccessObj.current) {
-        return;
-      }
-      if (player.current !== null && player.current.isPlaying()) {
-        stopMidiPlayer();
-      }
-      for (const input of midiAccessObj.current.inputs.values()) {
-        input.onmidimessage = null;
-      }
-    };
-  }, []);
+  });
 
   useEffect(() => {
     if (!src) {
@@ -206,11 +239,14 @@ export default function MidiPianoDisplay({ content }) {
   }, []);
 
   useEffect(() => {
-    if (sampler.current) {
+    if (document.toneJsSampler) {
+      if (!samplerHasLoaded) {
+        setSamplerHasLoaded(true);
+      }
       return;
     }
 
-    sampler.current = new Tone.Sampler({
+    document.toneJsSampler = new Tone.Sampler({
       urls: {
         'A0': 'A0.mp3',
         'C1': 'C1.mp3',
@@ -248,7 +284,7 @@ export default function MidiPianoDisplay({ content }) {
       },
       baseUrl: 'https://tonejs.github.io/audio/salamander/' // Samples better be hosted in project.
     }).toDestination();
-  });
+  }, [samplerHasLoaded]);
 
   useEffect(() => {
     const numberChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
@@ -269,22 +305,78 @@ export default function MidiPianoDisplay({ content }) {
   });
 
   useEffect(() => {
-    window.midiPlayer = true;
-    console.log(window);
-  });
+    if (typeof document.midiAccessObj === 'undefined' || !midiDeviceConnected) {
+      return;
+    }
+    console.log("HELPERBOOOOOOOOOOOOOOOOL");
+    for (const input of document.midiAccessObj.inputs.values()) {
+      input.onmidimessage = null;
+      input.onmidimessage = handleMidiDeviceEvent;
+    }
+  }, [inputSwitchState, helperBool.current]);
+
+  useEffect(() => {
+    if (pianoId === 'default' || !midiDeviceConnected || !inputIsEnabled) {
+      return;
+    }
+    if (typeof document.midiPianos === 'undefined') {
+      document.midiPianos = [];
+      document.midiPianoIds = [];
+    }
+
+    document.midiPianos = document.midiPianos.filter(item => !!document.querySelector(`#${item[0]}`));
+    document.midiPianoIds = [];
+    document.midiPianos.forEach(item => {
+      document.midiPianoIds.push(item[0]);
+    });
+
+    document.midiPianoIds = document.midiPianoIds.filter(item => item !== pianoId);
+    document.midiPianos = document.midiPianos.filter(item => item[0] !== pianoId);
+
+    document.midiPianoIds.push(pianoId);
+    document.midiPianos.push([pianoId, disableInput]);
+
+    for (let i = 0; i < document.midiPianos.length; i += 1) {
+      const midiPiano = document.midiPianos[i];
+      midiPiano[1](pianoId);
+    }
+    for (const input of document.midiAccessObj.inputs.values()) {
+      input.onmidimessage = null;
+      input.onmidimessage = handleMidiDeviceEvent;
+    }
+
+  }, [pianoId, inputSwitchState, midiDeviceConnected]);
+
+  // useEffect(() => {
+  //   if (inputIsEnabled && midiDeviceConnected) {
+  //     for (const input of document.midiAccessObj.inputs.values()) {
+  //       input.onmidimessage = null;
+  //       input.onmidimessage = handleMidiDeviceEvent;
+  //     }
+  //   }
+  // });
 
   return (
     <React.Fragment>
       <PianoComponent
         noteRange={noteRange}
-        sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
         colors={colors}
         pianoId={pianoId}
         />
-      <div>
-        {!!sourceUrl && renderControls()}
-        {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}
+      <div id="MidiPiano-controlsContainer">
+        <div style={{ width: '100%' }} >
+          <div>{pianoId}</div>
+          <div>inputIsEnabled: {inputIsEnabled ? 'true' : 'false'}</div>
+        </div>
+        <div style={{ width: '100%' }} >
+          {!!sourceUrl && renderControls()}
+          {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}
+        </div>
+        <div id="MidiPiano-inputSwitch">
+          {/* {!isSinglePiano && document.midiAccessObj && renderInputSwitch()} */}
+          {midiDeviceConnected && renderInputSwitch()}
+        </div>
       </div>
     </React.Fragment>
   );

@@ -16,7 +16,7 @@ export default function PianoComponent(props) {
 
   const piano = useRef(null);
   const { NOTES } = midiPlayerNs.Constants;
-  const { noteRange, sampler, samplerHasLoaded, colors, pianoId } = props;
+  const { noteRange, samplerHasLoaded, colors, pianoId } = props;
   const keyRangeLayout = pianoLayout.slice(noteRange.first, noteRange.last);
 
   const getNoteNameFromMidiValue = midiValue => {
@@ -27,12 +27,12 @@ export default function PianoComponent(props) {
     if (!samplerHasLoaded) {
       return;
     }
-    sampler.current.triggerAttack(getNoteNameFromMidiValue(midiValue));
+    document.toneJsSampler.triggerAttack(getNoteNameFromMidiValue(midiValue));
   };
 
   const stopNote = midiValue => {
     setTimeout(() => {
-      sampler.current.triggerRelease(getNoteNameFromMidiValue(midiValue));
+      document.toneJsSampler.triggerRelease(getNoteNameFromMidiValue(midiValue));
     }, 150);
   };
 
@@ -94,10 +94,5 @@ PianoComponent.propTypes = {
   colors: PropTypes.object.isRequired,
   noteRange: PropTypes.object.isRequired,
   pianoId: PropTypes.string.isRequired,
-  sampler: PropTypes.object,
   samplerHasLoaded: PropTypes.bool.isRequired
-};
-
-PianoComponent.defaultProps = {
-  sampler: {}
 };
