@@ -36,19 +36,19 @@ export default function PianoComponent(props) {
     }, 150);
   };
 
-  const handleMouseEnter = e => {
-    if (typeof e.target.dataset.midiValue === 'undefined') {
-      return;
-    }
-    e.target.style.backgroundColor = colors.activeKey;
-  };
+  // const handleMouseEnter = e => {
+  //   if (typeof e.target.dataset.midiValue === 'undefined') {
+  //     return;
+  //   }
+  //   e.target.style.backgroundColor = colors.activeKey;
+  // };
 
-  const handleMouseLeave = e => {
-    if (typeof e.target.dataset.midiValue === 'undefined') {
-      return;
-    }
-    e.target.style.backgroundColor = e.target.classList.contains('MidiPiano-keyWhite') ? colors.white : colors.blackKey;
-  };
+  // const handleMouseLeave = e => {
+  //   if (typeof e.target.dataset.midiValue === 'undefined') {
+  //     return;
+  //   }
+  //   e.target.style.backgroundColor = e.target.classList.contains('MidiPiano-keyWhite') ? colors.white : colors.blackKey;
+  // };
 
   const handleMouseDown = e => {
     if (typeof e.target.dataset.midiValue === 'undefined') {

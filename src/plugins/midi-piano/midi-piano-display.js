@@ -72,6 +72,9 @@ export default function MidiPianoDisplay({ content }) {
 
   function updateKeyStyle(eventType, midiValue) {
     const key = keys.current[midiValue];
+    if (typeof key === 'undefined') {
+      return;
+    }
     if (eventType === 'Note on') {
       key.style.backgroundColor = colors.activeKey;
     }
@@ -212,6 +215,21 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
+  const handleMouseEnter = e => {
+    // if (typeof e.target.dataset.midiValue === 'undefined') {
+    //   return;
+    // }
+    e.preventDefault();
+    e.target.style.backgroundColor = colors.activeKey;
+  };
+
+  const handleMouseLeave = e => {
+    // if (typeof e.target.dataset.midiValue === 'undefined') {
+    //   return;
+    // }
+    e.target.style.backgroundColor = e.target.dataset.defaultColor;
+  };
+
   useEffect(() => {
     if (midiDeviceConnected) {
       return;
@@ -289,6 +307,10 @@ export default function MidiPianoDisplay({ content }) {
 
   useEffect(() => {
     const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);
+    for (const key of keyElems) {
+      key.addEventListener('mouseenter', handleMouseEnter);
+      key.addEventListener('mouseleave', handleMouseLeave);
+    }
     keys.current = [];
     for (let i = 0; i < keyElems.length; i += 1) {
       const index = parseInt(keyElems[i].dataset.midiValue, 10);
