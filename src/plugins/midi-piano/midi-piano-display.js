@@ -24,7 +24,7 @@ export default function MidiPianoDisplay({ content }) {
   const keys = useRef(null);
   const player = useRef(null);
   const activeNotes = useRef([]);
-  const helperBool = useRef(false);
+  const [helperBool, setHelperBool] = useState(false);
   const httpClient = new HttpClient();
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
@@ -32,7 +32,6 @@ export default function MidiPianoDisplay({ content }) {
   const [midiData, setMidiData] = useState(null);
   const [pianoId, setPianoId] = useState('default');
   const [inputIsEnabled, setInputIsEnabled] = useState(true);
-  // const [hasMidiSuccess, setHasMidiSuccess] = useState(false);
   const [inputSwitchState, setInputSwitchState] = useState(true);
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
   const [midiDeviceConnected, setMidiDeviceConnected] = useState(false);
@@ -83,9 +82,9 @@ export default function MidiPianoDisplay({ content }) {
 
   function handleMidiDeviceEvent(message) {
 
-    // if (!inputIsEnabled) {
-    //   return;
-    // }
+    if (!inputIsEnabled) {
+      return;
+    }
     const midiValue = message.data[1];
     const noteName = getNoteNameFromMidiValue(midiValue);
     const velocity = message.data.length > 2 ? message.data[2] : 0;
@@ -97,17 +96,11 @@ export default function MidiPianoDisplay({ content }) {
   }
 
   function onMIDISuccess(midiAccess) {
-    // setHasMidiSuccess(true);
     if (midiAccess.inputs.size > 0) {
       setMidiDeviceConnected(true);
     }
     if (!document.midiAccessObj) {
       document.midiAccessObj = midiAccess;
-    }
-    for (const input of document.midiAccessObj.inputs.values()) {
-      console.log(input.onmidimessage);
-      input.onmidimessage = null;
-      input.onmidimessage = handleMidiDeviceEvent;
     }
   }
 
@@ -212,10 +205,9 @@ export default function MidiPianoDisplay({ content }) {
 
   const disableInput = id => {
     if (id === pianoId) {
-      helperBool.current = !helperBool.current;
+      setHelperBool(!helperBool);
     }
     if (id !== pianoId) {
-      console.log(id, '->', pianoId);
       setInputIsEnabled(false);
     }
   };
@@ -308,12 +300,11 @@ export default function MidiPianoDisplay({ content }) {
     if (typeof document.midiAccessObj === 'undefined' || !midiDeviceConnected) {
       return;
     }
-    console.log("HELPERBOOOOOOOOOOOOOOOOL");
     for (const input of document.midiAccessObj.inputs.values()) {
       input.onmidimessage = null;
       input.onmidimessage = handleMidiDeviceEvent;
     }
-  }, [inputSwitchState, helperBool.current]);
+  }, [inputSwitchState]);
 
   useEffect(() => {
     if (pianoId === 'default' || !midiDeviceConnected || !inputIsEnabled) {
@@ -340,21 +331,16 @@ export default function MidiPianoDisplay({ content }) {
       const midiPiano = document.midiPianos[i];
       midiPiano[1](pianoId);
     }
-    for (const input of document.midiAccessObj.inputs.values()) {
-      input.onmidimessage = null;
-      input.onmidimessage = handleMidiDeviceEvent;
-    }
-
   }, [pianoId, inputSwitchState, midiDeviceConnected]);
 
-  // useEffect(() => {
-  //   if (inputIsEnabled && midiDeviceConnected) {
-  //     for (const input of document.midiAccessObj.inputs.values()) {
-  //       input.onmidimessage = null;
-  //       input.onmidimessage = handleMidiDeviceEvent;
-  //     }
-  //   }
-  // });
+  useEffect(() => {
+    if (inputIsEnabled && midiDeviceConnected) {
+      for (const input of document.midiAccessObj.inputs.values()) {
+        input.onmidimessage = null;
+        input.onmidimessage = handleMidiDeviceEvent;
+      }
+    }
+  });
 
   return (
     <React.Fragment>
@@ -365,10 +351,7 @@ export default function MidiPianoDisplay({ content }) {
         pianoId={pianoId}
         />
       <div id="MidiPiano-controlsContainer">
-        <div style={{ width: '100%' }} >
-          <div>{pianoId}</div>
-          <div>inputIsEnabled: {inputIsEnabled ? 'true' : 'false'}</div>
-        </div>
+        <div style={{ width: '100%' }} />
         <div style={{ width: '100%' }} >
           {!!sourceUrl && renderControls()}
           {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}
