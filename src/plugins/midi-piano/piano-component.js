@@ -16,11 +16,18 @@ export default function PianoComponent(props) {
 
   const piano = useRef(null);
   const { NOTES } = midiPlayerNs.Constants;
-  const { noteRange, samplerHasLoaded, colors, pianoId } = props;
+  const { noteRange, samplerHasLoaded, colors, pianoId, keys } = props;
   const keyRangeLayout = pianoLayout.slice(noteRange.first, noteRange.last);
 
   const getNoteNameFromMidiValue = midiValue => {
     return NOTES[midiValue];
+  };
+
+  const isBlackKey = key => {
+    if (key.classList.contains('MidiPiano-keyBlack')) {
+      return true;
+    }
+    return false;
   };
 
   const playNote = midiValue => {
@@ -36,25 +43,10 @@ export default function PianoComponent(props) {
     }, 150);
   };
 
-  // const handleMouseEnter = e => {
-  //   if (typeof e.target.dataset.midiValue === 'undefined') {
-  //     return;
-  //   }
-  //   e.target.style.backgroundColor = colors.activeKey;
-  // };
-
-  // const handleMouseLeave = e => {
-  //   if (typeof e.target.dataset.midiValue === 'undefined') {
-  //     return;
-  //   }
-  //   e.target.style.backgroundColor = e.target.classList.contains('MidiPiano-keyWhite') ? colors.white : colors.blackKey;
-  // };
-
   const handleMouseDown = e => {
     if (typeof e.target.dataset.midiValue === 'undefined') {
       return;
     }
-    e.preventDefault;
     playNote(parseInt(e.target.dataset.midiValue, 10));
   };
 
@@ -62,21 +54,42 @@ export default function PianoComponent(props) {
     if (typeof e.target.dataset.midiValue === 'undefined') {
       return;
     }
-    e.preventDefault;
     stopNote(parseInt(e.target.dataset.midiValue, 10));
+  };
+
+  const handleMouseOver = e => {
+    const key = e.target;
+    if (isBlackKey(key)) {
+      e.preventDefault();
+      e.target.parentElement.style.backgroundColor = e.target.parentElement.dataset.defaultColor;
+    }
+    e.target.style.backgroundColor = colors.activeKey;
+  };
+
+  const handleMouseOut = e => {
+    e.target.style.backgroundColor = e.target.dataset.defaultColor;
   };
 
   useEffect(() => {
     if (!samplerHasLoaded) {
       return;
     }
-    piano.current.addEventListener('mousedown', e => {
-      handleMouseDown(e);
-    });
-    piano.current.addEventListener('mouseup', e => {
-      handleMouseUp(e);
-    });
-  }, [samplerHasLoaded]);
+    piano.current.addEventListener('mousedown', handleMouseDown);
+    piano.current.addEventListener('mouseup', handleMouseUp);
+  }, [!samplerHasLoaded]);
+
+  useEffect(() => {
+    const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);
+    for (const key of keyElems) {
+      key.addEventListener('mouseover', handleMouseOver);
+      key.addEventListener('mouseleave', handleMouseOut);
+    }
+    keys.current = [];
+    for (let i = 0; i < keyElems.length; i += 1) {
+      const index = parseInt(keyElems[i].dataset.midiValue, 10);
+      keys.current[index] = keyElems[i];
+    }
+  });
 
   return (
     <div ref={piano} id={pianoId} className="MidiPiano-pianoContainer">
@@ -92,6 +105,7 @@ export default function PianoComponent(props) {
 
 PianoComponent.propTypes = {
   colors: PropTypes.object.isRequired,
+  keys: PropTypes.object.isRequired,
   noteRange: PropTypes.object.isRequired,
   pianoId: PropTypes.string.isRequired,
   samplerHasLoaded: PropTypes.bool.isRequired
