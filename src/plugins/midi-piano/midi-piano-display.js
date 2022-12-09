@@ -4,6 +4,7 @@ import StopIcon from './stop-icon.js';
 import midiPlayerNs from 'midi-player-js';
 import Logger from '../../common/logger.js';
 import { useTranslation } from 'react-i18next';
+import CustomSwitch from './switch.js';
 import urlUtils from '../../utils/url-utils.js';
 import PianoComponent from './piano-component.js';
 import { MIDI_COMMANDS } from '../../domain/constants.js';
@@ -23,6 +24,7 @@ export default function MidiPianoDisplay({ content }) {
 
   const keys = useRef(null);
   const player = useRef(null);
+  // const switchElem = useRef(null);
   const httpClient = new HttpClient();
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
@@ -31,7 +33,8 @@ export default function MidiPianoDisplay({ content }) {
   const [pianoId, setPianoId] = useState('default');
   // ASFLJSDFLJASDFLJHSADLFJASDLFJSDALF
   const [helperBool, setHelperBool] = useState(false);
-  const [inputIsEnabled, setInputIsEnabled] = useState(true);
+  // const [inputIsEnabled, setInputIsEnabled] = useState(true);
+  const inputIsEnabled = useRef(false);
   const [inputSwitchState, setInputSwitchState] = useState(true);
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
   const [midiDeviceConnected, setMidiDeviceConnected] = useState(false);
@@ -85,7 +88,7 @@ export default function MidiPianoDisplay({ content }) {
 
   function handleMidiDeviceEvent(message) {
 
-    if (!inputIsEnabled) {
+    if (!inputIsEnabled.current) {
       return;
     }
     const midiValue = message.data[1];
@@ -98,7 +101,7 @@ export default function MidiPianoDisplay({ content }) {
     updateKeyStyle(eventType, midiValue);
   }
 
-  // Triggers when browser supports MIDI, even when no MIDI device is connected
+  // Triggers if browser supports MIDI, even when no MIDI device is connected
   function onMIDISuccess(midiAccessObj) {
     if (midiAccessObj.inputs.size > 0) {
       setMidiDeviceConnected(true);
@@ -163,16 +166,27 @@ export default function MidiPianoDisplay({ content }) {
   };
 
   const pauseMidiPlayer = () => {
+    if (!player.current) {
+      return;
+    }
     if (!player.current.isPlaying()) {
       return;
     }
     player.current.pause();
+
     document.toneJsSampler.releaseAll();
   };
 
   const stopMidiPlayer = () => {
-    player.current.stop();
+    if (player.current) {
+      player.current.stop();
+    }
     document.toneJsSampler.releaseAll();
+    for (const key of keys.current) {
+      if (typeof key !== 'undefined') {
+        key.style.backgroundColor = key.dataset.defaultColor;
+      }
+    }
   };
 
   const getData = () => {
@@ -182,9 +196,64 @@ export default function MidiPianoDisplay({ content }) {
       });
   };
 
-  const onChangeHandler = () => {
-    setInputSwitchState(!inputSwitchState);
-    setInputIsEnabled(!inputIsEnabled);
+  // Stored in document object so that midi pianos can disable each other
+  const disableInput = id => {
+    if (id === pianoId) {
+      return;
+    }
+    inputIsEnabled.current = false;
+    const switchElem = document.querySelector(`.${pianoId}.MidiPiano-Switch`);
+    if (switchElem && switchElem.classList.contains('MidiPiano-SwitchChecked')) {
+      switchElem.classList.remove('MidiPiano-SwitchChecked');
+    }
+  };
+
+  const updateMidiMessageHandlers = () => {
+    if (inputIsEnabled.current && midiDeviceConnected) {
+      for (const input of document.midiAccessObj.inputs.values()) {
+        input.onmidimessage = null;
+        input.onmidimessage = handleMidiDeviceEvent;
+      }
+    }
+  };
+
+  const updateMidiInputSwitches = () => {
+
+    if (pianoId === 'default' || !midiDeviceConnected || !inputIsEnabled.current) {
+      return;
+    }
+
+    if (typeof document.midiPianos === 'undefined') {
+      document.midiPianos = [];
+      document.midiPianoIds = [];
+    }
+
+    document.midiPianos = document.midiPianos.filter(item => !!document.querySelector(`#${item[0]}`));
+    document.midiPianoIds = [];
+    document.midiPianos.forEach(item => {
+      document.midiPianoIds.push(item[0]);
+    });
+
+    document.midiPianoIds = document.midiPianoIds.filter(item => item !== pianoId);
+    document.midiPianos = document.midiPianos.filter(item => item[0] !== pianoId);
+
+    document.midiPianoIds.push(pianoId);
+    document.midiPianos.push([pianoId, disableInput]);
+
+    for (let i = 0; i < document.midiPianos.length; i += 1) {
+      const midiPiano = document.midiPianos[i];
+      midiPiano[1](pianoId);
+    }
+  };
+
+  const handleSwitchClick = isChecked => {
+    if (isChecked) {
+      inputIsEnabled.current = true;
+    } else {
+      inputIsEnabled.current = false;
+    }
+    updateMidiMessageHandlers();
+    updateMidiInputSwitches(pianoId);
   };
 
   const renderControls = () => (
@@ -197,8 +266,8 @@ export default function MidiPianoDisplay({ content }) {
 
   const renderInputSwitch = () => (
     <React.Fragment>
-      {inputIsEnabled && <Switch defaultChecked onChange={onChangeHandler} />}
-      {!inputIsEnabled && <Switch onChange={onChangeHandler} />}
+      <CustomSwitch handleSwitchClick={handleSwitchClick} pianoId={pianoId} />
+      {/* <Switch ref={switchElem} onChange={onChangeHandler} /> */}
       <div>{t('input')}</div>
     </React.Fragment>
   );
@@ -206,16 +275,6 @@ export default function MidiPianoDisplay({ content }) {
   const renderMidiTrackTitle = () => (
     <div className="MidiPiano-midiTrackTitle">{midiTrackTitle}</div>
   );
-
-  // Stored in document object so that midi pianos can disable each other
-  const disableInput = id => {
-    if (id === pianoId) {
-      setHelperBool(!helperBool);
-    }
-    if (id !== pianoId) {
-      setInputIsEnabled(false);
-    }
-  };
 
   // Check for connected MIDI devices
   useEffect(() => {
@@ -308,39 +367,21 @@ export default function MidiPianoDisplay({ content }) {
   }, [inputSwitchState]);
 
   useEffect(() => {
-    if (pianoId === 'default' || !midiDeviceConnected || !inputIsEnabled) {
-      return;
-    }
-    if (typeof document.midiPianos === 'undefined') {
-      document.midiPianos = [];
-      document.midiPianoIds = [];
-    }
+    updateMidiInputSwitches();
+  }, [pianoId, midiDeviceConnected]);
 
-    document.midiPianos = document.midiPianos.filter(item => !!document.querySelector(`#${item[0]}`));
-    document.midiPianoIds = [];
-    document.midiPianos.forEach(item => {
-      document.midiPianoIds.push(item[0]);
-    });
-
-    document.midiPianoIds = document.midiPianoIds.filter(item => item !== pianoId);
-    document.midiPianos = document.midiPianos.filter(item => item[0] !== pianoId);
-
-    document.midiPianoIds.push(pianoId);
-    document.midiPianos.push([pianoId, disableInput]);
-
-    for (let i = 0; i < document.midiPianos.length; i += 1) {
-      const midiPiano = document.midiPianos[i];
-      midiPiano[1](pianoId);
-    }
-  }, [pianoId, inputSwitchState, midiDeviceConnected]);
+  // Nötig?
+  // useEffect(() => {
+  //   updateMidiMessageHandlers();
+  // });
 
   useEffect(() => {
-    if (inputIsEnabled && midiDeviceConnected) {
-      for (const input of document.midiAccessObj.inputs.values()) {
-        input.onmidimessage = null;
-        input.onmidimessage = handleMidiDeviceEvent;
+    return function cleanUp() {
+      if (player.current && samplerHasLoaded) {
+        player.current.stop();
+        document.toneJsSampler.releaseAll();
       }
-    }
+    };
   });
 
   return (

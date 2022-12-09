@@ -22,6 +22,8 @@
   display: flex;
   flex-direction: column;
   align-items: end;
+  position: relative;
+  // position: relative war vor switch design weg;
 }
 
 .MidiPiano-pianoContainer {
@@ -58,3 +60,34 @@
   z-index: 1;
 }
 
+.MidiPiano-Switch {
+  position: relative;
+  background-color: rgb(230,230,230);
+  height: 22px;
+  width: 44px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+}
+
+.MidiPiano-SwitchChecked {
+  background-color: rgb(109,139,177);
+  transition: all 0.2s ease-in-out;
+}
+
+.MidiPiano-SwitchHandle {
+  position: absolute;
+  background-color: white;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  top: 2px;
+  left: 2px;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.MidiPiano-Switch.MidiPiano-SwitchChecked .MidiPiano-SwitchHandle {
+  left: calc(100% - 18px - 2px);
+  transition: all 0.2s ease-in-out;
+}
