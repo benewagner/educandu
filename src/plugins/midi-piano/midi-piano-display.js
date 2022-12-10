@@ -1,12 +1,13 @@
-import * as Tone from 'tone';
+// import * as Tone from 'tone';
 import { Button, Switch } from 'antd';
 import StopIcon from './stop-icon.js';
+import CustomSwitch from './switch.js';
 import midiPlayerNs from 'midi-player-js';
 import Logger from '../../common/logger.js';
 import { useTranslation } from 'react-i18next';
-import CustomSwitch from './switch.js';
 import urlUtils from '../../utils/url-utils.js';
 import PianoComponent from './piano-component.js';
+import { useToneJsSampler } from './customHooks.js';
 import { MIDI_COMMANDS } from '../../domain/constants.js';
 import { handleApiError } from '../../ui/error-helper.js';
 import HttpClient from '../../api-clients/http-client.js';
@@ -24,18 +25,14 @@ export default function MidiPianoDisplay({ content }) {
 
   const keys = useRef(null);
   const player = useRef(null);
-  // const switchElem = useRef(null);
+  const activeNotes = useRef([]);
   const httpClient = new HttpClient();
+  const inputIsEnabled = useRef(false);
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
   const clientConfig = useService(ClientConfig);
   const [midiData, setMidiData] = useState(null);
   const [pianoId, setPianoId] = useState('default');
-  // ASFLJSDFLJASDFLJHSADLFJASDLFJSDALF
-  const [helperBool, setHelperBool] = useState(false);
-  // const [inputIsEnabled, setInputIsEnabled] = useState(true);
-  const inputIsEnabled = useRef(false);
-  const [inputSwitchState, setInputSwitchState] = useState(true);
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
   const [midiDeviceConnected, setMidiDeviceConnected] = useState(false);
   const { sourceType, sourceUrl, midiTrackTitle, noteRange, colors } = content;
@@ -56,6 +53,22 @@ export default function MidiPianoDisplay({ content }) {
         return 'Note off';
       default:
         return '';
+    }
+  };
+
+  const updateActiveNotes = (eventType, midiValue) => {
+    const arr = activeNotes.current;
+    if (eventType === 'Note on') {
+      const index = arr.indexOf(midiValue);
+      if (index === -1) {
+        arr.push(midiValue);
+      }
+    }
+    if (eventType === 'Note off') {
+      const index = arr.indexOf(midiValue);
+      if (index !== -1) {
+        arr.splice(index, 1);
+      }
     }
   };
 
@@ -97,6 +110,7 @@ export default function MidiPianoDisplay({ content }) {
     const command = message.data[0];
     const eventType = getEventTypeFromMidiCommand(command, velocity);
 
+    updateActiveNotes(eventType, midiValue);
     handleSamplerEvent(eventType, noteName);
     updateKeyStyle(eventType, midiValue);
   }
@@ -123,6 +137,7 @@ export default function MidiPianoDisplay({ content }) {
     const velocity = message.velocity;
     const noteName = message.noteName;
     let eventType;
+    // Refactor
     if (message.name === 'Note on') {
       if (velocity === 0) {
         eventType = 'Note off';
@@ -135,6 +150,7 @@ export default function MidiPianoDisplay({ content }) {
       eventType = 'Note off';
     }
 
+    updateActiveNotes(eventType, midiValue);
     // Rename
     handleSamplerEvent(eventType, noteName);
     updateKeyStyle(eventType, midiValue);
@@ -144,9 +160,7 @@ export default function MidiPianoDisplay({ content }) {
     if (player.current) {
       return;
     }
-
     player.current = new midiPlayerNs.Player();
-
     player.current.on('midiEvent', message => {
       handleMidiPlayerEvent(message);
     });
@@ -173,7 +187,6 @@ export default function MidiPianoDisplay({ content }) {
       return;
     }
     player.current.pause();
-
     document.toneJsSampler.releaseAll();
   };
 
@@ -190,6 +203,7 @@ export default function MidiPianoDisplay({ content }) {
   };
 
   const getData = () => {
+    console.log('fetching data');
     httpClient.get(src, { responseType: 'arraybuffer' })
       .then(response => {
         setMidiData(response.data);
@@ -227,7 +241,6 @@ export default function MidiPianoDisplay({ content }) {
       document.midiPianos = [];
       document.midiPianoIds = [];
     }
-
     document.midiPianos = document.midiPianos.filter(item => !!document.querySelector(`#${item[0]}`));
     document.midiPianoIds = [];
     document.midiPianos.forEach(item => {
@@ -288,62 +301,65 @@ export default function MidiPianoDisplay({ content }) {
     navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
   });
 
+  console.log(pianoId);
+
   // Load MIDI file
   useEffect(() => {
     if (!src) {
       return;
     }
     getData();
-  }, []);
+  }, [src]);
 
-  // Instantiate Tone.js sampler
-  useEffect(() => {
-    if (document.toneJsSampler) {
-      if (!samplerHasLoaded) {
-        setSamplerHasLoaded(true);
-      }
-      return;
-    }
+  // Instantiate Tone.js sampler and store it on document obj to be accessed from different pianos
+  useToneJsSampler(samplerHasLoaded, setSamplerHasLoaded);
 
-    document.toneJsSampler = new Tone.Sampler({
-      urls: {
-        'A0': 'A0.mp3',
-        'C1': 'C1.mp3',
-        'D#1': 'Ds1.mp3',
-        'F#1': 'Fs1.mp3',
-        'A1': 'A1.mp3',
-        'C2': 'C2.mp3',
-        'D#2': 'Ds2.mp3',
-        'F#2': 'Fs2.mp3',
-        'A2': 'A2.mp3',
-        'C3': 'C3.mp3',
-        'D#3': 'Ds3.mp3',
-        'F#3': 'Fs3.mp3',
-        'A3': 'A3.mp3',
-        'C4': 'C4.mp3',
-        'D#4': 'Ds4.mp3',
-        'F#4': 'Fs4.mp3',
-        'A4': 'A4.mp3',
-        'C5': 'C5.mp3',
-        'D#5': 'Ds5.mp3',
-        'F#5': 'Fs5.mp3',
-        'A5': 'A5.mp3',
-        'C6': 'C6.mp3',
-        'D#6': 'Ds6.mp3',
-        'F#6': 'Fs6.mp3',
-        'A6': 'A6.mp3',
-        'C7': 'C7.mp3',
-        'D#7': 'Ds7.mp3',
-        'F#7': 'Fs7.mp3',
-        'A7': 'A7.mp3',
-        'C8': 'C8.mp3'
-      },
-      onload: () => {
-        setSamplerHasLoaded(true);
-      },
-      baseUrl: 'https://tonejs.github.io/audio/salamander/' // Samples better be hosted in project.
-    }).toDestination();
-  }, [samplerHasLoaded]);
+  // useEffect(() => {
+  //   if (document.toneJsSampler) {
+  //     if (!samplerHasLoaded) {
+  //       setSamplerHasLoaded(true);
+  //     }
+  //     return;
+  //   }
+  //   document.toneJsSampler = new Tone.Sampler({
+  //     urls: {
+  //       'A0': 'A0.mp3',
+  //       'C1': 'C1.mp3',
+  //       'D#1': 'Ds1.mp3',
+  //       'F#1': 'Fs1.mp3',
+  //       'A1': 'A1.mp3',
+  //       'C2': 'C2.mp3',
+  //       'D#2': 'Ds2.mp3',
+  //       'F#2': 'Fs2.mp3',
+  //       'A2': 'A2.mp3',
+  //       'C3': 'C3.mp3',
+  //       'D#3': 'Ds3.mp3',
+  //       'F#3': 'Fs3.mp3',
+  //       'A3': 'A3.mp3',
+  //       'C4': 'C4.mp3',
+  //       'D#4': 'Ds4.mp3',
+  //       'F#4': 'Fs4.mp3',
+  //       'A4': 'A4.mp3',
+  //       'C5': 'C5.mp3',
+  //       'D#5': 'Ds5.mp3',
+  //       'F#5': 'Fs5.mp3',
+  //       'A5': 'A5.mp3',
+  //       'C6': 'C6.mp3',
+  //       'D#6': 'Ds6.mp3',
+  //       'F#6': 'Fs6.mp3',
+  //       'A6': 'A6.mp3',
+  //       'C7': 'C7.mp3',
+  //       'D#7': 'Ds7.mp3',
+  //       'F#7': 'Fs7.mp3',
+  //       'A7': 'A7.mp3',
+  //       'C8': 'C8.mp3'
+  //     },
+  //     onload: () => {
+  //       setSamplerHasLoaded(true);
+  //     },
+  //     baseUrl: 'https://tonejs.github.io/audio/salamander/' // Samples better be hosted in project.
+  //   }).toDestination();
+  // }, [samplerHasLoaded]);
 
   // PianoId is used as CSS selector and must not start with a number character
   useEffect(() => {
@@ -355,25 +371,9 @@ export default function MidiPianoDisplay({ content }) {
     setPianoId(id);
   }, []);
 
-  // Setup listeners for messages from connected MIDI device
-  useEffect(() => {
-    if (typeof document.midiAccessObj === 'undefined' || !midiDeviceConnected) {
-      return;
-    }
-    for (const input of document.midiAccessObj.inputs.values()) {
-      input.onmidimessage = null;
-      input.onmidimessage = handleMidiDeviceEvent;
-    }
-  }, [inputSwitchState]);
-
   useEffect(() => {
     updateMidiInputSwitches();
   }, [pianoId, midiDeviceConnected]);
-
-  // Nötig?
-  // useEffect(() => {
-  //   updateMidiMessageHandlers();
-  // });
 
   useEffect(() => {
     return function cleanUp() {
@@ -392,11 +392,11 @@ export default function MidiPianoDisplay({ content }) {
         colors={colors}
         pianoId={pianoId}
         keys={keys}
+        activeNotes={activeNotes}
+        updateActiveNotes={updateActiveNotes}
         />
       <div id="MidiPiano-controlsContainer">
-        <div style={{ width: '100%' }} >
-          {pianoId}
-        </div>
+        <div style={{ width: '100%' }} />
         <div style={{ width: '100%' }} >
           {!!sourceUrl && renderControls()}
           {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}
