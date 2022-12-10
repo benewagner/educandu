@@ -4,6 +4,6 @@ name:
 pianoKeyRange:
   en: Key range
   de: Tastenumfang
-input:
+midiInput:
   en: Midi Input
   de: Midi-Eingabe

@@ -14,15 +14,16 @@ export default function PianoComponent(props) {
     [1, 107], [1, 108]
   ];
 
-  const piano = useRef(null);
-  const { NOTES } = midiPlayerNs.Constants;
-  const { noteRange,
-    samplerHasLoaded,
+  const { keys,
     colors,
     pianoId,
-    keys,
+    noteRange,
     activeNotes,
-    updateActiveNotes } = props;
+    samplerHasLoaded,
+    updateActiveNotes,
+    updateKeyStyle } = props;
+  const piano = useRef(null);
+  const { NOTES } = midiPlayerNs.Constants;
   const keyRangeLayout = pianoLayout.slice(noteRange.first, noteRange.last);
 
   const getNoteNameFromMidiValue = midiValue => {
@@ -69,27 +70,27 @@ export default function PianoComponent(props) {
 
   const handleMouseOver = e => {
     const key = e.target;
+    const midiValue = parseInt(key.dataset.midiValue, 10);
     if (isBlackKey(key)) {
       e.preventDefault();
       const parent = key.parentElement;
-      parent.style.backgroundColor = parent.dataset.defaultColor;
       const parentMidiValue = parseInt(parent.dataset.midiValue, 10);
+      updateKeyStyle('Note off', parentMidiValue);
       const index = activeNotes.current.indexOf(parentMidiValue);
       if (index !== -1) {
         updateActiveNotes('Note off', parentMidiValue);
         stopNote(parentMidiValue);
       }
     }
-    key.style.backgroundColor = colors.activeKey;
+    updateKeyStyle('Note on', midiValue);
   };
 
   const handleMouseOut = e => {
     const key = e.target;
     const midiValue = parseInt(key.dataset.midiValue, 10);
     const index = activeNotes.current.indexOf(midiValue);
-    key.style.backgroundColor = key.dataset.defaultColor;
+    updateKeyStyle('Note off', midiValue);
     if (index !== -1) {
-      activeNotes.current.splice(index, 1);
       updateActiveNotes('Note off', midiValue);
       stopNote(midiValue);
     }
@@ -135,5 +136,6 @@ PianoComponent.propTypes = {
   noteRange: PropTypes.object.isRequired,
   pianoId: PropTypes.string.isRequired,
   samplerHasLoaded: PropTypes.bool.isRequired,
-  updateActiveNotes: PropTypes.func.isRequired
+  updateActiveNotes: PropTypes.func.isRequired,
+  updateKeyStyle: PropTypes.func.isRequired
 };

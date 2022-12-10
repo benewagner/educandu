@@ -1,15 +1,63 @@
 import * as Tone from 'tone';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import HttpClient from '../../api-clients/http-client.js';
+import { create as createId } from '../../utils/unique-id.js';
 
-export function useToneJsSampler(bool, setBool) {
+export function useMidiDevice() {
+  const [midiDeviceIsConnected, setMidiDeviceIsConnected] = useState(false);
+
+  useEffect(() => {
+    if (midiDeviceIsConnected) {
+      return;
+    }
+    if (typeof document.midiAccessObj !== 'undefined' && document.midiAccessObj.inputs.size > 0) {
+      setMidiDeviceIsConnected(true);
+      return;
+    }
+    // Triggers if browser supports MIDI, even when no MIDI device is connected
+    function onMIDISuccess(midiAccessObj) {
+      if (midiAccessObj.inputs.size > 0) {
+        setMidiDeviceIsConnected(true);
+      }
+      if (!document.midiAccessObj) {
+        document.midiAccessObj = midiAccessObj;
+      }
+    }
+    function onMIDIFailure(error) {
+      console.log(error);
+    }
+
+    navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
+  }, [midiDeviceIsConnected]);
+
+  return midiDeviceIsConnected;
+}
+
+export function useMidiLoader(src) {
+  const [midiData, setMidiData] = useState(null);
+
+  useEffect(() => {
+    if (!src || midiData) {
+      return;
+    }
+    const httpClient = new HttpClient();
+    httpClient.get(src, { responseType: 'arraybuffer' })
+      .then(response => {
+        setMidiData(response.data);
+      });
+  }, [src, midiData]);
+
+  return midiData;
+}
+
+export function useToneJsSampler(samplerHasLoaded, setSamplerHasLoaded) {
   useEffect(() => {
     if (document.toneJsSampler) {
-      if (!bool) {
-        setBool(true);
+      if (!samplerHasLoaded) {
+        setSamplerHasLoaded(true);
       }
       return;
     }
-    console.log('Instantiating Sampler');
     document.toneJsSampler = new Tone.Sampler({
       urls: {
         'A0': 'A0.mp3',
@@ -44,9 +92,25 @@ export function useToneJsSampler(bool, setBool) {
         'C8': 'C8.mp3'
       },
       onload: () => {
-        setBool(true);
+        setSamplerHasLoaded(true);
       },
       baseUrl: 'https://tonejs.github.io/audio/salamander/' // Samples better be hosted in project.
     }).toDestination();
-  }, [bool, setBool]);
+  }, [samplerHasLoaded, setSamplerHasLoaded]);
+}
+
+// Set pianoId which does not start with a number character for use as CSS selector
+export function usePianoId(defaultValue) {
+  const [pianoId, setPianoId] = useState(defaultValue);
+
+  useEffect(() => {
+    const numberChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+    let id = '';
+    do {
+      id = createId();
+    } while (numberChars.includes(id[0]));
+    setPianoId(id);
+  }, []);
+
+  return pianoId;
 }
