@@ -50,7 +50,9 @@ export function useMidiLoader(src) {
   return midiData;
 }
 
-export function useToneJsSampler(samplerHasLoaded, setSamplerHasLoaded) {
+export function useToneJsSampler(samplesType) {
+  const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
+
   useEffect(() => {
     if (document.toneJsSampler) {
       if (!samplerHasLoaded) {
@@ -58,6 +60,7 @@ export function useToneJsSampler(samplerHasLoaded, setSamplerHasLoaded) {
       }
       return;
     }
+
     document.toneJsSampler = new Tone.Sampler({
       urls: {
         'A0': 'A0.mp3',
@@ -94,21 +97,19 @@ export function useToneJsSampler(samplerHasLoaded, setSamplerHasLoaded) {
       onload: () => {
         setSamplerHasLoaded(true);
       },
-      baseUrl: 'https://tonejs.github.io/audio/salamander/' // Samples better be hosted in project.
+      baseUrl: `https://anmeldung-sprechstunde.herokuapp.com/instrument-samples/${samplesType}/` // Samples better be hosted in project.
     }).toDestination();
   }, [samplerHasLoaded, setSamplerHasLoaded]);
+
+  return samplerHasLoaded;
 }
 
-// Set pianoId which does not start with a number character for use as CSS selector
+// Set pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches
 export function usePianoId(defaultValue) {
   const [pianoId, setPianoId] = useState(defaultValue);
 
   useEffect(() => {
-    const numberChars = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
-    let id = '';
-    do {
-      id = createId();
-    } while (numberChars.includes(id[0]));
+    const id = `ID${createId()}`;
     setPianoId(id);
   }, []);
 

@@ -7,3 +7,12 @@ pianoKeyRange:
 midiInput:
   en: Midi Input
   de: Midi-Eingabe
+earTraining:
+  en: Ear Training
+  de: Gehörbildung
+piano:
+  en: Piano
+  de: Klavier
+harpsichord:
+  en: Harpsichord
+  de: Cembalo

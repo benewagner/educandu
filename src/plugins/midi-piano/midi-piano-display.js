@@ -1,12 +1,12 @@
 import { Button } from 'antd';
 import StopIcon from './stop-icon.js';
-import CustomSwitch from './switch.js';
 import midiPlayerNs from 'midi-player-js';
+import CustomSwitch from './customSwitch.js';
 import { useTranslation } from 'react-i18next';
 import urlUtils from '../../utils/url-utils.js';
 import PianoComponent from './piano-component.js';
 import { MIDI_COMMANDS } from '../../domain/constants.js';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import ClientConfig from '../../bootstrap/client-config.js';
 import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
@@ -20,16 +20,17 @@ export default function MidiPianoDisplay({ content }) {
   const player = useRef(null);
   const activeNotes = useRef([]);
   const inputIsEnabled = useRef(false);
-  const pianoId = usePianoId('default');
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
-  const midiDeviceIsConnected = useMidiDevice();
   const clientConfig = useService(ClientConfig);
-  const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
-  const { sourceType, sourceUrl, midiTrackTitle, noteRange, colors } = content;
+  const { sourceType, sourceUrl, midiTrackTitle, noteRange, colors, samplesType } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
+  // Custom hooks returning state variables
   const midiData = useMidiLoader(src);
+  const pianoId = usePianoId('default');
+  const midiDeviceIsConnected = useMidiDevice();
+  const samplerHasLoaded = useToneJsSampler(samplesType);
 
   const getNoteNameFromMidiValue = midiValue => {
     return NOTES[midiValue];
@@ -66,7 +67,6 @@ export default function MidiPianoDisplay({ content }) {
     if (eventType === 'Reset') {
       arr.length = 0;
     }
-    console.log(arr);
   };
 
   function handleSamplerEvent(eventType, noteName) {
@@ -82,6 +82,14 @@ export default function MidiPianoDisplay({ content }) {
         break;
     }
   }
+
+  const resetAllKeyStyles = () => {
+    for (const key of keys.current) {
+      if (typeof key !== 'undefined') {
+        key.style.backgroundColor = key.dataset.defaultColor;
+      }
+    }
+  };
 
   const updateKeyStyle = (eventType, midiValue) => {
     const key = keys.current[midiValue];
@@ -120,14 +128,8 @@ export default function MidiPianoDisplay({ content }) {
     const velocity = message.velocity;
     const noteName = message.noteName;
     let eventType;
-    // Refactor
     if (message.name === 'Note on') {
-      if (velocity === 0) {
-        eventType = 'Note off';
-      }
-      if (velocity > 0) {
-        eventType = 'Note on';
-      }
+      eventType = velocity <= 0 ? 'Note off' : 'Note on';
     }
     if (message.name === 'Note off') {
       eventType = 'Note off';
@@ -178,11 +180,7 @@ export default function MidiPianoDisplay({ content }) {
       player.current.stop();
     }
     document.toneJsSampler.releaseAll();
-    for (const key of keys.current) {
-      if (typeof key !== 'undefined') {
-        key.style.backgroundColor = key.dataset.defaultColor;
-      }
-    }
+    resetAllKeyStyles();
     updateActiveNotes('Reset');
   };
 
@@ -196,6 +194,7 @@ export default function MidiPianoDisplay({ content }) {
     if (switchElem && switchElem.classList.contains('MidiPiano-SwitchChecked')) {
       switchElem.classList.remove('MidiPiano-SwitchChecked');
     }
+    resetAllKeyStyles();
   };
 
   const updateMidiMessageHandlers = () => {
@@ -241,6 +240,7 @@ export default function MidiPianoDisplay({ content }) {
     } else {
       inputIsEnabled.current = false;
     }
+    updateActiveNotes('Reset');
     updateMidiMessageHandlers();
     updateMidiInputSwitches(pianoId);
   };
@@ -263,12 +263,6 @@ export default function MidiPianoDisplay({ content }) {
   const renderMidiTrackTitle = () => (
     <div className="MidiPiano-midiTrackTitle">{midiTrackTitle}</div>
   );
-
-  // Load MIDI file
-  // useMidiLoader(src);
-
-  // Instantiate and store Tone.js sampler on document obj to be accessed from different pianos
-  useToneJsSampler(samplerHasLoaded, setSamplerHasLoaded);
 
   useEffect(() => {
     updateMidiInputSwitches();

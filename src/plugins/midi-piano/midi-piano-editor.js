@@ -1,7 +1,8 @@
 import React from 'react';
-import { Form, Input, Radio } from 'antd';
 import { useTranslation } from 'react-i18next';
 import validation from '../../ui/validation.js';
+import { Form, Input, Radio, Button } from 'antd';
+import ItemPanel from '../../components/item-panel.js';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
 import { CDN_URL_PREFIX, MIDI_SOURCE_TYPE } from '../../domain/constants.js';
 import ResourcePicker from '../../components/resource-picker/resource-picker.js';
@@ -13,7 +14,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const RadioGroup = Radio.Group;
   const RadioButton = Radio.Button;
   const { t } = useTranslation('midiPiano');
-  const { sourceType, sourceUrl, midiTrackTitle } = content;
+  const { sourceType, sourceUrl, midiTrackTitle, samplesType } = content;
 
   const formItemLayout = {
     labelCol: { span: 4 },
@@ -31,6 +32,12 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const handleSourceTypeValueChanged = event => {
     const { value } = event.target;
     changeContent({ sourceType: value, sourceUrl: '' });
+  };
+
+  const handleSamplesTypeValueChanged = event => {
+    const { value } = event.target;
+    document.toneJsSampler = null;
+    changeContent({ samplesType: value });
   };
 
   const handleExternalSourceUrlValueChanged = event => {
@@ -51,6 +58,15 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     const { value } = event.target;
     changeContent({ midiTrackTitle: value });
   };
+
+  const renderSamplesTypeInput = (value, onChangeHandler) => (
+    <FormItem label="Samples" {...formItemLayout}>
+      <RadioGroup value={value} onChange={onChangeHandler}>
+        <RadioButton value="piano">{t('piano')}</RadioButton>
+        <RadioButton value="harpsichord">{t('harpsichord')}</RadioButton>
+      </RadioGroup>
+    </FormItem>
+  );
 
   const renderSourceTypeInput = (value, onChangeHandler) => (
     <FormItem label={t('common:source')} {...formItemLayout}>
@@ -89,21 +105,39 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </FormItem>
   );
 
+  const renderKeyRangeSelector = onChangeHandler => (
+    <FormItem label={t('pianoKeyRange')} {...formItemLayout} hasFeedback>
+      <Button onChange={onChangeHandler} >. . .</Button>
+    </FormItem>
+  );
+
   return (
     <div className="MidiPianoEditor">
 
-      {renderMidiTrackTitleInput(midiTrackTitle, handleMidiTrackTitleValueChanged)}
+      {renderKeyRangeSelector()}
 
-      <Form>
-        {renderSourceTypeInput(sourceType, handleSourceTypeValueChanged)}
+      {renderSamplesTypeInput(samplesType, handleSamplesTypeValueChanged)}
 
-        {sourceType === MIDI_SOURCE_TYPE.external
-          && renderExternalSourceTypeInput(sourceUrl, handleExternalSourceUrlValueChanged)}
+      <ItemPanel header="MIDI">
+        {renderMidiTrackTitleInput(midiTrackTitle, handleMidiTrackTitleValueChanged)}
 
-        {sourceType === MIDI_SOURCE_TYPE.internal
-          && renderInternalSourceTypeInput(sourceUrl, handleInternalSourceUrlValueChanged, handleInternalSourceUrlFileNameChanged)}
-      </Form>
+        <Form>
+          {renderSourceTypeInput(sourceType, handleSourceTypeValueChanged)}
+
+          {sourceType === MIDI_SOURCE_TYPE.external
+            && renderExternalSourceTypeInput(sourceUrl, handleExternalSourceUrlValueChanged)}
+
+          {sourceType === MIDI_SOURCE_TYPE.internal
+            && renderInternalSourceTypeInput(sourceUrl, handleInternalSourceUrlValueChanged, handleInternalSourceUrlFileNameChanged)}
+        </Form>
+      </ItemPanel>
+
+      <ItemPanel header={t('earTraining')}>
+        <div>Hallo Uli</div>
+      </ItemPanel>
+
     </div>
+
   );
 }
 

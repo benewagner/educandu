@@ -45,6 +45,9 @@ export default function PianoComponent(props) {
   };
 
   const stopNote = midiValue => {
+    if (!samplerHasLoaded) {
+      return;
+    }
     setTimeout(() => {
       document.toneJsSampler.triggerRelease(getNoteNameFromMidiValue(midiValue));
     }, 150);

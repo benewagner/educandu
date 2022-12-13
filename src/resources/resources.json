@@ -1937,7 +1937,10 @@
     "resources": {
       "name": "Midi piano",
       "pianoKeyRange": "Key range",
-      "midiInput": "Midi Input"
+      "midiInput": "Midi Input",
+      "earTraining": "Ear Training",
+      "piano": "Piano",
+      "harpsichord": "Harpsichord"
     }
   },
   {
@@ -1946,7 +1949,10 @@
     "resources": {
       "name": "Midi-Klavier",
       "pianoKeyRange": "Tastenumfang",
-      "midiInput": "Midi-Eingabe"
+      "midiInput": "Midi-Eingabe",
+      "earTraining": "Gehörbildung",
+      "piano": "Klavier",
+      "harpsichord": "Cembalo"
     }
   },
   {

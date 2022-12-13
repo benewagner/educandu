@@ -33,7 +33,7 @@ class MidiPianoInfo {
       sourceType: MIDI_SOURCE_TYPE.internal,
       sourceUrl: '',
       noteRange: {
-        first: 20,
+        first: 0,
         last: 52
       },
       hasMidiFile: false,
@@ -43,7 +43,8 @@ class MidiPianoInfo {
         blackKey: 'rgb(56, 56, 56)',
         activeKey: 'rgb(127, 202, 230)',
         whiteKey: 'rgb(255, 255, 255)'
-      }
+      },
+      samplesType: 'harpsichord'
     };
   }
 

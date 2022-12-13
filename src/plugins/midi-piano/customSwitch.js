@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 import React, { useRef } from 'react';
 
+// Dom Manipulation of antd switch did not work as intended
 export default function CustomSwitch({ handleSwitchClick, pianoId }) {
 
   const inputSwitch = useRef(null);
