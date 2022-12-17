@@ -99,7 +99,7 @@ export function useToneJsSampler(samplesType) {
       },
       baseUrl: `https://anmeldung-sprechstunde.herokuapp.com/instrument-samples/${samplesType}/` // Samples better be hosted in project.
     }).toDestination();
-  }, [samplerHasLoaded, setSamplerHasLoaded]);
+  });
 
   return samplerHasLoaded;
 }

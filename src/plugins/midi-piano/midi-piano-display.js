@@ -4,9 +4,9 @@ import midiPlayerNs from 'midi-player-js';
 import CustomSwitch from './customSwitch.js';
 import { useTranslation } from 'react-i18next';
 import urlUtils from '../../utils/url-utils.js';
+import React, { useEffect, useRef } from 'react';
 import PianoComponent from './piano-component.js';
 import { MIDI_COMMANDS } from '../../domain/constants.js';
-import React, { useEffect, useRef } from 'react';
 import ClientConfig from '../../bootstrap/client-config.js';
 import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
@@ -19,7 +19,7 @@ export default function MidiPianoDisplay({ content }) {
   const keys = useRef(null);
   const player = useRef(null);
   const activeNotes = useRef([]);
-  const inputIsEnabled = useRef(false);
+  const inputIsEnabled = useRef(true);
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
   const clientConfig = useService(ClientConfig);
@@ -27,8 +27,8 @@ export default function MidiPianoDisplay({ content }) {
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   // Custom hooks returning state variables
-  const midiData = useMidiLoader(src);
   const pianoId = usePianoId('default');
+  const midiData = useMidiLoader(src);
   const midiDeviceIsConnected = useMidiDevice();
   const samplerHasLoaded = useToneJsSampler(samplesType);
 
@@ -52,17 +52,18 @@ export default function MidiPianoDisplay({ content }) {
 
   const updateActiveNotes = (eventType, midiValue) => {
     const arr = activeNotes.current;
+    const index = arr.indexOf(midiValue);
     if (eventType === 'Note on') {
-      const index = arr.indexOf(midiValue);
       if (index === -1) {
         arr.push(midiValue);
       }
+      return;
     }
     if (eventType === 'Note off') {
-      const index = arr.indexOf(midiValue);
       if (index !== -1) {
         arr.splice(index, 1);
       }
+      return;
     }
     if (eventType === 'Reset') {
       arr.length = 0;
@@ -184,7 +185,8 @@ export default function MidiPianoDisplay({ content }) {
     updateActiveNotes('Reset');
   };
 
-  // Stored in document object so that midi pianos can disable each other
+  // Stored in document object
+  // Disable MIDI input when called from sibling piano via document object
   const disableInput = id => {
     if (id === pianoId) {
       return;
@@ -206,6 +208,7 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
+  // Disable MIDI input for sibling pianos when switch is clicked
   const updateMidiInputSwitches = () => {
 
     if (pianoId === 'default' || !midiDeviceIsConnected || !inputIsEnabled.current) {
@@ -216,33 +219,34 @@ export default function MidiPianoDisplay({ content }) {
       document.midiPianos = [];
       document.midiPianoIds = [];
     }
-    document.midiPianos = document.midiPianos.filter(item => !!document.querySelector(`#${item[0]}`));
+
+    // Check if midi pianos have been deleted
+    document.midiPianos = document.midiPianos.filter(piano => !!document.querySelector(`#${piano.id}`));
     document.midiPianoIds = [];
-    document.midiPianos.forEach(item => {
-      document.midiPianoIds.push(item[0]);
+    document.midiPianos.forEach(piano => {
+      document.midiPianoIds.push(piano.id);
     });
 
-    document.midiPianoIds = document.midiPianoIds.filter(item => item !== pianoId);
-    document.midiPianos = document.midiPianos.filter(item => item[0] !== pianoId);
+    document.midiPianoIds = document.midiPianoIds.filter(id => id !== pianoId);
+    document.midiPianos = document.midiPianos.filter(piano => piano.id !== pianoId);
 
     document.midiPianoIds.push(pianoId);
-    document.midiPianos.push([pianoId, disableInput]);
+    document.midiPianos.push({
+      id: pianoId,
+      disableInput
+    });
 
     for (let i = 0; i < document.midiPianos.length; i += 1) {
       const midiPiano = document.midiPianos[i];
-      midiPiano[1](pianoId);
+      midiPiano.disableInput(pianoId);
     }
   };
 
   const handleSwitchClick = isChecked => {
-    if (isChecked) {
-      inputIsEnabled.current = true;
-    } else {
-      inputIsEnabled.current = false;
-    }
+    inputIsEnabled.current = isChecked;
     updateActiveNotes('Reset');
     updateMidiMessageHandlers();
-    updateMidiInputSwitches(pianoId);
+    updateMidiInputSwitches();
   };
 
   const renderControls = () => (
@@ -266,7 +270,7 @@ export default function MidiPianoDisplay({ content }) {
 
   useEffect(() => {
     updateMidiInputSwitches();
-  }, [pianoId, midiDeviceIsConnected]);
+  });
 
   useEffect(() => {
     return function cleanUp() {

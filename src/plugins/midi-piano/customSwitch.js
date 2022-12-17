@@ -8,7 +8,8 @@ export default function CustomSwitch({ handleSwitchClick, pianoId }) {
 
   const onClick = () => {
     inputSwitch.current.classList.toggle('MidiPiano-SwitchChecked');
-    handleSwitchClick(inputSwitch.current.classList.contains('MidiPiano-SwitchChecked'));
+    const isChecked = inputSwitch.current.classList.contains('MidiPiano-SwitchChecked');
+    handleSwitchClick(isChecked);
   };
 
   return (
