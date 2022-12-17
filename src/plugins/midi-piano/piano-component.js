@@ -18,14 +18,14 @@ export default function PianoComponent(props) {
     colors,
     pianoId,
     sampler,
-    noteRange,
+    keyRange,
     activeNotes,
     samplerHasLoaded,
     updateActiveNotes,
     updateKeyStyle } = props;
   const piano = useRef(null);
   const { NOTES } = midiPlayerNs.Constants;
-  const keyRangeLayout = pianoLayout.slice(noteRange.first, noteRange.last);
+  const keyRangeLayout = pianoLayout.slice(keyRange.first, keyRange.last + 1);
 
   const getNoteNameFromMidiValue = midiValue => {
     return NOTES[midiValue];
@@ -137,7 +137,7 @@ PianoComponent.propTypes = {
   activeNotes: PropTypes.object.isRequired,
   colors: PropTypes.object.isRequired,
   keys: PropTypes.object.isRequired,
-  noteRange: PropTypes.object.isRequired,
+  keyRange: PropTypes.object.isRequired,
   pianoId: PropTypes.string.isRequired,
   sampler: PropTypes.object,
   samplerHasLoaded: PropTypes.bool.isRequired,

@@ -32,7 +32,7 @@ class MidiPianoInfo {
     return {
       sourceType: MIDI_SOURCE_TYPE.internal,
       sourceUrl: '',
-      noteRange: {
+      keyRange: {
         first: 0,
         last: 52
       },

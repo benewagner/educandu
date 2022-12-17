@@ -23,7 +23,7 @@ export default function MidiPianoDisplay({ content }) {
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
   const clientConfig = useService(ClientConfig);
-  const { sourceType, sourceUrl, midiTrackTitle, noteRange, colors, samplesType } = content;
+  const { sourceType, sourceUrl, midiTrackTitle, keyRange, colors, samplesType } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   // Custom hooks returning state variables
@@ -152,6 +152,7 @@ export default function MidiPianoDisplay({ content }) {
     });
     player.current.on('endOfFile', () => {
       player.current.stop();
+      resetAllKeyStyles();
     });
     player.current.loadArrayBuffer(midiData);
   }
@@ -278,13 +279,18 @@ export default function MidiPianoDisplay({ content }) {
         player.current.stop();
         sampler.releaseAll();
       }
+      if (inputIsEnabled.current && midiDeviceIsConnected) {
+        for (const input of document.midiAccessObj.inputs.values()) {
+          input.onmidimessage = null;
+        }
+      }
     };
   });
 
   return (
     <React.Fragment>
       <PianoComponent
-        noteRange={noteRange}
+        keyRange={keyRange}
         sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
         colors={colors}

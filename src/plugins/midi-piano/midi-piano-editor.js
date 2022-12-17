@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import React, { useState, useRef } from 'react';
 import validation from '../../ui/validation.js';
 import { Form, Input, Radio, Button } from 'antd';
 import { pianoLayout } from './piano-component.js';
@@ -16,9 +16,10 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const FormItem = Form.Item;
   const RadioGroup = Radio.Group;
   const RadioButton = Radio.Button;
+  const keyRangeSelection = useRef([]);
   const { t } = useTranslation('midiPiano');
   const { sourceType, sourceUrl, midiTrackTitle, samplesType } = content;
-  const [canRenderSelectorPiano, setCanRenderSelectorPiano] = useState(true);
+  const [canRenderSelectorPiano, setCanRenderSelectorPiano] = useState(false);
   const selectorPianoColors = {
     whiteKey: 'white',
     blackKey: 'black'
@@ -35,6 +36,30 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
       = newContent.sourceType === MIDI_SOURCE_TYPE.external
       && validation.validateUrl(newContent.sourceUrl, t).validateStatus === 'error';
     onContentChanged(newContent, isInvalidSourceUrl);
+  };
+
+  const handleKeyRangeChanged = () => {
+    const keyRangeValues = keyRangeSelection.current.sort((a, b) => {
+      return a - b;
+    });
+    const keyRange = {
+      first: keyRangeValues[0],
+      last: keyRangeValues[keyRangeValues.length - 1]
+    };
+    setCanRenderSelectorPiano(!canRenderSelectorPiano);
+    changeContent({ keyRange });
+  };
+
+  const updateKeyRangeSelection = event => {
+    const value = parseInt(event.target.dataset.index, 10);
+    if (!keyRangeSelection.current.includes(value)) {
+      keyRangeSelection.current.push(value);
+      console.log(keyRangeSelection.current);
+      return;
+    }
+    const index = keyRangeSelection.current.indexOf(value);
+    keyRangeSelection.current.splice(index, 1);
+    console.log(keyRangeSelection.current);
   };
 
   const handleSourceTypeValueChanged = event => {
@@ -65,6 +90,10 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const handleMidiTrackTitleValueChanged = event => {
     const { value } = event.target;
     changeContent({ midiTrackTitle: value });
+  };
+
+  const toggleSelectorPiano = () => {
+    setCanRenderSelectorPiano(!canRenderSelectorPiano);
   };
 
   const renderSamplesTypeInput = (value, onChangeHandler) => (
@@ -114,23 +143,30 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   );
 
   const renderSelectorPiano = () => (
-    <div id="MidiPiano-selectorPianoContainer">
-      <div>Hallo</div>
-      <div id="MidiPiano-selectorPianoWrapper">
-        {pianoLayout.map((elem, index) => {
-          if (elem[0] === 0 && index < pianoLayout.length - 1) {
-            return <KeyWhiteWithBlack key={createId()} midiValue={elem[1]} colors={selectorPianoColors} />;
-          }
-          return <KeyWhite key={createId()} midiValue={elem[1]} colors={selectorPianoColors} />;
-        })}
+    <div id="MidiPiano-XXX1">
+      <div id="MidiPiano-XXX2">
+        <div>
+          {t('keyRangeSelectionText')}
+        </div>
+        <div id="MidiPiano-selectorPianoWrapper">
+          {pianoLayout.map((elem, index) => {
+            if (elem[0] === 0 && index < pianoLayout.length - 1) {
+              return <KeyWhiteWithBlack updateKeyRangeSelection={updateKeyRangeSelection} key={createId()} index={index} colors={selectorPianoColors} />;
+            }
+            return <KeyWhite updateKeyRangeSelection={updateKeyRangeSelection} key={createId()} index={index} colors={selectorPianoColors} />;
+          })}
+        </div>
+        <div>
+          <Button onClick={handleKeyRangeChanged}>{t('common:confirm')}</Button>
+        </div>
       </div>
     </div>
   );
 
-  const renderKeyRangeSelector = onChangeHandler => (
+  const renderKeyRangeSelector = onClickHandler => (
     <React.Fragment>
       <FormItem label={t('pianoKeyRange')} {...formItemLayout} hasFeedback>
-        <Button onChange={onChangeHandler} >. . .</Button>
+        <Button onClick={onClickHandler} >. . .</Button>
       </FormItem>
       {canRenderSelectorPiano && renderSelectorPiano()}
     </React.Fragment>
@@ -139,7 +175,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   return (
     <div className="MidiPianoEditor">
 
-      {renderKeyRangeSelector()}
+      {renderKeyRangeSelector(toggleSelectorPiano)}
 
       {renderSamplesTypeInput(samplesType, handleSamplesTypeValueChanged)}
 

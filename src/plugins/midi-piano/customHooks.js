@@ -59,6 +59,7 @@ export function useToneJsSampler(samplesType) {
     if (document.toneJsSamplers?.[samplesType]) {
       if (!samplerHasLoaded) {
         setSamplerHasLoaded(true);
+        setSampler(document.toneJsSamplers[samplesType]);
       }
       return;
     }
