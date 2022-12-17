@@ -1940,7 +1940,8 @@
       "midiInput": "Midi Input",
       "earTraining": "Ear Training",
       "piano": "Piano",
-      "harpsichord": "Harpsichord"
+      "harpsichord": "Harpsichord",
+      "keyRangeSelectionText": "Please select the two outermost white keys to be shown."
     }
   },
   {
@@ -1952,7 +1953,8 @@
       "midiInput": "Midi-Eingabe",
       "earTraining": "Gehörbildung",
       "piano": "Klavier",
-      "harpsichord": "Cembalo"
+      "harpsichord": "Cembalo",
+      "keyRangeSelectionText": "Bitte wählen Sie die beiden äußersten anzuzeigenden weißen Tasten aus."
     }
   },
   {

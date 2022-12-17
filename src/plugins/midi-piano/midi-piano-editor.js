@@ -1,8 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import validation from '../../ui/validation.js';
 import { Form, Input, Radio, Button } from 'antd';
+import { pianoLayout } from './piano-component.js';
 import ItemPanel from '../../components/item-panel.js';
+import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
+import { create as createId } from '../../utils/unique-id.js';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
 import { CDN_URL_PREFIX, MIDI_SOURCE_TYPE } from '../../domain/constants.js';
 import ResourcePicker from '../../components/resource-picker/resource-picker.js';
@@ -15,6 +18,11 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const RadioButton = Radio.Button;
   const { t } = useTranslation('midiPiano');
   const { sourceType, sourceUrl, midiTrackTitle, samplesType } = content;
+  const [canRenderSelectorPiano, setCanRenderSelectorPiano] = useState(true);
+  const selectorPianoColors = {
+    whiteKey: 'white',
+    blackKey: 'black'
+  };
 
   const formItemLayout = {
     labelCol: { span: 4 },
@@ -105,10 +113,27 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </FormItem>
   );
 
+  const renderSelectorPiano = () => (
+    <div id="MidiPiano-selectorPianoContainer">
+      <div>Hallo</div>
+      <div id="MidiPiano-selectorPianoWrapper">
+        {pianoLayout.map((elem, index) => {
+          if (elem[0] === 0 && index < pianoLayout.length - 1) {
+            return <KeyWhiteWithBlack key={createId()} midiValue={elem[1]} colors={selectorPianoColors} />;
+          }
+          return <KeyWhite key={createId()} midiValue={elem[1]} colors={selectorPianoColors} />;
+        })}
+      </div>
+    </div>
+  );
+
   const renderKeyRangeSelector = onChangeHandler => (
-    <FormItem label={t('pianoKeyRange')} {...formItemLayout} hasFeedback>
-      <Button onChange={onChangeHandler} >. . .</Button>
-    </FormItem>
+    <React.Fragment>
+      <FormItem label={t('pianoKeyRange')} {...formItemLayout} hasFeedback>
+        <Button onChange={onChangeHandler} >. . .</Button>
+      </FormItem>
+      {canRenderSelectorPiano && renderSelectorPiano()}
+    </React.Fragment>
   );
 
   return (

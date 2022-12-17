@@ -52,16 +52,22 @@ export function useMidiLoader(src) {
 
 export function useToneJsSampler(samplesType) {
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
+  const [sampler, setSampler] = useState(null);
 
   useEffect(() => {
-    if (document.toneJsSampler) {
+
+    if (document.toneJsSamplers?.[samplesType]) {
       if (!samplerHasLoaded) {
         setSamplerHasLoaded(true);
       }
       return;
     }
 
-    document.toneJsSampler = new Tone.Sampler({
+    if (!document.toneJsSamplers) {
+      document.toneJsSamplers = {};
+    }
+
+    document.toneJsSamplers[samplesType] = new Tone.Sampler({
       urls: {
         'A0': 'A0.mp3',
         'C1': 'C1.mp3',
@@ -96,12 +102,13 @@ export function useToneJsSampler(samplesType) {
       },
       onload: () => {
         setSamplerHasLoaded(true);
+        setSampler(document.toneJsSamplers[samplesType]);
       },
       baseUrl: `https://anmeldung-sprechstunde.herokuapp.com/instrument-samples/${samplesType}/` // Samples better be hosted in project.
     }).toDestination();
-  });
+  }, [samplerHasLoaded, setSamplerHasLoaded, samplesType]);
 
-  return samplerHasLoaded;
+  return [sampler, samplerHasLoaded];
 }
 
 // Set pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches

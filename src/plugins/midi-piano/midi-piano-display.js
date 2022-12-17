@@ -27,10 +27,10 @@ export default function MidiPianoDisplay({ content }) {
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   // Custom hooks returning state variables
-  const pianoId = usePianoId('default');
   const midiData = useMidiLoader(src);
+  const pianoId = usePianoId('default');
   const midiDeviceIsConnected = useMidiDevice();
-  const samplerHasLoaded = useToneJsSampler(samplesType);
+  const [sampler, samplerHasLoaded] = useToneJsSampler(samplesType);
 
   const getNoteNameFromMidiValue = midiValue => {
     return NOTES[midiValue];
@@ -74,10 +74,10 @@ export default function MidiPianoDisplay({ content }) {
 
     switch (eventType) {
       case 'Note on':
-        document.toneJsSampler.triggerAttack(noteName);
+        sampler.triggerAttack(noteName);
         break;
       case 'Note off':
-        document.toneJsSampler.triggerRelease(noteName);
+        sampler.triggerRelease(noteName);
         break;
       default:
         break;
@@ -173,14 +173,14 @@ export default function MidiPianoDisplay({ content }) {
       return;
     }
     player.current.pause();
-    document.toneJsSampler.releaseAll();
+    sampler.releaseAll();
   };
 
   const stopMidiPlayer = () => {
     if (player.current) {
       player.current.stop();
     }
-    document.toneJsSampler.releaseAll();
+    sampler.releaseAll();
     resetAllKeyStyles();
     updateActiveNotes('Reset');
   };
@@ -276,7 +276,7 @@ export default function MidiPianoDisplay({ content }) {
     return function cleanUp() {
       if (player.current && samplerHasLoaded) {
         player.current.stop();
-        document.toneJsSampler.releaseAll();
+        sampler.releaseAll();
       }
     };
   });
@@ -285,6 +285,7 @@ export default function MidiPianoDisplay({ content }) {
     <React.Fragment>
       <PianoComponent
         noteRange={noteRange}
+        sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
         colors={colors}
         pianoId={pianoId}
