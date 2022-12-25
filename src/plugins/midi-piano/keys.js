@@ -5,12 +5,12 @@ export function KeyWhite({ midiValue, colors, index, updateKeyRangeSelection }) 
 
   return (
     <div
-    className="MidiPiano-key MidiPiano-keyWhite"
-    onClick={updateKeyRangeSelection}
-    data-midi-value={midiValue}
-    data-default-color={colors.whiteKey}
-    data-index={index}
-    />
+      className="MidiPiano-key MidiPiano-keyWhite"
+      onClick={updateKeyRangeSelection}
+      data-midi-value={midiValue}
+      data-default-color={colors.whiteKey}
+      data-index={index}
+      />
   );
 }
 
@@ -35,7 +35,7 @@ KeyWhite.propTypes = {
 KeyWhite.defaultProps = {
   midiValue: null,
   updateKeyRangeSelection: () => {}
-}
+};
 
 KeyWhiteWithBlack.propTypes = {
   ...keyProps
@@ -44,4 +44,4 @@ KeyWhiteWithBlack.propTypes = {
 KeyWhiteWithBlack.defaultProps = {
   midiValue: null,
   updateKeyRangeSelection: null
-}
+};

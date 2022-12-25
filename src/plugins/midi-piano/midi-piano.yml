@@ -19,3 +19,6 @@ harpsichord:
 keyRangeSelectionText:
   en: Please select the two outermost white keys to be shown.
   de: Bitte wählen Sie die beiden äußersten anzuzeigenden weißen Tasten aus.
+exerciseType:
+  en: Exercise type
+  de: Übungstyp

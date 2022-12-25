@@ -1941,7 +1941,8 @@
       "earTraining": "Ear Training",
       "piano": "Piano",
       "harpsichord": "Harpsichord",
-      "keyRangeSelectionText": "Please select the two outermost white keys to be shown."
+      "keyRangeSelectionText": "Please select the two outermost white keys to be shown.",
+      "exerciseType": "Exercise type"
     }
   },
   {
@@ -1954,7 +1955,8 @@
       "earTraining": "Gehörbildung",
       "piano": "Klavier",
       "harpsichord": "Cembalo",
-      "keyRangeSelectionText": "Bitte wählen Sie die beiden äußersten anzuzeigenden weißen Tasten aus."
+      "keyRangeSelectionText": "Bitte wählen Sie die beiden äußersten anzuzeigenden weißen Tasten aus.",
+      "exerciseType": "Übungstyp"
     }
   },
   {

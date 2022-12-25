@@ -1,17 +1,20 @@
 import { useTranslation } from 'react-i18next';
 import React, { useState, useRef } from 'react';
 import validation from '../../ui/validation.js';
-import { Form, Input, Radio, Button } from 'antd';
 import { pianoLayout } from './piano-component.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
 import { create as createId } from '../../utils/unique-id.js';
+import { Form, Input, Radio, Button, Menu, Dropdown } from 'antd';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
 import { CDN_URL_PREFIX, MIDI_SOURCE_TYPE } from '../../domain/constants.js';
 import ResourcePicker from '../../components/resource-picker/resource-picker.js';
+import NeverScrollingTextArea from '../../components/never-scrolling-text-area.js';
 import { storageLocationPathToUrl, urlToStorageLocationPath } from '../../utils/storage-utils.js';
 
 export default function MidiPianoEditor({ content, onContentChanged }) {
+
+  const [text, setText] = useState();
 
   const FormItem = Form.Item;
   const RadioGroup = Radio.Group;
@@ -51,15 +54,14 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   };
 
   const updateKeyRangeSelection = event => {
+    event.target.classList.toggle('MidiPiano-keySelected');
     const value = parseInt(event.target.dataset.index, 10);
     if (!keyRangeSelection.current.includes(value)) {
       keyRangeSelection.current.push(value);
-      console.log(keyRangeSelection.current);
       return;
     }
     const index = keyRangeSelection.current.indexOf(value);
     keyRangeSelection.current.splice(index, 1);
-    console.log(keyRangeSelection.current);
   };
 
   const handleSourceTypeValueChanged = event => {
@@ -172,6 +174,11 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </React.Fragment>
   );
 
+  const handler = event => {
+    console.log(event.target.value);
+    setText(event.target.value);
+  };
+
   return (
     <div className="MidiPianoEditor">
 
@@ -194,7 +201,10 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
       </ItemPanel>
 
       <ItemPanel header={t('earTraining')}>
-        <div>Hallo Uli</div>
+        <FormItem label={t('exerciseType')} {...formItemLayout} hasFeedback>
+          <Button onClick={() => {}} >. . .</Button>
+        </FormItem>
+        <NeverScrollingTextArea value={text} onChange={handler} />
       </ItemPanel>
 
     </div>
