@@ -19,6 +19,132 @@ harpsichord:
 keyRangeSelectionText:
   en: Please select the two outermost white keys to be shown.
   de: Bitte wählen Sie die beiden äußersten anzuzeigenden weißen Tasten aus.
+testNumber:
+  en: Test {number}
+  de: Test {number}
 exerciseType:
   en: Exercise type
   de: Übungstyp
+interval:
+  en: Interval
+  de: Intervall
+chord:
+  en: Chord
+  de: Akkord
+noteSequence:
+  en: Note sequence
+  de: Tonfolge
+numberOfNotes:
+  en: Number of notes
+  de: Anzahl an Tönen
+intervals:
+  en: Intervals
+  de: Intervalle
+chords:
+  en: Chords
+  de: Akkorde
+all:
+  en: All
+  de: Alle
+prime:
+  en: Prime
+  de: Prime
+second:
+  en: Second
+  de: Sekunde
+third:
+  en: Third
+  de: Terz
+fourth:
+  en: Fourth
+  de: Quarte
+tritone:
+  en: Tritone
+  de: Tritonus
+fifth:
+  en: Fifth
+  de: Quinte
+sixth:
+  en: Sixth
+  de: Sexte
+seventh:
+  en: Seventh
+  de: Septime
+octave:
+  en: Octave
+  de: Oktave
+minor:
+  en: Minor
+  de: Klein
+major:
+  en: Major
+  de: Groß
+majorTriad:
+  en: Major
+  de: Dur
+minorTriad:
+  en: Minor
+  de: Moll
+diminished:
+  en: Diminished
+  de: Vermindert
+augmented:
+  en: Augmented
+  de: Übermäßig
+triads:
+  en: Triads
+  de: Dreiklänge
+seventhChords:
+  en: Seventh Chords
+  de: Septakkorde
+majorTriadMajorSeventh:
+  en: Major Triad + Major Seventh
+  de: Großer Durseptakkord
+majorTriadMinorSeventh:
+  en: Major Triad + Minor Seventh
+  de: Kleiner Durseptakkord
+minorTriadMinorSeventh:
+  en: Minor Triad + Minor Seventh
+  de: Kleiner Mollseptakkord
+minorTriadMajorSeventh:
+  en: Minor Triad + Major Seventh
+  de: Großer Mollseptakkord
+diminishedSeventh:
+  en: Diminished Seventh
+  de: Vollvermindert
+halfDiminished:
+  en: Half-diminished
+  de: Halbvermindert
+inversions:
+  en: Inversions
+  de: Umkehrungen
+fundamental:
+  en: Fundamental
+  de: Grundstellung
+firstInversion:
+  en: First Inversion
+  de: Erste Umkehrung
+secondInversion:
+  en: Second Inversion
+  de: Zweite Umkehrung
+thirdInversion:
+  en: Third Inversion
+  de: Dritte Umkehrung
+direction:
+  en: Direction
+  de: Richtung
+upwards:
+  en: Upwards
+  de: Aufwärts
+downwards:
+  en: Downwards
+  de: Abwärts
+noteRange:
+  en: Note Range
+  de: Tonumfang
+noteB:
+  en: B
+  de: H
+whiteKeysOnly:
+  en: White Keys Only
+  de: Nur weiße Tasten

@@ -136,8 +136,8 @@ export default function PianoComponent(props) {
 PianoComponent.propTypes = {
   activeNotes: PropTypes.object.isRequired,
   colors: PropTypes.object.isRequired,
-  keys: PropTypes.object.isRequired,
   keyRange: PropTypes.object.isRequired,
+  keys: PropTypes.object.isRequired,
   pianoId: PropTypes.string.isRequired,
   sampler: PropTypes.object,
   samplerHasLoaded: PropTypes.bool.isRequired,

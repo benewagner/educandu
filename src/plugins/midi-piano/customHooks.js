@@ -3,21 +3,26 @@ import { useEffect, useState } from 'react';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
 
+/**
+ * This hook uses the Web MIDI API for checking if a MIDI device is connected.
+ * If true, stores the Midi Acces Object on browser document object to be accessed by each piano on the page.
+ */
+
 export function useMidiDevice() {
-  const [midiDeviceIsConnected, setMidiDeviceIsConnected] = useState(false);
+  const [isMidiDeviceConnected, setIsMidiDeviceConnected] = useState(false);
 
   useEffect(() => {
-    if (midiDeviceIsConnected) {
+    if (isMidiDeviceConnected) {
       return;
     }
     if (typeof document.midiAccessObj !== 'undefined' && document.midiAccessObj.inputs.size > 0) {
-      setMidiDeviceIsConnected(true);
+      setIsMidiDeviceConnected(true);
       return;
     }
-    // Triggers if browser supports MIDI, even when no MIDI device is connected
+    // Triggers if browser supports Web MIDI API, even if no MIDI device is connected
     function onMIDISuccess(midiAccessObj) {
       if (midiAccessObj.inputs.size > 0) {
-        setMidiDeviceIsConnected(true);
+        setIsMidiDeviceConnected(true);
       }
       if (!document.midiAccessObj) {
         document.midiAccessObj = midiAccessObj;
@@ -28,11 +33,12 @@ export function useMidiDevice() {
     }
 
     navigator.requestMIDIAccess().then(onMIDISuccess, onMIDIFailure);
-  }, [midiDeviceIsConnected]);
+  }, [isMidiDeviceConnected]);
 
-  return midiDeviceIsConnected;
+  return isMidiDeviceConnected;
 }
 
+// Loads the midi file defined in midi-piano-editor.js.
 export function useMidiLoader(src) {
   const [midiData, setMidiData] = useState(null);
 
@@ -50,6 +56,11 @@ export function useMidiLoader(src) {
   return midiData;
 }
 
+/**
+ * This Hook initiates a Tone.js sampler used for playback of notes played on connected MIDI devices.
+ * The Sampler is stored on the browser document object so that it can be accessed by every piano on the page.
+ * Currently there are only piano samples available. By including the samplesType variable it will be easy to add further samples like Harpsichord later.
+ */
 export function useToneJsSampler(samplesType) {
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
   const [sampler, setSampler] = useState(null);
@@ -112,7 +123,7 @@ export function useToneJsSampler(samplesType) {
   return [sampler, samplerHasLoaded];
 }
 
-// Set pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches
+// Sets unique pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches in midi-piano-display.js.
 export function usePianoId(defaultValue) {
   const [pianoId, setPianoId] = useState(defaultValue);
 

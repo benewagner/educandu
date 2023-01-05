@@ -63,12 +63,14 @@ const charsToDelete = [' ', '|', '=', '(', ')', '-'];
 
 // const abcString = 'd3e ^f2a2|_b2^^g2__e4|';
 const abcString = `X:1
+M:C
+L:1/8
 K:C
-Q:1/4=80
-%
-d3e ^f2 a2|_b2^^g2 __e4|`;
+c2 cdef g2'' | ^g2 gfed c2 || c2 _c d3 e f' g2 | g2 g ^^f e d c2 ||
+c2 cdzf g2 | G,, GFzD C2, || c2 c''' def g2 | g2 g, fe d c2 ||
+`;
 
-const noteNameLetters = ['c', 'd', 'e', 'f', 'g', 'a', 'b', 'z'];
+const noteNameLetters = ['c', 'd', 'e', 'f', 'g', 'a', 'b', 'z', 'x'];
 const prefixes = ['^', '_'];
 const suffixes = ['1', '2', '3', '4', '5', '6', '7', '8', '9', ','];
 
@@ -90,7 +92,7 @@ function convertABC(string) {
     let indexStart = 0;
     let indexEnd = 0;
 
-    console.log(newString, indexStart);
+    // console.log(newString, indexStart);
 
     while (!noteNameLetters.includes(newString[indexStart].toLowerCase())) {
       indexStart += 1;
@@ -125,7 +127,7 @@ function convertABC(string) {
 
 const notesArray = convertABC(abcString);
 
-console.log(notesArray);
+// console.log(notesArray);
 
 function convertNotesArray(arr) {
   const newArr = [];
@@ -148,7 +150,7 @@ function convertNotesArray(arr) {
 
 const melodyArray = convertNotesArray(notesArray);
 
-console.log(melodyArray);
+// console.log(melodyArray);
 
 function wait(factor) {
   return new Promise(res => {
@@ -173,6 +175,19 @@ async function playMelody(melodyArr) {
   }
 }
 
-playMelody(melodyArray);
+// playMelody(melodyArray);
 
 // Haltebogen funktioniert noch nicht, weil minus rausgefiltert wird.
+
+const obj = {
+  hallo: {
+    hi: 1,
+    bye: 2
+  }
+};
+
+const obj2 = {};
+
+obj2.hallo = obj.hallo;
+
+obj.hallo = {};

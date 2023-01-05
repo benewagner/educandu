@@ -28,7 +28,72 @@ class MidiPianoInfo {
     return (await import('./midi-piano-editor.js')).default;
   }
 
+  getDefaultTest() {
+    const defaultCheckboxStates = {
+      all: false,
+      prime: false,
+      second: {
+        minor: false,
+        major: false
+      },
+      third: {
+        minor: false,
+        major: false
+      },
+      fourth: false,
+      tritone: false,
+      fifth: false,
+      sixth: {
+        minor: false,
+        major: false
+      },
+      seventh: {
+        minor: false,
+        major: false
+      },
+      octave: false
+    };
+
+    return {
+      exerciseType: '',
+      noteRange: [17, 30],
+      whiteKeysOnly: false,
+      numberOfNotes: 4,
+      directionCheckboxStates: {
+        up: true,
+        down: false
+      },
+      triadCheckboxStates: {
+        majorTriad: false,
+        minorTriad: false,
+        diminished: false,
+        augmented: false
+      },
+      seventhChordCheckboxStates: {
+        majorTriadMinorSeventh: false,
+        majorTriadMajorSeventh: false,
+        minorTriadMinorSeventh: false,
+        minorTriadMajorSeventh: false,
+        halfDiminished: false,
+        diminishedSeventh: false
+      },
+      inversionCheckboxStates: {
+        fundamental: false,
+        firstInversion: false,
+        secondInversion: false,
+        thirdInversion: false
+      },
+      intervalCheckboxStates: {
+        ...defaultCheckboxStates
+      },
+      noteSequenceCheckboxStates: {
+        ...defaultCheckboxStates
+      }
+    };
+  }
+
   getDefaultContent() {
+
     return {
       sourceType: MIDI_SOURCE_TYPE.internal,
       sourceUrl: '',
@@ -38,13 +103,13 @@ class MidiPianoInfo {
       },
       hasMidiFile: false,
       midiTrackTitle: '',
-      activeNotes: [],
       colors: {
         blackKey: 'rgb(56, 56, 56)',
         activeKey: 'rgb(127, 202, 230)',
         whiteKey: 'rgb(255, 255, 255)'
       },
-      samplesType: 'harpsichord'
+      samplesType: 'piano',
+      tests: []
     };
   }
 
