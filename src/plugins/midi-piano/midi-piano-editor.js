@@ -1,10 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import validation from '../../ui/validation.js';
 import React, { useState, useRef } from 'react';
+import { pianoLayout } from './custom-piano.js';
 import MidiPianoInfo from './midi-piano-info.js';
 import { PlusOutlined } from '@ant-design/icons';
 import cloneDeep from '../../utils/clone-deep.js';
-import { pianoLayout } from './piano-component.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
 import { create as createId } from '../../utils/unique-id.js';

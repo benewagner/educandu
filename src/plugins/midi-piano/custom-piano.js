@@ -12,7 +12,7 @@ export const pianoLayout = [
   [1, 107], [1, 108]
 ];
 
-export default function PianoComponent(props) {
+export default function CustomPiano(props) {
 
   const { keys,
     colors,
@@ -133,7 +133,7 @@ export default function PianoComponent(props) {
   );
 }
 
-PianoComponent.propTypes = {
+CustomPiano.propTypes = {
   activeNotes: PropTypes.object.isRequired,
   colors: PropTypes.object.isRequired,
   keyRange: PropTypes.object.isRequired,
@@ -145,7 +145,7 @@ PianoComponent.propTypes = {
   updateKeyStyle: PropTypes.func.isRequired
 };
 
-PianoComponent.defaultProps = {
+CustomPiano.defaultProps = {
   sampler: {}
 };
 

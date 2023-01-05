@@ -1,11 +1,11 @@
 import { Button } from 'antd';
 import StopIcon from './stop-icon.js';
 import midiPlayerNs from 'midi-player-js';
-import CustomSwitch from './customSwitch.js';
+import CustomPiano from './custom-piano.js';
+import CustomSwitch from './custom-switch.js';
 import { useTranslation } from 'react-i18next';
 import urlUtils from '../../utils/url-utils.js';
 import React, { useEffect, useRef } from 'react';
-import PianoComponent from './piano-component.js';
 import { MIDI_COMMANDS } from '../../domain/constants.js';
 import AbcNotation from '../../components/abc-notation.js';
 import ClientConfig from '../../bootstrap/client-config.js';
@@ -13,7 +13,7 @@ import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
 import PauseIcon from '../../components/icons/media-player/pause-icon.js';
-import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice } from './customHooks.js';
+import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice } from './custom-hooks.js';
 
 export default function MidiPianoDisplay({ content }) {
 
@@ -309,7 +309,7 @@ export default function MidiPianoDisplay({ content }) {
           </div>
         </div>
       </div>
-      <PianoComponent
+      <CustomPiano
         keyRange={keyRange}
         sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
