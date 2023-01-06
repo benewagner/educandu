@@ -178,5 +178,8 @@ accidentals:
 addCustomNoteSequence:
   en: Add Note Sequence
   de: Tonfolge hinzufügen
+noteSequenceNumber:
+  en: Note Sequence {number}
+  de: Tonfolge {number}
 
 

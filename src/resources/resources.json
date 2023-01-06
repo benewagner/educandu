@@ -1994,7 +1994,8 @@
       "trebleClef": "Treble",
       "bassClef": "Bass",
       "accidentals": "Accidentals",
-      "addCustomNoteSequence": "Add Note Sequence"
+      "addCustomNoteSequence": "Add Note Sequence",
+      "noteSequenceNumber": "Note Sequence {number}"
     }
   },
   {
@@ -2060,7 +2061,8 @@
       "trebleClef": "Violinschlüssel",
       "bassClef": "Bassschlüssel",
       "accidentals": "Vorzeichen",
-      "addCustomNoteSequence": "Tonfolge hinzufügen"
+      "addCustomNoteSequence": "Tonfolge hinzufügen",
+      "noteSequenceNumber": "Tonfolge {number}"
     }
   },
   {
