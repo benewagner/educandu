@@ -1984,7 +1984,17 @@
       "downwards": "Downwards",
       "noteRange": "Note Range",
       "noteB": "B",
-      "whiteKeysOnly": "White Keys Only"
+      "whiteKeysOnly": "White Keys Only",
+      "type": "Type",
+      "predefined": "Predefined",
+      "random": "Random",
+      "abcCode": "ABC Code",
+      "preview": "Preview",
+      "clef": "Clef",
+      "trebleClef": "Treble",
+      "bassClef": "Bass",
+      "accidentals": "Accidentals",
+      "addCustomNoteSequence": "Add Note Sequence"
     }
   },
   {
@@ -2040,7 +2050,17 @@
       "downwards": "Abwärts",
       "noteRange": "Tonumfang",
       "noteB": "H",
-      "whiteKeysOnly": "Nur weiße Tasten"
+      "whiteKeysOnly": "Nur weiße Tasten",
+      "type": "Typ",
+      "predefined": "Vordefiniert",
+      "random": "Zufällig",
+      "abcCode": "ABC-Code",
+      "preview": "Vorschau",
+      "clef": "Notenschlüssel",
+      "trebleClef": "Violinschlüssel",
+      "bassClef": "Bassschlüssel",
+      "accidentals": "Vorzeichen",
+      "addCustomNoteSequence": "Tonfolge hinzufügen"
     }
   },
   {

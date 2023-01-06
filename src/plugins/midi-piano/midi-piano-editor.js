@@ -1,13 +1,15 @@
 import { useTranslation } from 'react-i18next';
 import validation from '../../ui/validation.js';
-import React, { useState, useRef } from 'react';
 import { pianoLayout } from './custom-piano.js';
 import MidiPianoInfo from './midi-piano-info.js';
 import { PlusOutlined } from '@ant-design/icons';
 import cloneDeep from '../../utils/clone-deep.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
+import AbcNotation from '../../components/abc-notation.js';
+import React, { useState, useRef, useEffect } from 'react';
 import { create as createId } from '../../utils/unique-id.js';
+import { analyizeABC, filterAbcString } from './abc-utils.js';
 import { useService } from '../../components/container-context.js';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
 import { swapItemsAt, removeItemAt } from '../../utils/array-utils.js';
@@ -19,21 +21,16 @@ import { storageLocationPathToUrl, urlToStorageLocationPath } from '../../utils/
 export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const FormItem = Form.Item;
+  const abcInput = useRef(null);
   const RadioGroup = Radio.Group;
   const RadioButton = Radio.Button;
   const keyRangeSelection = useRef([]);
+  const abcHasBeenInput = useRef(false);
   const { t } = useTranslation('midiPiano');
-  const { tests,
-    sourceUrl,
-    sourceType,
-    samplesType,
-    midiTrackTitle } = content;
   const midiPianoInfo = useService(MidiPianoInfo);
+  const selectorPianoColors = { whiteKey: 'white', blackKey: 'black' };
   const [canRenderSelectorPiano, setCanRenderSelectorPiano] = useState(false);
-  const selectorPianoColors = {
-    whiteKey: 'white',
-    blackKey: 'black'
-  };
+  const { tests, sourceUrl, sourceType, samplesType, midiTrackTitle } = content;
 
   const tooltipformatter = value => {
     const tooltips = {
@@ -82,7 +79,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     changeContent({ tests: newTests });
   };
 
-  const handleAddButtonClick = () => {
+  const handleAddTestButtonClick = () => {
     const newTests = cloneDeep(tests);
     newTests.push(midiPianoInfo.getDefaultTest());
     changeContent({ tests: newTests });
@@ -203,7 +200,6 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const handleSamplesTypeValueChanged = event => {
     const { value } = event.target;
-    // document.toneJsSampler = null;
     changeContent({ samplesType: value });
   };
 
@@ -238,6 +234,40 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     const newTests = cloneDeep(tests);
     newTests[index].numberOfNotes = value;
     changeContent({ tests: newTests });
+  };
+
+  const handleNoteSequenceTypeChanged = (event, index) => {
+    const { value } = event.target;
+    const newTests = cloneDeep(tests);
+    newTests[index].isCustomNoteSequence = value;
+    changeContent({ tests: newTests });
+  };
+
+  const handleCurrentAbcCodeChanged = (event, index) => {
+    const { value } = event.target;
+    const filteredAbc = filterAbcString(value);
+    const [abcNotes, noteNameSequence] = analyizeABC(value);
+    const newCustomNoteSequences = tests[index].customNoteSequences.map((nS, i) => i === 0
+      ? { ...nS,
+        abc: value,
+        noteNameSequence,
+        filteredAbc,
+        abcNotes }
+      : nS);
+    const newTests = tests.map((test, i) => i === index ? { ...test, customNoteSequences: newCustomNoteSequences } : test);
+    abcHasBeenInput.current = true;
+    changeContent({ tests: newTests });
+  };
+
+  const handleClefTypeChanged = (event, index) => {
+    const { value } = event.target;
+    const newTests = cloneDeep(tests);
+    newTests[index].customNoteSequences[0].clef = value;
+    changeContent({ tests: newTests });
+  };
+
+  const handleAddCustomNoteSequenceButtonClick = () => {
+
   };
 
   const toggleSelectorPiano = () => {
@@ -361,9 +391,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
           {intervals.map((interval, index) => {
             return (
               <div key={createId()}>
-                {/* ClassName for use as CSS-Selector only*/}
                 <Checkbox
-                  className="MidiPiano-Checkbox"
                   defaultChecked={checkboxStates[interval] === true || checkboxStates[interval].minor || checkboxStates[interval].major}
                   style={{ minWidth: '6rem' }}
                   interval={interval}
@@ -467,45 +495,84 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     );
   };
 
-  const renderNoteSequenceSelector = (value, index) => {
+  const renderNoteSequenceTypeSelector = index => (
+    <FormItem label={t('type')} {...formItemLayout}>
+      <RadioGroup value={tests[index].isCustomNoteSequence}>
+        <RadioButton value={false} onChange={event => handleNoteSequenceTypeChanged(event, index)}>{t('random')}</RadioButton>
+        <RadioButton value onChange={event => handleNoteSequenceTypeChanged(event, index)}>{t('predefined')}</RadioButton>
+      </RadioGroup>
+    </FormItem>
+  );
+
+  const renderAbcInput = (noteSequence, index) => {
+    const { abc, clef } = noteSequence;
     return (
       <React.Fragment>
-        <FormItem label={t('numberOfNotes')} {...formItemLayout} hasFeedback>
-          <Slider
-            min={3}
-            max={10}
-            defaultValue={value}
-            onAfterChange={event => handleNumberOfNotesValueChanged(event, index)}
-            dots
-            marks={{ 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: '10' }}
-            />
+        <FormItem label={t('clef')} {...formItemLayout}>
+          <RadioGroup value={tests[index].customNoteSequences[0].clef}>
+            <RadioButton value="treble" onChange={event => handleClefTypeChanged(event, index)}>{t('trebleClef')}</RadioButton>
+            <RadioButton value="bass" onChange={event => handleClefTypeChanged(event, index)}>{t('bassClef')}</RadioButton>
+          </RadioGroup>
         </FormItem>
-        {renderIntervalSelector(tests[index].noteSequenceCheckboxStates, 'noteSequence', index)}
+        <FormItem label={t('preview')} {...formItemLayout} hasFeedback>
+          <AbcNotation abcCode={`L:1/4 \n K:C ${clef} \n ${filterAbcString(abc)}`} />
+        </FormItem>
+        <FormItem label={t('abcCode')} {...formItemLayout} hasFeedback>
+          <Input ref={abcInput} value={abc} onChange={event => handleCurrentAbcCodeChanged(event, index)} />
+        </FormItem>
+        <Button type="primary" icon={<PlusOutlined />} onClick={handleAddCustomNoteSequenceButtonClick}>
+          {t('addCustomNoteSequence')}
+        </Button>
       </React.Fragment>
     );
   };
+
+  const renderNoteSequenceSelector = (numberOfNotes, index) => {
+    return (
+      <React.Fragment>
+        {!tests[index].isCustomNoteSequence && (
+          <FormItem label={t('numberOfNotes')} {...formItemLayout} hasFeedback>
+            <Slider
+              min={3}
+              max={10}
+              defaultValue={numberOfNotes}
+              onAfterChange={event => handleNumberOfNotesValueChanged(event, index)}
+              dots
+              marks={{ 3: '3', 4: '4', 5: '5', 6: '6', 7: '7', 8: '8', 9: '9', 10: '10' }}
+              />
+          </FormItem>
+        )}
+        {!tests[index].isCustomNoteSequence && renderIntervalSelector(tests[index].noteSequenceCheckboxStates, 'noteSequence', index)}
+        {!!tests[index].isCustomNoteSequence && renderAbcInput(tests[index].customNoteSequences[0], index)}
+      </React.Fragment>
+    );
+  };
+
+  // Test durchreichen statt index? Da wo read-only XXX
+  // Wo nur event übergeben werden muss, reicht Variable als Callback, muss nicht ausgeführt werden. XXX
+  // constants.js für Sachen in defaultContent und so... XXX
+
+  useEffect(() => {
+    if (!abcHasBeenInput.current) {
+      return;
+    }
+    abcHasBeenInput.current = false;
+    abcInput.current.focus();
+  });
 
   return (
     <div className="MidiPianoEditor">
       <Form>
         {renderKeyRangeSelector(toggleSelectorPiano)}
-
         {renderSamplesTypeInput(samplesType, handleSamplesTypeValueChanged)}
-
         <Divider>MIDI</Divider>
-
         {renderMidiTrackTitleInput(midiTrackTitle, handleMidiTrackTitleValueChanged)}
-
         {renderSourceTypeInput(sourceType, handleSourceTypeValueChanged)}
-
         {sourceType === MIDI_SOURCE_TYPE.external
           && renderExternalSourceTypeInput(sourceUrl, handleExternalSourceUrlValueChanged)}
-
         {sourceType === MIDI_SOURCE_TYPE.internal
           && renderInternalSourceTypeInput(sourceUrl, handleInternalSourceUrlValueChanged, handleInternalSourceUrlFileNameChanged)}
-
         <Divider plain>{t('earTraining')}</Divider>
-
         {
           tests.map((test, index) => (
             <ItemPanel
@@ -524,21 +591,20 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
                   <RadioButton value="noteSequence">{t('noteSequence')}</RadioButton>
                 </RadioGroup>
               </FormItem>
-              {test.exerciseType !== '' && renderNoteRangeSelector(index)}
+              {test.exerciseType === 'noteSequence' && renderNoteSequenceTypeSelector(index)}
+              {(['interval', 'chord'].includes(test.exerciseType) || (test.exerciseType === 'noteSequence' && !test.isCustomNoteSequence)) && renderNoteRangeSelector(index)}
               {test.exerciseType === 'interval' && renderIntervalSelector(test.intervalCheckboxStates, 'interval', index)}
               {test.exerciseType === 'chord' && renderChordSelector(index)}
               {test.exerciseType === 'noteSequence' && renderNoteSequenceSelector(test.numberOfNotes, index)}
             </ItemPanel>
           ))
         }
-
       </Form>
 
-      <Button type="primary" icon={<PlusOutlined />} onClick={handleAddButtonClick}>
+      <Button type="primary" icon={<PlusOutlined />} onClick={handleAddTestButtonClick}>
         {t('earTraining:addTest')}
       </Button>
     </div>
-
   );
 }
 

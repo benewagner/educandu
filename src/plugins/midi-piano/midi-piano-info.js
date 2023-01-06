@@ -28,6 +28,16 @@ class MidiPianoInfo {
     return (await import('./midi-piano-editor.js')).default;
   }
 
+  getDefaultCustomNoteSequence() {
+    return {
+      abc: 'c',
+      abcNotes: ['c'],
+      clef: 'treble',
+      noteNameSequence: ['C5'],
+      filteredAbc: 'c'
+    };
+  }
+
   getDefaultTest() {
     const defaultCheckboxStates = {
       all: false,
@@ -56,9 +66,11 @@ class MidiPianoInfo {
 
     return {
       exerciseType: '',
-      noteRange: [17, 30],
+      noteRange: [17, 31],
       whiteKeysOnly: false,
       numberOfNotes: 4,
+      isCustomNoteSequence: false,
+      customNoteSequences: [this.getDefaultCustomNoteSequence()],
       directionCheckboxStates: {
         up: true,
         down: false
@@ -109,7 +121,7 @@ class MidiPianoInfo {
         whiteKey: 'rgb(255, 255, 255)'
       },
       samplesType: 'piano',
-      tests: []
+      tests: [this.getDefaultTest()]
     };
   }
 

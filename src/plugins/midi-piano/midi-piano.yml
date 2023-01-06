@@ -148,3 +148,35 @@ noteB:
 whiteKeysOnly:
   en: White Keys Only
   de: Nur weiße Tasten
+type:
+  en: Type
+  de: Typ
+predefined:
+  en: Predefined
+  de: Vordefiniert
+random:
+  en: Random
+  de: Zufällig
+abcCode:
+  en: ABC Code
+  de: ABC-Code
+preview:
+  en: Preview
+  de: Vorschau
+clef:
+  en: Clef
+  de: Notenschlüssel
+trebleClef:
+  en: Treble
+  de: Violinschlüssel
+bassClef:
+  en: Bass
+  de: Bassschlüssel
+accidentals:
+  en: Accidentals
+  de: Vorzeichen
+addCustomNoteSequence:
+  en: Add Note Sequence
+  de: Tonfolge hinzufügen
+
+

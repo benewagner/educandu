@@ -5,7 +5,7 @@ import CustomPiano from './custom-piano.js';
 import CustomSwitch from './custom-switch.js';
 import { useTranslation } from 'react-i18next';
 import urlUtils from '../../utils/url-utils.js';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MIDI_COMMANDS } from '../../domain/constants.js';
 import AbcNotation from '../../components/abc-notation.js';
 import ClientConfig from '../../bootstrap/client-config.js';
@@ -17,12 +17,6 @@ import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice } from './cu
 
 export default function MidiPianoDisplay({ content }) {
 
-  const { sourceType,
-    sourceUrl,
-    midiTrackTitle,
-    keyRange,
-    colors,
-    samplesType } = content;
   const keys = useRef(null);
   const player = useRef(null);
   const activeNotes = useRef([]);
@@ -30,6 +24,9 @@ export default function MidiPianoDisplay({ content }) {
   const { NOTES } = midiPlayerNs.Constants;
   const { t } = useTranslation('midiPiano');
   const clientConfig = useService(ClientConfig);
+  const [noteDuration, setNoteDuration] = useState(2000);
+  const [canShowSolution, setCanShowSolution] = useState(false);
+  const { sourceType, sourceUrl, midiTrackTitle, keyRange, colors, samplesType, tests } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   // Custom hooks returning state variables
@@ -77,7 +74,7 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
-  function handleMidiPlayerEvent(eventType, noteName) {
+  function playOrStopNote(eventType, noteName) {
     switch (eventType) {
       case 'Note on':
         sampler.triggerAttack(noteName);
@@ -123,14 +120,11 @@ export default function MidiPianoDisplay({ content }) {
     const eventType = getEventTypeFromMidiCommand(command, velocity);
 
     updateActiveNotes(eventType, midiValue);
-    handleMidiPlayerEvent(eventType, noteName);
+    playOrStopNote(eventType, noteName);
     updateKeyStyle(eventType, midiValue);
   }
 
   function handleMidiPlayerEvent(message) {
-    // if (message.name !== 'Note on' && message.name !== 'Note off') {
-    //   return;
-    // }
     if (!['Note on', 'Note off'].includes(message.name)) {
       return;
     }
@@ -145,9 +139,9 @@ export default function MidiPianoDisplay({ content }) {
       eventType = 'Note off';
     }
 
-    updateActiveNotes(eventType, midiValue);
-    handleMidiPlayerEvent(eventType, noteName);
+    playOrStopNote(eventType, noteName);
     updateKeyStyle(eventType, midiValue);
+    updateActiveNotes(eventType, midiValue);
   }
 
   function instantiatePlayer() {
@@ -305,7 +299,7 @@ export default function MidiPianoDisplay({ content }) {
       <div style={{ paddingBottom: '1rem' }}>
         <div className="AbcNotation">
           <div className="AbcNotation-wrapper u-width-70">
-            <AbcNotation abcCode={'L:1/4 \n gfedcdefgc||"Lösung"g"X"fe"X"dcdefgc'} />
+            <AbcNotation abcCode={`L:1/4 \n K:C ${tests[0].customNoteSequences[0].clef} \n ${tests[0].customNoteSequences[0].abcNotes[0]}`} />
           </div>
         </div>
       </div>
