@@ -1,13 +1,17 @@
 import * as Tone from 'tone';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
+import { NOTES, WHITE_KEYS_MIDI_VALUES } from './constants.js';
+
+const getMidiValueFromNoteName = noteName => NOTES.indexOf(noteName);
+const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
+// X const getWhiteKeyIndexFromMidiValue = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue); XXX
 
 /**
  * This hook uses the Web MIDI API for checking if a MIDI device is connected.
  * If true, stores the Midi Acces Object on browser document object to be accessed by each piano on the page.
  */
-
 export function useMidiDevice() {
   const [isMidiDeviceConnected, setIsMidiDeviceConnected] = useState(false);
 
@@ -38,7 +42,7 @@ export function useMidiDevice() {
   return isMidiDeviceConnected;
 }
 
-// Loads the midi file defined in midi-piano-editor.js.
+// Load the midi file defined in midi-piano-editor.js
 export function useMidiLoader(src) {
   const [midiData, setMidiData] = useState(null);
 
@@ -57,20 +61,20 @@ export function useMidiLoader(src) {
 }
 
 /**
- * This Hook initiates a Tone.js sampler used for playback of notes played on connected MIDI devices.
+ * This Hook initiates a Tone.js sampler used for playback of any notes.
  * The Sampler is stored on the browser document object so that it can be accessed by every piano on the page.
- * Currently there are only piano samples available. By including the samplesType variable it will be easy to add further samples like Harpsichord later.
+ * Currently there are only piano samples available. By including the sampleType variable it will be easy to add further samples like Harpsichord later.
  */
-export function useToneJsSampler(samplesType) {
+export function useToneJsSampler(sampleType) {
   const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
   const [sampler, setSampler] = useState(null);
 
   useEffect(() => {
 
-    if (document.toneJsSamplers?.[samplesType]) {
+    if (document.toneJsSamplers?.[sampleType]) {
       if (!samplerHasLoaded) {
         setSamplerHasLoaded(true);
-        setSampler(document.toneJsSamplers[samplesType]);
+        setSampler(document.toneJsSamplers[sampleType]);
       }
       return;
     }
@@ -79,7 +83,7 @@ export function useToneJsSampler(samplesType) {
       document.toneJsSamplers = {};
     }
 
-    document.toneJsSamplers[samplesType] = new Tone.Sampler({
+    document.toneJsSamplers[sampleType] = new Tone.Sampler({
       urls: {
         'A0': 'A0.mp3',
         'C1': 'C1.mp3',
@@ -114,16 +118,16 @@ export function useToneJsSampler(samplesType) {
       },
       onload: () => {
         setSamplerHasLoaded(true);
-        setSampler(document.toneJsSamplers[samplesType]);
+        setSampler(document.toneJsSamplers[sampleType]);
       },
-      baseUrl: `https://anmeldung-sprechstunde.herokuapp.com/instrument-samples/${samplesType}/` // Samples better be hosted in project.
+      baseUrl: `https://anmeldung-sprechstunde.herokuapp.com/instrument-samples/${sampleType}/` // Samples better be hosted in project. XXX
     }).toDestination();
-  }, [samplerHasLoaded, setSamplerHasLoaded, samplesType]);
+  }, [samplerHasLoaded, setSamplerHasLoaded, sampleType]);
 
   return [sampler, samplerHasLoaded];
 }
 
-// Sets unique pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches in midi-piano-display.js.
+// Set unique pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches in midi-piano-display.js
 export function usePianoId(defaultValue) {
   const [pianoId, setPianoId] = useState(defaultValue);
 
@@ -133,4 +137,77 @@ export function usePianoId(defaultValue) {
   }, []);
 
   return pianoId;
+}
+
+export function useExercise(content, currentTestIndex, currentExerciseIndex) {
+
+  const currentTest = useCallback(() => content.tests[currentTestIndex], [content.tests, currentTestIndex]);
+  const currentNoteSequence = useCallback(() => currentTest().customNoteSequences[currentExerciseIndex], [currentExerciseIndex, currentTest]);
+
+  const getData = useCallback(
+    () => {
+      if (content.tests.length === 0) {
+        return content.keyRange;
+      }
+
+      const test = currentTest();
+      const contentKeyRange = content.keyRange;
+
+      if (test.exerciseType === 'noteSequence' && test.isCustomNoteSequence) {
+        const noteSequence = currentNoteSequence();
+        const noteNameSequence = noteSequence.noteNameSequence;
+        const currentKeyRange = {};
+
+        let firstMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.first);
+        let lastMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.last);
+
+        for (let i = 0; i < noteNameSequence.length; i += 1) {
+          const midiValue = getMidiValueFromNoteName(noteNameSequence[i]);
+          if (midiValue < firstMidiValue) {
+            firstMidiValue = midiValue;
+          }
+          if (midiValue > lastMidiValue) {
+            lastMidiValue = midiValue;
+          }
+        }
+
+        // Make sure first and last midi value belongs to white key
+        firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
+        lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
+
+        const midiValueRange = { first: firstMidiValue, last: lastMidiValue };
+
+        // Convert midi values to white key indices which are needed for rendering custom piano
+        currentKeyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
+        currentKeyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
+
+        return { currentKeyRange,
+          midiValueRange,
+          exerciseArray: noteNameSequence,
+          indication: noteSequence.abcNotes[0],
+          solution: noteSequence.filteredAbc };
+      }
+
+      if (test.exerciseType === 'interval') {
+        return test.noteRange;
+      }
+
+      return contentKeyRange;
+    },
+    [content.keyRange, content.tests.length, currentNoteSequence, currentTest]
+  );
+
+  const [data, setData] = useState(() => getData());
+
+  useEffect(() => {
+    setData(() => getData());
+  }, [currentTestIndex, getData]);
+
+  return [
+    data.currentKeyRange,
+    data.midiValueRange,
+    data.exerciseArray,
+    data.indication,
+    data.solution
+  ];
 }

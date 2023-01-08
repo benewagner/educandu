@@ -2,7 +2,6 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 export function KeyWhite({ midiValue, colors, index, updateKeyRangeSelection }) {
-
   return (
     <div
       className="MidiPiano-key MidiPiano-keyWhite"

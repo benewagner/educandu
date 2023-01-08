@@ -21,5 +21,9 @@ export default function CustomSwitch({ handleSwitchClick, pianoId }) {
 
 CustomSwitch.propTypes = {
   handleSwitchClick: PropTypes.func.isRequired,
-  pianoId: PropTypes.string.isRequired
+  pianoId: PropTypes.string
+};
+
+CustomSwitch.defaultProps = {
+  pianoId: ''
 };

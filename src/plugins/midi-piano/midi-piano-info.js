@@ -34,7 +34,8 @@ class MidiPianoInfo {
       abcNotes: ['c'],
       clef: 'treble',
       noteNameSequence: ['C5'],
-      filteredAbc: 'c'
+      filteredAbc: 'c',
+      noteRange: { first: 12, last: 39 }
     };
   }
 
@@ -65,11 +66,11 @@ class MidiPianoInfo {
     };
 
     return {
-      exerciseType: '',
-      noteRange: [17, 31],
+      exerciseType: 'noteSequence',
+      noteRange: { first: 12, last: 39 },
       whiteKeysOnly: false,
       numberOfNotes: 4,
-      isCustomNoteSequence: false,
+      isCustomNoteSequence: true,
       customNoteSequences: [this.getDefaultCustomNoteSequence()],
       directionCheckboxStates: {
         up: true,

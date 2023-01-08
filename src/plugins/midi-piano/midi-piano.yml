@@ -32,7 +32,7 @@ chord:
   en: Chord
   de: Akkord
 noteSequence:
-  en: Note sequence
+  en: Note Sequence
   de: Tonfolge
 numberOfNotes:
   en: Number of notes
@@ -181,5 +181,60 @@ addCustomNoteSequence:
 noteSequenceNumber:
   en: Note Sequence {number}
   de: Tonfolge {number}
-
-
+c1:
+  en: C1
+  de: C1
+c2:
+  en: C2
+  de: C
+c3:
+  en: C3
+  de: c
+c4:
+  en: C4
+  de: c1
+c5:
+  en: C5
+  de: c2
+c6:
+  en: C6
+  de: c3
+c7:
+  en: C7
+  de: c4
+c8:
+  en: C8
+  de: c5
+successive:
+  en: Successive
+  de: Sukzessiv
+simultaneous:
+  en: Simultaneous
+  de: Simultan
+showSolution:
+  en: Show Solution
+  de: Lösung anzeigen
+hideSolution:
+  en: Hide Solution
+  de: Lösung ausblenden
+playFromNote:
+  en: Play from Note
+  de: Abspielen von Ton
+noteDuration:
+  en: Note Duration
+  de: Tondauer
+newExercise:
+  en: New Exercise
+  de: Neue Übung
+noteInput:
+  en: Note Input
+  de: Noteneingabe
+firstNote:
+  en: First Note
+  de: Erster Ton
+solution:
+  en: Solution
+  de: Lösung
+deleteNote:
+  en: Delete Note
+  de: Ton löschen

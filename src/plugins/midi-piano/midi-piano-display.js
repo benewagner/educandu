@@ -1,43 +1,58 @@
-import { Button } from 'antd';
 import StopIcon from './stop-icon.js';
 import midiPlayerNs from 'midi-player-js';
 import CustomPiano from './custom-piano.js';
 import CustomSwitch from './custom-switch.js';
 import { useTranslation } from 'react-i18next';
 import urlUtils from '../../utils/url-utils.js';
-import React, { useEffect, useRef, useState } from 'react';
+import Markdown from '../../components/markdown.js';
+import { SAMPLE_TYPES, NOTES } from './constants.js';
 import { MIDI_COMMANDS } from '../../domain/constants.js';
+import React, { useEffect, useRef, useState } from 'react';
 import AbcNotation from '../../components/abc-notation.js';
 import ClientConfig from '../../bootstrap/client-config.js';
+import { getAbcNoteNameFromMidiValue } from './abc-utils.js';
+import CardSelector from '../../components/card-selector.js';
+import { Button, Radio, InputNumber, Slider, Form } from 'antd';
+import IterationPanel from '../../components/iteration-panel.js';
 import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
 import PauseIcon from '../../components/icons/media-player/pause-icon.js';
-import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice } from './custom-hooks.js';
+import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice, useExercise } from './custom-hooks.js';
 
 export default function MidiPianoDisplay({ content }) {
 
   const keys = useRef(null);
   const player = useRef(null);
   const activeNotes = useRef([]);
+  const RadioGroup = Radio.Group;
+  const RadioButton = Radio.Button;
+  const noteDuration = useRef(2000);
   const inputIsEnabled = useRef(true);
-  const { NOTES } = midiPlayerNs.Constants;
+  const isExercisePlaying = useRef(false);
+  const isAbcInputEnabled = useRef(false);
+  const playExerciseStartIndex = useRef(0);
   const { t } = useTranslation('midiPiano');
+  const intervalMode = useRef('successive');
   const clientConfig = useService(ClientConfig);
-  const [noteDuration, setNoteDuration] = useState(2000);
+  const [currentTestIndex, setCurrentTestIndex] = useState(0);
   const [canShowSolution, setCanShowSolution] = useState(false);
-  const { sourceType, sourceUrl, midiTrackTitle, keyRange, colors, samplesType, tests } = content;
+  const getNoteNameFromMidiValue = midiValue => NOTES[midiValue];
+  // const [isAbcInputEnabled, setIsAbcInputEnabled] = useState(false);
+  const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const { sourceType, sourceUrl, midiTrackTitle, colors, tests } = content;
+  const [isCurrentTestAnswerVisible, setIsCurrentTestAnswerVisible] = useState(false);
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   // Custom hooks returning state variables
   const midiData = useMidiLoader(src);
   const pianoId = usePianoId('default');
   const isMidiDeviceConnected = useMidiDevice();
-  const [sampler, samplerHasLoaded] = useToneJsSampler(samplesType);
+  const [sampler, samplerHasLoaded] = useToneJsSampler(SAMPLE_TYPES.piano);
+  const [currentKeyRange, midiValueRange, exerciseArray, indication, solution] = useExercise(content, currentTestIndex, currentExerciseIndex);
 
-  const getNoteNameFromMidiValue = midiValue => {
-    return NOTES[midiValue];
-  };
+  const abcInputNotesArray = useRef([]);
+  const [abcInput, setAbcInput] = useState('');
 
   const getEventTypeFromMidiCommand = (command, velocity) => {
     switch (command) {
@@ -52,6 +67,11 @@ export default function MidiPianoDisplay({ content }) {
         return '';
     }
   };
+
+  const currentTest = () => tests[currentTestIndex];
+  const currentNoteSequence = () => currentTest().customNoteSequences[currentExerciseIndex];
+
+  const tipformatter = value => `${(value / 1000).toFixed(1)}s`;
 
   // Keeps track of active notes of both midi player and midi device input by storing and removing midi values.
   const updateActiveNotes = (eventType, midiValue) => {
@@ -87,6 +107,52 @@ export default function MidiPianoDisplay({ content }) {
     }
   }
 
+  const playExercise = async () => {
+
+    if (isExercisePlaying.current) {
+      return;
+    }
+
+    isExercisePlaying.current = true;
+
+    for (let i = playExerciseStartIndex.current; i < exerciseArray.length; i += 1) {
+      // Check if stop button has been clicked
+      if (!isExercisePlaying.current) {
+        return;
+      }
+      sampler.triggerAttackRelease(exerciseArray[i], noteDuration.current / 1000);
+      // eslint-disable-next-line no-await-in-loop
+      await new Promise(res => {
+        setTimeout(() => {
+          res();
+        }, noteDuration.current);
+      });
+    }
+
+    isExercisePlaying.current = false;
+  };
+
+  function resetEarTrainingControls() {
+    playExerciseStartIndex.current = 0;
+  }
+
+  const getNewExercise = () => {
+    isExercisePlaying.current = false;
+    resetEarTrainingControls();
+    setCanShowSolution(false);
+    if (currentTest().exerciseType === 'noteSequence'
+      && currentTest().isCustomNoteSequence
+      && currentTest().customNoteSequences.length - 1 < currentExerciseIndex + 1) {
+
+      setAbcInput('');
+      setCurrentExerciseIndex(0);
+      return;
+    }
+    setAbcInput('');
+    setCurrentExerciseIndex(prev => prev + 1);
+
+  };
+
   const resetAllKeyStyles = () => {
     for (const key of keys.current) {
       if (typeof key !== 'undefined') {
@@ -105,6 +171,9 @@ export default function MidiPianoDisplay({ content }) {
     }
     if (eventType === 'Note off') {
       key.style.backgroundColor = key.dataset.defaultColor;
+    }
+    if (eventType === 'toggle') {
+      key.style.backgroundColor = key.style.backgroundColor === colors.activeKey ? key.dataset.defaultColor : colors.activeKey;
     }
   };
 
@@ -253,6 +322,13 @@ export default function MidiPianoDisplay({ content }) {
     updateMidiInputSwitches();
   };
 
+  const handleTestCardSelected = testIndex => {
+    if (currentTestIndex !== testIndex) {
+      setCurrentTestIndex(testIndex);
+      setIsCurrentTestAnswerVisible(false);
+    }
+  };
+
   const renderMidiPlayerControls = () => (
     <div className="MidiPiano-midiPlayerControls" >
       <Button onClick={startMidiPlayer} icon={<PlayIcon />} />
@@ -272,12 +348,52 @@ export default function MidiPianoDisplay({ content }) {
     <div className="MidiPiano-midiTrackTitle">{midiTrackTitle}</div>
   );
 
+  const renderIntervallControls = () => (
+    <div style={{ padding: '0.5rem' }}>
+      <RadioGroup defaultValue="successive">
+        <RadioButton value="successive" onChange={() => { intervalMode.current = 'successive'; }}>{t('successive')}</RadioButton>
+        <RadioButton value="simultaneous" onChange={() => { intervalMode.current = 'simultaneous'; }}>{t('simultaneous')}</RadioButton>
+      </RadioGroup>
+    </div>
+  );
+  // Rename XXX
+  const itemStyle = {
+    marginBottom: '0.8rem'
+  };
+
+  const renderNoteSequenceControls = () => (
+    <Form.Item label={t('playFromNote')} style={itemStyle}>
+      <InputNumber defaultValue={1} min={1} max={currentNoteSequence().abcNotes.length} onChange={value => { playExerciseStartIndex.current = value - 1; }} />
+    </Form.Item>
+  );
+
   const renderEarTrainingControls = () => (
-    <Button>Hallo</Button>
+    <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', alignItems: 'center' }}>
+      <h4>{t(currentTest().exerciseType)}</h4>
+      <div style={itemStyle}>
+        <Button onClick={playExercise} icon={<PlayIcon />} />
+        <Button onClick={() => { isExercisePlaying.current = false; }} icon={<StopIcon />} />
+      </div>
+      <Form>
+        <Form.Item label={t('noteDuration')} style={itemStyle}>
+          <Slider tipFormatter={tipformatter} defaultValue={2000} min={500} max={4000} step={100} onChange={value => { noteDuration.current = value; }} />
+        </Form.Item>
+        {currentTest().exerciseType === 'noteSequence' && renderNoteSequenceControls()}
+        {currentTest().exerciseType === 'interval' && renderIntervallControls()}
+      </Form>
+      <div>
+        <Button style={{ width: 'fit-content' }} onClick={() => setCanShowSolution(prev => !prev)}>{canShowSolution ? t('hideSolution') : t('showSolution')}</Button>
+        <Button style={{ width: 'fit-content' }} onClick={getNewExercise}>{t('newExercise')}</Button>
+      </div>
+    </div>
   );
 
   useEffect(() => {
     updateMidiInputSwitches();
+  });
+
+  useEffect(() => {
+
   });
 
   useEffect(() => {
@@ -294,17 +410,59 @@ export default function MidiPianoDisplay({ content }) {
     };
   });
 
+  const testCards = tests.map((test, index) => ({ label: (index + 1).toString(), tooltip: t('testNumber', { number: index + 1 }) }));
+
   return (
     <React.Fragment>
-      <div style={{ paddingBottom: '1rem' }}>
-        <div className="AbcNotation">
-          <div className="AbcNotation-wrapper u-width-70">
-            <AbcNotation abcCode={`L:1/4 \n K:C ${tests[0].customNoteSequences[0].clef} \n ${tests[0].customNoteSequences[0].abcNotes[0]}`} />
+      <h3>
+        <Markdown inline>{t('earTraining')}</Markdown>
+      </h3>
+      {testCards.length > 1 && (
+        <div className="EarTrainingDisplay-controlPanel">
+          <div>
+            <CardSelector
+              cards={testCards}
+              onCardSelected={handleTestCardSelected}
+              selectedCardIndex={currentTestIndex}
+              // visitedCardIndices={viewedTestIndices}
+              treatSelectedCardAsVisited
+              />
           </div>
+          {/* <IterationPanel
+            itemCount={testCards.length}
+            selectedItemIndex={currentTestIndex}
+            onNextClick={handleNextTestClick}
+            onPreviousClick={handlePreviousTestClick}
+            onResetClick={handleResetTestsClick}
+            /> */}
         </div>
+      )}
+      <div style={{ paddingBottom: '1rem' }}>
+        {tests[currentTestIndex].exerciseType === 'noteSequence' && (
+          <div className="AbcNotation" style={{ display: 'flex' }}>
+            <div className="AbcNotation-wrapper u-width-65" style={{ marginLeft: '0', textAlign: 'left' }}>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                {/* Oder useRef für isAbcInputEnabled XXX */}
+                {/* <CustomSwitch handleSwitchClick={isChecked => setIsAbcInputEnabled(isChecked)} /> */}
+                <CustomSwitch handleSwitchClick={isChecked => { isAbcInputEnabled.current = isChecked; }} />
+                <div>{t('noteInput')}</div>
+              </div>
+              <div style={{ minHeight: '7rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <AbcNotation abcCode={`L:1/4 \n K:C ${currentNoteSequence().clef || 'treble'} \n ${indication + abcInput}`} />
+              </div>
+              <Button>{t('deleteNote')}</Button>
+            </div>
+            <div className="AbcNotation-wrapper u-width-65" style={{ position: 'absolute', left: '50%', textAlign: 'left' }}>
+              <div>{canShowSolution ? t('solution') : t('firstNote')}</div>
+              <div style={{ minHeight: '7rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <AbcNotation abcCode={`L:1/4 \n K:C ${currentNoteSequence().clef || 'treble'} \n ${canShowSolution ? solution : indication}`} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
       <CustomPiano
-        keyRange={keyRange}
+        keyRange={currentKeyRange}
         sampler={sampler}
         samplerHasLoaded={samplerHasLoaded}
         colors={colors}
@@ -313,9 +471,12 @@ export default function MidiPianoDisplay({ content }) {
         activeNotes={activeNotes}
         updateActiveNotes={updateActiveNotes}
         updateKeyStyle={updateKeyStyle}
+        isExercisePlaying={isExercisePlaying}
+        test={currentTest()}
         />
       <div className="MidiPiano-controlsContainer">
-        <div style={{ width: '100%' }}>
+        <div style={{ width: '100%', padding: '1rem 0' }}>
+          {!!sourceUrl && <h4>MIDI</h4>}
           {!!sourceUrl && renderMidiPlayerControls()}
           {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}
         </div>

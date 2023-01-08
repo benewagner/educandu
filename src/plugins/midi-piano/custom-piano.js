@@ -2,7 +2,9 @@ import PropTypes from 'prop-types';
 import midiPlayerNs from 'midi-player-js';
 import React, { useEffect, useRef } from 'react';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
+import { getAbcNoteNameFromMidiValue } from './abc-utils.js';
 import { create as createId } from '../../utils/unique-id.js';
+import { NOTE_CONVERSION_MAP, MIDI_NOTE_NAMES } from './constants.js';
 
 // 0 represents white and black key, 1 respresents white key. Second element is midiValue for white key.
 export const pianoLayout = [
@@ -15,15 +17,18 @@ export const pianoLayout = [
 export default function CustomPiano(props) {
 
   const { keys,
+    test,
     colors,
     pianoId,
     sampler,
     keyRange,
     activeNotes,
+    updateKeyStyle,
     samplerHasLoaded,
     updateActiveNotes,
-    updateKeyStyle } = props;
+    isExercisePlaying } = props;
   const piano = useRef(null);
+  const exerciseType = test.exerciseType;
   const { NOTES } = midiPlayerNs.Constants;
   const keyRangeLayout = pianoLayout.slice(keyRange.first, keyRange.last + 1);
 
@@ -55,16 +60,19 @@ export default function CustomPiano(props) {
   };
 
   const handleMouseDown = e => {
-    if (typeof e.target.dataset.midiValue === 'undefined') {
+    if (typeof e.target.dataset.midiValue === 'undefined' || isExercisePlaying.current) {
       return;
     }
     const midiValue = parseInt(e.target.dataset.midiValue, 10);
+    if (exerciseType !== 'noteSequence') {
+      updateKeyStyle('toggle', midiValue);
+    }
     updateActiveNotes('Note on', midiValue);
     playNote(midiValue);
   };
 
   const handleMouseUp = e => {
-    if (typeof e.target.dataset.midiValue === 'undefined') {
+    if (typeof e.target.dataset.midiValue === 'undefined' || isExercisePlaying.current) {
       return;
     }
     const midiValue = parseInt(e.target.dataset.midiValue, 10);
@@ -73,6 +81,9 @@ export default function CustomPiano(props) {
   };
 
   const handleMouseOver = e => {
+    if (exerciseType !== 'noteSequence') {
+      return;
+    }
     const key = e.target;
     const midiValue = parseInt(key.dataset.midiValue, 10);
     if (isBlackKey(key)) {
@@ -82,8 +93,8 @@ export default function CustomPiano(props) {
       updateKeyStyle('Note off', parentMidiValue);
       const index = activeNotes.current.indexOf(parentMidiValue);
       if (index !== -1) {
-        updateActiveNotes('Note off', parentMidiValue);
         stopNote(parentMidiValue);
+        updateActiveNotes('Note off', parentMidiValue);
       }
     }
     updateKeyStyle('Note on', midiValue);
@@ -93,10 +104,12 @@ export default function CustomPiano(props) {
     const key = e.target;
     const midiValue = parseInt(key.dataset.midiValue, 10);
     const index = activeNotes.current.indexOf(midiValue);
-    updateKeyStyle('Note off', midiValue);
     if (index !== -1) {
       updateActiveNotes('Note off', midiValue);
       stopNote(midiValue);
+    }
+    if (!['interval', 'chord'].includes(exerciseType)) {
+      updateKeyStyle('Note off', midiValue);
     }
   };
 
@@ -136,16 +149,19 @@ export default function CustomPiano(props) {
 CustomPiano.propTypes = {
   activeNotes: PropTypes.object.isRequired,
   colors: PropTypes.object.isRequired,
+  isExercisePlaying: PropTypes.object.isRequired,
   keyRange: PropTypes.object.isRequired,
   keys: PropTypes.object.isRequired,
   pianoId: PropTypes.string.isRequired,
   sampler: PropTypes.object,
   samplerHasLoaded: PropTypes.bool.isRequired,
+  test: PropTypes.object,
   updateActiveNotes: PropTypes.func.isRequired,
   updateKeyStyle: PropTypes.func.isRequired
 };
 
 CustomPiano.defaultProps = {
-  sampler: {}
+  sampler: {},
+  test: { exerciseType: '' }
 };
 

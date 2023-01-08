@@ -8,7 +8,7 @@ import cloneDeep from '../../utils/clone-deep.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
 import AbcNotation from '../../components/abc-notation.js';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { create as createId } from '../../utils/unique-id.js';
 import { analyizeABC, filterAbcString } from './abc-utils.js';
 import { useService } from '../../components/container-context.js';
@@ -22,7 +22,7 @@ import { storageLocationPathToUrl, urlToStorageLocationPath } from '../../utils/
 export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const FormItem = Form.Item;
-  // const abcInput = useRef(null);
+  // X const abcInput = useRef(null); XXX
   const RadioGroup = Radio.Group;
   const RadioButton = Radio.Button;
   const keyRangeSelection = useRef([]);
@@ -33,15 +33,15 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const [canRenderSelectorPiano, setCanRenderSelectorPiano] = useState(false);
   const { tests, sourceUrl, sourceType, samplesType, midiTrackTitle } = content;
 
-  const tooltipformatter = value => {
+  const tipformatter = value => {
     const tooltips = {
-      1: 'A',
-      2: t('noteB'),
-      3: 'C',
-      4: 'D',
-      5: 'E',
-      6: 'F',
-      0: 'G'
+      1: t('noteB'),
+      2: 'C',
+      3: 'D',
+      4: 'E',
+      5: 'F',
+      6: 'G',
+      0: 'A'
     };
     return tooltips[value % 7];
   };
@@ -81,17 +81,23 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   };
 
   const handleDeleteNoteSequence = (testIndex, index) => {
-    const newTests = removeItemAt(tests[testIndex].customNoteSequences, index);
+    const newTests = cloneDeep(tests);
+    const newNoteSequences = removeItemAt(tests[testIndex].customNoteSequences, index);
+    newTests[testIndex].customNoteSequences = newNoteSequences;
     changeContent({ tests: newTests });
   };
 
   const handleMoveNoteSequenceUp = (testIndex, index) => {
-    const newTests = swapItemsAt(tests[testIndex].customNoteSequences, index, index - 1);
+    const newTests = cloneDeep(tests);
+    const newNoteSequences = swapItemsAt(tests[testIndex].customNoteSequences, index, index - 1);
+    newTests[testIndex].customNoteSequences = newNoteSequences;
     changeContent({ tests: newTests });
   };
 
   const handleMoveNoteSequenceDown = (testIndex, index) => {
-    const newTests = swapItemsAt(tests[testIndex].customNoteSequences, index, index + 1);
+    const newTests = cloneDeep(tests);
+    const newNoteSequences = swapItemsAt(tests[testIndex].customNoteSequences, index, index + 1);
+    newTests[testIndex].customNoteSequences = newNoteSequences;
     changeContent({ tests: newTests });
   };
 
@@ -194,7 +200,13 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const handleNoteRangeChanged = (event, index) => {
     const newTests = cloneDeep(tests);
-    newTests[index].noteRange = event;
+    newTests[index].noteRange = { first: event[0], last: event[1] };
+    changeContent({ tests: newTests });
+  };
+
+  const handleCustomNoteSequenceNoteRangeChanged = (event, testIndex, index) => {
+    const newTests = cloneDeep(tests);
+    newTests[testIndex].customNoteSequences[index].noteRange = { first: event[0], last: event[1] };
     changeContent({ tests: newTests });
   };
 
@@ -261,8 +273,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const handleCurrentAbcCodeChanged = (event, testIndex, noteSequenceIndex) => {
     const { value } = event.target;
-    const filteredAbc = filterAbcString(value);
-    const [abcNotes, noteNameSequence] = analyizeABC(value);
+    const [abcNotes, noteNameSequence, filteredAbc] = analyizeABC(value);
     const newCustomNoteSequences = tests[testIndex].customNoteSequences.map((nS, i) => i === noteSequenceIndex
       ? { ...nS,
         abc: value,
@@ -377,18 +388,18 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </Checkbox>
   );
 
-  const renderNoteRangeSelector = index => (
+  const renderNoteRangeSelector = (testIndex, onAfterChangeHandler, noteRange, index) => (
     <FormItem label={t('noteRange')} {...formItemLayout} hasFeedback>
       <Slider
-        min={1}
-        max={52}
-        defaultValue={tests[index].noteRange}
-        onAfterChange={event => handleNoteRangeChanged(event, index)}
+        min={0}
+        max={51}
+        defaultValue={[noteRange.first, noteRange.last]}
+        onAfterChange={event => onAfterChangeHandler(event, testIndex, index)}
         range
-        tipFormatter={tooltipformatter}
-        marks={{ 3: 'C', 10: 'C', 17: 'C', 24: 'C', 31: 'C', 38: 'C', 45: 'C', 52: 'C' }}
+        tipFormatter={tipformatter}
+        marks={{ 2: t('c1'), 9: t('c2'), 16: t('c3'), 23: t('c4'), 30: t('c5'), 37: t('c6'), 44: t('c7'), 51: t('c8') }}
         />
-      {tests[index].exerciseType === 'noteSequence' && renderWhiteKeysCheckbox(index)}
+      {tests[testIndex].exerciseType === 'noteSequence' && !tests[testIndex].isCustomNoteSequence && renderWhiteKeysCheckbox(testIndex)}
     </FormItem>
   );
 
@@ -536,8 +547,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
           <AbcNotation abcCode={`L:1/4 \n K:C ${clef} \n ${filterAbcString(abc)}`} />
         </FormItem>
         <FormItem label={t('abcCode')} {...formItemLayout} hasFeedback>
-          {/* <Input ref={abcInput} value={abc} onChange={event => handleCurrentAbcCodeChanged(event, index)} /> */}
-          <Input value={abc} onChange={event => handleCurrentAbcCodeChanged(event, testIndex, index)} />
+          <Input defaultValue={abc} onBlur={event => handleCurrentAbcCodeChanged(event, testIndex, index)} />
         </FormItem>
       </React.Fragment>
     );
@@ -554,6 +564,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
         onMoveDown={() => handleMoveNoteSequenceDown(testIndex, index)}
         onDelete={() => handleDeleteNoteSequence(testIndex, index)}
         >
+        {renderNoteRangeSelector(testIndex, handleCustomNoteSequenceNoteRangeChanged, tests[testIndex].customNoteSequences[index].noteRange, index)}
         {renderAbcInput(noteSequence, testIndex, index)}
       </ItemPanel>
     ));
@@ -590,14 +601,6 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   // Wo nur event übergeben werden muss, reicht Variable als Callback, muss nicht ausgeführt werden. XXX
   // constants.js für Sachen in defaultContent und so... XXX
 
-  // useEffect(() => {
-  //   if (!abcHasBeenInput.current) {
-  //     return;
-  //   }
-  //   abcHasBeenInput.current = false;
-  //   abcInput.current.focus();
-  // });
-
   return (
     <div className="MidiPianoEditor">
       <Form>
@@ -630,7 +633,10 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
                 </RadioGroup>
               </FormItem>
               {test.exerciseType === 'noteSequence' && renderNoteSequenceTypeSelector(index)}
-              {(['interval', 'chord'].includes(test.exerciseType) || (test.exerciseType === 'noteSequence' && !test.isCustomNoteSequence)) && renderNoteRangeSelector(index)}
+              {(['interval', 'chord'].includes(test.exerciseType)
+                || (test.exerciseType === 'noteSequence'
+                && !test.isCustomNoteSequence))
+                && renderNoteRangeSelector(index, handleNoteRangeChanged, tests[index].noteRange)}
               {test.exerciseType === 'interval' && renderIntervalSelector(test.intervalCheckboxStates, 'interval', index)}
               {test.exerciseType === 'chord' && renderChordSelector(index)}
               {test.exerciseType === 'noteSequence' && renderNoteSequenceSelector(test.numberOfNotes, index)}
