@@ -1,5 +1,6 @@
 /* eslint-disable max-lines */
 import { useTranslation } from 'react-i18next';
+import React, { useState, useRef } from 'react';
 import validation from '../../ui/validation.js';
 import { pianoLayout } from './custom-piano.js';
 import MidiPianoInfo from './midi-piano-info.js';
@@ -8,9 +9,8 @@ import cloneDeep from '../../utils/clone-deep.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
 import AbcNotation from '../../components/abc-notation.js';
-import React, { useState, useRef } from 'react';
+import { analyseABC, filterAbcString } from './abc-utils.js';
 import { create as createId } from '../../utils/unique-id.js';
-import { analyizeABC, filterAbcString } from './abc-utils.js';
 import { useService } from '../../components/container-context.js';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
 import { swapItemsAt, removeItemAt } from '../../utils/array-utils.js';
@@ -22,7 +22,6 @@ import { storageLocationPathToUrl, urlToStorageLocationPath } from '../../utils/
 export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const FormItem = Form.Item;
-  // X const abcInput = useRef(null); XXX
   const RadioGroup = Radio.Group;
   const RadioButton = Radio.Button;
   const keyRangeSelection = useRef([]);
@@ -273,13 +272,14 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const handleCurrentAbcCodeChanged = (event, testIndex, noteSequenceIndex) => {
     const { value } = event.target;
-    const [abcNotes, noteNameSequence, filteredAbc] = analyizeABC(value);
+    const [abcNoteNameSequence, midiNoteNameSequence, midiValueSequence, filteredAbc] = analyseABC(value);
     const newCustomNoteSequences = tests[testIndex].customNoteSequences.map((nS, i) => i === noteSequenceIndex
       ? { ...nS,
         abc: value,
-        noteNameSequence,
-        filteredAbc,
-        abcNotes }
+        abcNoteNameSequence,
+        midiNoteNameSequence,
+        midiValueSequence,
+        filteredAbc }
       : nS);
     const newTests = tests.map((test, i) => i === testIndex ? { ...test, customNoteSequences: newCustomNoteSequences } : test);
     abcHasBeenInput.current = true;

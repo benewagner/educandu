@@ -1,8 +1,6 @@
 import { NOTE_CONVERSION_MAP, MIDI_NOTE_NAMES } from './constants.js';
 
-export const getAbcNoteNameFromMidiValue = midiValue => {
-  NOTE_CONVERSION_MAP.get(MIDI_NOTE_NAMES[midiValue]);
-};
+const getMidiValueFromMidiNoteName = midiNoteName => MIDI_NOTE_NAMES.indexOf(midiNoteName);
 
 export function filterAbcString(string) {
   const charsToDelete = [' ', '|', '=', '(', ')', '[', ']', '-', 'z', 'x', '1', '2', '3', '4', '5', '6', '7', '8'];
@@ -15,16 +13,17 @@ export function filterAbcString(string) {
   return newString;
 }
 
-// Returns two arrays (= sequences) of abc note names and note names Tone.js sampler can play.
-export function analyizeABC(string) {
+// Returned variables are saved in content.tests[currentTestIndex].customNoteSequences[currentExerciseIndex]
+export function analyseABC(string) {
   if (string.length === 0) {
-    return [null, null, null];
+    return [null, null, null, null];
   }
 
   const noteNameLetters = ['c', 'd', 'e', 'f', 'g', 'a', 'b', 'z', 'x', 'C', 'D', 'E', 'F', 'G', 'A', 'B'];
   const noteStartChars = ['^', '_', 'c', 'd', 'e', 'f', 'g', 'a', 'b', 'z', 'x', 'C', 'D', 'E', 'F', 'G', 'A', 'B'];
-  const abcNotes = [];
-  const noteNameSequence = [];
+  const abcNoteNameSequence = [];
+  const midiNoteNameSequence = [];
+  const midiValueSequence = [];
   let newString = filterAbcString(string);
   const filteredAbc = newString;
 
@@ -71,39 +70,28 @@ export function analyizeABC(string) {
         }
       }
       if (lastNote) {
-        abcNotes.push(newString.substring(0));
-        noteNameSequence.push(NOTE_CONVERSION_MAP.get(newString.substring(0)));
-        return [abcNotes, noteNameSequence, filteredAbc];
+        const abcNoteName = newString.substring(0);
+        const midiNoteName = NOTE_CONVERSION_MAP.get(abcNoteName);
+        const midiValue = getMidiValueFromMidiNoteName(midiNoteName);
+        abcNoteNameSequence.push(abcNoteName);
+        midiNoteNameSequence.push(midiNoteName);
+        midiValueSequence.push(midiValue);
+        return [abcNoteNameSequence, midiNoteNameSequence, midiValueSequence, filteredAbc];
       }
     }
 
-    const substring = newString.substring(noteStartIndex, nextNoteStartIndex);
-    const noteName = NOTE_CONVERSION_MAP.get(substring);
-    abcNotes.push(substring);
-    noteNameSequence.push(noteName);
+    const abcNoteName = newString.substring(noteStartIndex, nextNoteStartIndex);
+    const midiNoteName = NOTE_CONVERSION_MAP.get(abcNoteName);
+    const midiValue = getMidiValueFromMidiNoteName(midiNoteName);
+    abcNoteNameSequence.push(abcNoteName);
+    midiNoteNameSequence.push(midiNoteName);
+    midiValueSequence.push(midiValue);
 
     newString = newString.substring(nextNoteStartIndex);
 
     if (typeof newString[0] === 'undefined') {
-      return [abcNotes, noteNameSequence, filteredAbc];
+      return [abcNoteNameSequence, midiNoteNameSequence, midiValueSequence, filteredAbc];
     }
   }
-  return [abcNotes, noteNameSequence, filteredAbc];
+  return [abcNoteNameSequence, midiNoteNameSequence, midiValueSequence, filteredAbc];
 }
-
-// export async function playExerciseArray(exerciseArray, callback, noteDuration) {
-
-//   for (let i = 0; i < exerciseArray.length; i += 1) {
-//     callback(exerciseArray[i]);
-//     // eslint-disable-next-line no-await-in-loop
-//     await new Promise(res => {
-//       setTimeout(() => {
-//         res();
-//       }, noteDuration);
-//     });
-//   }
-// }
-
-// const callback = noteName => console.log(noteName);
-
-// playExerciseArray(['C5', 'D5', 'E5', 'F5', 'G5'], callback, 1000);

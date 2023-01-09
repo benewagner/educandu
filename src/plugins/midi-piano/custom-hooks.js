@@ -155,14 +155,14 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
 
       if (test.exerciseType === 'noteSequence' && test.isCustomNoteSequence) {
         const noteSequence = currentNoteSequence();
-        const noteNameSequence = noteSequence.noteNameSequence;
+        const midiNoteNameSequence = noteSequence.midiNoteNameSequence;
         const currentKeyRange = {};
 
         let firstMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.first);
         let lastMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.last);
 
-        for (let i = 0; i < noteNameSequence.length; i += 1) {
-          const midiValue = getMidiValueFromNoteName(noteNameSequence[i]);
+        for (let i = 0; i < midiNoteNameSequence.length; i += 1) {
+          const midiValue = getMidiValueFromNoteName(midiNoteNameSequence[i]);
           if (midiValue < firstMidiValue) {
             firstMidiValue = midiValue;
           }
@@ -175,21 +175,18 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
         lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
 
-        const midiValueRange = { first: firstMidiValue, last: lastMidiValue };
-
         // Convert midi values to white key indices which are needed for rendering custom piano
         currentKeyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
         currentKeyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
 
+        // CustomNoteSequence mode does not autogenerate exercises
+        const midiValueRange = null;
+
         return { currentKeyRange,
           midiValueRange,
-          exerciseArray: noteNameSequence,
-          indication: noteSequence.abcNotes[0],
+          exerciseArray: midiNoteNameSequence,
+          indication: noteSequence.abcNoteNameSequence[0],
           solution: noteSequence.filteredAbc };
-      }
-
-      if (test.exerciseType === 'interval') {
-        return test.noteRange;
       }
 
       return contentKeyRange;

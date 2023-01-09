@@ -5,16 +5,14 @@ import CustomSwitch from './custom-switch.js';
 import { useTranslation } from 'react-i18next';
 import urlUtils from '../../utils/url-utils.js';
 import Markdown from '../../components/markdown.js';
-import { SAMPLE_TYPES, NOTES } from './constants.js';
-import { MIDI_COMMANDS } from '../../domain/constants.js';
 import React, { useEffect, useRef, useState } from 'react';
 import AbcNotation from '../../components/abc-notation.js';
 import ClientConfig from '../../bootstrap/client-config.js';
-import { getAbcNoteNameFromMidiValue } from './abc-utils.js';
 import CardSelector from '../../components/card-selector.js';
 import { Button, Radio, InputNumber, Slider, Form } from 'antd';
 import IterationPanel from '../../components/iteration-panel.js';
 import { useService } from '../../components/container-context.js';
+import { SAMPLE_TYPES, NOTES, MIDI_COMMANDS } from './constants.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
 import PauseIcon from '../../components/icons/media-player/pause-icon.js';
@@ -24,6 +22,7 @@ export default function MidiPianoDisplay({ content }) {
 
   const keys = useRef(null);
   const player = useRef(null);
+  // Only for future tracking puposes if needed. Could be removed for now.
   const activeNotes = useRef([]);
   const RadioGroup = Radio.Group;
   const RadioButton = Radio.Button;
@@ -31,15 +30,15 @@ export default function MidiPianoDisplay({ content }) {
   const inputIsEnabled = useRef(true);
   const isExercisePlaying = useRef(false);
   const isAbcInputEnabled = useRef(false);
-  const playExerciseStartIndex = useRef(0);
+  // const playExerciseStartIndex = useRef(0);
   const { t } = useTranslation('midiPiano');
   const intervalMode = useRef('successive');
   const clientConfig = useService(ClientConfig);
   const [currentTestIndex, setCurrentTestIndex] = useState(0);
   const [canShowSolution, setCanShowSolution] = useState(false);
   const getNoteNameFromMidiValue = midiValue => NOTES[midiValue];
-  // const [isAbcInputEnabled, setIsAbcInputEnabled] = useState(false);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
+  const [playExerciseStartIndex, setPlayExerciseStartIndex] = useState(0);
   const { sourceType, sourceUrl, midiTrackTitle, colors, tests } = content;
   const [isCurrentTestAnswerVisible, setIsCurrentTestAnswerVisible] = useState(false);
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
@@ -51,8 +50,8 @@ export default function MidiPianoDisplay({ content }) {
   const [sampler, samplerHasLoaded] = useToneJsSampler(SAMPLE_TYPES.piano);
   const [currentKeyRange, midiValueRange, exerciseArray, indication, solution] = useExercise(content, currentTestIndex, currentExerciseIndex);
 
-  const abcInputNotesArray = useRef([]);
-  const [abcInput, setAbcInput] = useState('');
+  const inputAbcNoteNameSequence = useRef([]);
+  const [inputAbc, setInputAbc] = useState('');
 
   const getEventTypeFromMidiCommand = (command, velocity) => {
     switch (command) {
@@ -73,7 +72,7 @@ export default function MidiPianoDisplay({ content }) {
 
   const tipformatter = value => `${(value / 1000).toFixed(1)}s`;
 
-  // Keeps track of active notes of both midi player and midi device input by storing and removing midi values.
+  // Keeps track of active notes of both midi player and midi device input. No use for now. Could be removed.
   const updateActiveNotes = (eventType, midiValue) => {
     const arr = activeNotes.current;
     const index = arr.indexOf(midiValue);
@@ -108,14 +107,12 @@ export default function MidiPianoDisplay({ content }) {
   }
 
   const playExercise = async () => {
-
     if (isExercisePlaying.current) {
       return;
     }
-
     isExercisePlaying.current = true;
 
-    for (let i = playExerciseStartIndex.current; i < exerciseArray.length; i += 1) {
+    for (let i = playExerciseStartIndex; i < exerciseArray.length; i += 1) {
       // Check if stop button has been clicked
       if (!isExercisePlaying.current) {
         return;
@@ -128,29 +125,26 @@ export default function MidiPianoDisplay({ content }) {
         }, noteDuration.current);
       });
     }
-
     isExercisePlaying.current = false;
   };
 
   function resetEarTrainingControls() {
-    playExerciseStartIndex.current = 0;
+    setInputAbc('');
+    setCanShowSolution(false);
+    setPlayExerciseStartIndex(0);
+    isExercisePlaying.current = false;
   }
 
   const getNewExercise = () => {
-    isExercisePlaying.current = false;
     resetEarTrainingControls();
-    setCanShowSolution(false);
     if (currentTest().exerciseType === 'noteSequence'
       && currentTest().isCustomNoteSequence
       && currentTest().customNoteSequences.length - 1 < currentExerciseIndex + 1) {
 
-      setAbcInput('');
       setCurrentExerciseIndex(0);
       return;
     }
-    setAbcInput('');
     setCurrentExerciseIndex(prev => prev + 1);
-
   };
 
   const resetAllKeyStyles = () => {
@@ -325,7 +319,8 @@ export default function MidiPianoDisplay({ content }) {
   const handleTestCardSelected = testIndex => {
     if (currentTestIndex !== testIndex) {
       setCurrentTestIndex(testIndex);
-      setIsCurrentTestAnswerVisible(false);
+      setCurrentExerciseIndex(0);
+      resetEarTrainingControls();
     }
   };
 
@@ -361,11 +356,19 @@ export default function MidiPianoDisplay({ content }) {
     marginBottom: '0.8rem'
   };
 
-  const renderNoteSequenceControls = () => (
-    <Form.Item label={t('playFromNote')} style={itemStyle}>
-      <InputNumber defaultValue={1} min={1} max={currentNoteSequence().abcNotes.length} onChange={value => { playExerciseStartIndex.current = value - 1; }} />
-    </Form.Item>
-  );
+  const renderNoteSequenceControls = () => {
+
+    return (
+      <Form.Item label={t('playFromNote')} style={itemStyle}>
+        <InputNumber
+          value={playExerciseStartIndex + 1}
+          min={1}
+          max={currentNoteSequence().abcNoteNameSequence.length}
+          onChange={value => { setPlayExerciseStartIndex(value - 1); }}
+          />
+      </Form.Item>
+    );
+  };
 
   const renderEarTrainingControls = () => (
     <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', alignItems: 'center' }}>
@@ -448,7 +451,7 @@ export default function MidiPianoDisplay({ content }) {
                 <div>{t('noteInput')}</div>
               </div>
               <div style={{ minHeight: '7rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <AbcNotation abcCode={`L:1/4 \n K:C ${currentNoteSequence().clef || 'treble'} \n ${indication + abcInput}`} />
+                <AbcNotation abcCode={`L:1/4 \n K:C ${currentNoteSequence().clef || 'treble'} \n ${indication + inputAbc}`} />
               </div>
               <Button>{t('deleteNote')}</Button>
             </div>

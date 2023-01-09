@@ -2,9 +2,7 @@ import PropTypes from 'prop-types';
 import midiPlayerNs from 'midi-player-js';
 import React, { useEffect, useRef } from 'react';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
-import { getAbcNoteNameFromMidiValue } from './abc-utils.js';
 import { create as createId } from '../../utils/unique-id.js';
-import { NOTE_CONVERSION_MAP, MIDI_NOTE_NAMES } from './constants.js';
 
 // 0 represents white and black key, 1 respresents white key. Second element is midiValue for white key.
 export const pianoLayout = [
