@@ -166,6 +166,17 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       }
     }
 
+    if (exerciseType === EXERCISE_TYPES.noteSequence && !currentTest().isCustomNoteSequence) {
+      for (const vector of intervalVectors) {
+        if (firstMidiValue > lastMidiValue - vector) {
+          firstMidiValue = lastMidiValue - vector;
+        }
+        if (lastMidiValue < firstMidiValue + vector) {
+          lastMidiValue = firstMidiValue + vector;
+        }
+      }
+    }
+
     // Make sure first and last midi value belongs to white key
     firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
     lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
@@ -175,6 +186,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     // Convert midi values to white key indices which are needed for rendering CustomPiano
     keyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
     keyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
+
+    return keyRange;
 
   }, [currentTest]);
 
@@ -218,28 +231,29 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       if (test.exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence) {
         const noteSequence = currentNoteSequence();
         const midiNoteNameSequence = noteSequence.midiNoteNameSequence;
-        const keyRange = {};
+        const noteRange = noteSequence.noteRange;
+        const keyRange = getKeyRange({ midiNoteNameSequence, noteRange });
 
-        let firstMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.first);
-        let lastMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.last);
+        // let firstMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.first);
+        // let lastMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.last);
 
-        for (let i = 0; i < midiNoteNameSequence.length; i += 1) {
-          const midiValue = getMidiValueFromNoteName(midiNoteNameSequence[i]);
-          if (midiValue < firstMidiValue) {
-            firstMidiValue = midiValue;
-          }
-          if (midiValue > lastMidiValue) {
-            lastMidiValue = midiValue;
-          }
-        }
+        // for (let i = 0; i < midiNoteNameSequence.length; i += 1) {
+        //   const midiValue = getMidiValueFromNoteName(midiNoteNameSequence[i]);
+        //   if (midiValue < firstMidiValue) {
+        //     firstMidiValue = midiValue;
+        //   }
+        //   if (midiValue > lastMidiValue) {
+        //     lastMidiValue = midiValue;
+        //   }
+        // }
 
-        // Make sure first and last midi value belongs to white key
-        firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
-        lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
+        // // Make sure first and last midi value belongs to white key
+        // firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
+        // lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
 
-        // Convert midi values to white key indices which are needed for rendering CustomPiano
-        keyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
-        keyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
+        // // Convert midi values to white key indices which are needed for rendering CustomPiano
+        // keyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
+        // keyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
 
         const indicationMidiValue = currentNoteSequence().midiValueSequence[0];
 
@@ -253,25 +267,27 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       if (test.exerciseType === EXERCISE_TYPES.noteSequence && !test.isCustomNoteSequence) {
         const intervalCheckboxStates = currentTest().intervalCheckboxStates;
         const intervalVectors = getIntervalVectors(intervalCheckboxStates);
+        const noteRange = currentTest().noteRange;
+        const keyRange = getKeyRange({ intervalVectors, noteRange });
 
-        // Set keyRange
-        let firstMidiValue = getMidiValueFromWhiteKeyIndex(currentTest().noteRange.first);
-        let lastMidiValue = getMidiValueFromWhiteKeyIndex(currentTest().noteRange.last);
+        // // Set keyRange
+        // let firstMidiValue = getMidiValueFromWhiteKeyIndex(currentTest().noteRange.first);
+        // let lastMidiValue = getMidiValueFromWhiteKeyIndex(currentTest().noteRange.last);
 
-        for (const vector of intervalVectors) {
-          if (firstMidiValue > lastMidiValue - vector) {
-            firstMidiValue = lastMidiValue - vector;
-          }
-          if (lastMidiValue < firstMidiValue + vector) {
-            lastMidiValue = firstMidiValue + vector;
-          }
-        }
+        // for (const vector of intervalVectors) {
+        //   if (firstMidiValue > lastMidiValue - vector) {
+        //     firstMidiValue = lastMidiValue - vector;
+        //   }
+        //   if (lastMidiValue < firstMidiValue + vector) {
+        //     lastMidiValue = firstMidiValue + vector;
+        //   }
+        // }
 
-        // Make sure first and last midi value belongs to white key
-        firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
-        lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
+        // // Make sure first and last midi value belongs to white key
+        // firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
+        // lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
 
-        const keyRange = { first: firstMidiValue, last: lastMidiValue };
+        // const keyRange = { first: firstMidiValue, last: lastMidiValue };
 
         const numberOfNotes = currentTest().numberofNotes;
         const midiValueSequence = [];
