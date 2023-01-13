@@ -2013,8 +2013,7 @@
       "newExercise": "New Exercise",
       "noteInput": "Note Input",
       "firstNote": "First Note",
-      "solution": "Solution",
-      "deleteNote": "Delete Note"
+      "solution": "Solution"
     }
   },
   {
@@ -2099,8 +2098,7 @@
       "newExercise": "Neue Übung",
       "noteInput": "Noteneingabe",
       "firstNote": "Erster Ton",
-      "solution": "Lösung",
-      "deleteNote": "Ton löschen"
+      "solution": "Lösung"
     }
   },
   {

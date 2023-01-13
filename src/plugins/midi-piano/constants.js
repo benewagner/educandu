@@ -1,8 +1,11 @@
 // Note names for each midi Value that can be played by Tone.js sampler.
 export const MIDI_NOTE_NAMES = ['C-1', 'Db-1', 'D-1', 'Eb-1', 'E-1', 'F-1', 'Gb-1', 'G-1', 'Ab-1', 'A-1', 'Bb-1', 'B-1', 'C0', 'Db0', 'D0', 'Eb0', 'E0', 'F0', 'Gb0', 'G0', 'Ab0', 'A0', 'Bb0', 'B0', 'C1', 'Db1', 'D1', 'Eb1', 'E1', 'F1', 'Gb1', 'G1', 'Ab1', 'A1', 'Bb1', 'B1', 'C2', 'Db2', 'D2', 'Eb2', 'E2', 'F2', 'Gb2', 'G2', 'Ab2', 'A2', 'Bb2', 'B2', 'C3', 'Db3', 'D3', 'Eb3', 'E3', 'F3', 'Gb3', 'G3', 'Ab3', 'A3', 'Bb3', 'B3', 'C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'Gb4', 'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5', 'Db5', 'D5', 'Eb5', 'E5', 'F5', 'Gb5', 'G5', 'Ab5', 'A5', 'Bb5', 'B5', 'C6', 'Db6', 'D6', 'Eb6', 'E6', 'F6', 'Gb6', 'G6', 'Ab6', 'A6', 'Bb6', 'B6', 'C7', 'Db7', 'D7', 'Eb7', 'E7', 'F7', 'Gb7', 'G7', 'Ab7', 'A7', 'Bb7', 'B7', 'C8', 'Db8', 'D8', 'Eb8', 'E8', 'F8', 'Gb8', 'G8', 'Ab8', 'A8', 'Bb8', 'B8', 'C9', 'Db9', 'D9', 'Eb9', 'E9', 'F9', 'Gb9', 'G9', 'Ab9', 'A9', 'Bb9', 'B9'];
 
-// Only white key note names. NOTE_CONVERSION_MAP includes black keys.
-const abcNoteNames = ['C,,,,,', 'D,,,,,', 'E,,,,,', 'F,,,,,', 'G,,,,,', 'A,,,,,', 'B,,,,,', 'C,,,,', 'D,,,,', 'E,,,,', 'F,,,,', 'G,,,,', 'A,,,,', 'B,,,,', 'C,,,', 'D,,,', 'E,,,', 'F,,,', 'G,,,', 'A,,,', 'B,,,', 'C,,', 'D,,', 'E,,', 'F,,', 'G,,', 'A,,', 'B,,', 'C,', 'D,', 'E,', 'F,', 'G,', 'A,', 'B,', 'C', 'D', 'E', 'F', 'G', 'A', 'B', 'c', 'd', 'e', 'f', 'g', 'a', 'b', 'c\'', 'd\'', 'e\'', 'f\'', 'g\'', 'a\'', 'b\'', 'c\'\'', 'd\'\'', 'e\'\'', 'f\'\'', 'g\'\'', 'a\'\'', 'b\'\'', 'c\'\'\'', 'd\'\'\'', 'e\'\'\'', 'f\'\'\'', 'g\'\'\'', 'a\'\'\'', 'b\'\'\'', 'c\'\'\'\'', 'd\'\'\'\'', 'e\'\'\'\'', 'f\'\'\'\'', 'g\'\'\'\'', 'a\'\'\'\'', 'b\'\'\'\''];
+// Chromatic abc note names
+export const ABC_NOTE_NAMES = ['C,,,,,', '^C,,,,,', 'D,,,,,', '_E,,,,,', 'E,,,,,', 'F,,,,,', '^F,,,,,', 'G,,,,,', '^G,,,,,', 'A,,,,,', '_B,,,,,', 'B,,,,,', 'C,,,,', '^C,,,,', 'D,,,,', '_E,,,,', 'E,,,,', 'F,,,,', '^F,,,,', 'G,,,,', '^G,,,,', 'A,,,,', '_B,,,,', 'B,,,,', 'C,,,', '^C,,,', 'D,,,', '_E,,,', 'E,,,', 'F,,,', '^F,,,', 'G,,,', '^G,,,', 'A,,,', '_B,,,', 'B,,,', 'C,,', '^C,,', 'D,,', '_E,,', 'E,,', 'F,,', '^F,,', 'G,,', '^G,,', 'A,,', '_B,,', 'B,,', 'C,', '^C,', 'D,', '_E,', 'E,', 'F,', '^F,', 'G,', '^G,', 'A,', '_B,', 'B,', 'C', '^C', 'D', '_E', 'E', 'F', '^F', 'G', '^G', 'A', '_B', 'B', 'c', '^c', 'd', '_e', 'e', 'f', '^f', 'g', '^g', 'a', '_b', 'b', 'c\'', '^c\'', 'd\'', '_e\'', 'e\'', 'f\'', '^f\'', 'g\'', '^g\'', 'a\'', '_b\'', 'b\'', 'c\'\'', '^c\'\'', 'd\'\'', '_e\'\'', 'e\'\'', 'f\'\'', '^f\'\'', 'g\'\'', '^g\'\'', 'a\'\'', '_b\'\'', 'b\'\'', 'c\'\'\'', '^c\'\'\'', 'd\'\'\'', '_e\'\'\'', 'e\'\'\'', 'f\'\'\'', '^f\'\'\'', 'g\'\'\'', '^g\'\'\'', 'a\'\'\'', '_b\'\'\'', 'b\'\'\'', 'c\'\'\'\'', '^c\'\'\'\'', 'd\'\'\'\'', '_e\'\'\'\'', 'e\'\'\'\'', 'f\'\'\'\'', '^f\'\'\'\'', 'g\'\'\'\'', '^g\'\'\'\'', 'a\'\'\'\'', '_b\'\'\'\'', 'b\'\'\'\'', 'c\'\'\'\'\''];
+
+// Only white key abc note names.
+const abcNaturalNoteNames = ['C,,,,,', 'D,,,,,', 'E,,,,,', 'F,,,,,', 'G,,,,,', 'A,,,,,', 'B,,,,,', 'C,,,,', 'D,,,,', 'E,,,,', 'F,,,,', 'G,,,,', 'A,,,,', 'B,,,,', 'C,,,', 'D,,,', 'E,,,', 'F,,,', 'G,,,', 'A,,,', 'B,,,', 'C,,', 'D,,', 'E,,', 'F,,', 'G,,', 'A,,', 'B,,', 'C,', 'D,', 'E,', 'F,', 'G,', 'A,', 'B,', 'C', 'D', 'E', 'F', 'G', 'A', 'B', 'c', 'd', 'e', 'f', 'g', 'a', 'b', 'c\'', 'd\'', 'e\'', 'f\'', 'g\'', 'a\'', 'b\'', 'c\'\'', 'd\'\'', 'e\'\'', 'f\'\'', 'g\'\'', 'a\'\'', 'b\'\'', 'c\'\'\'', 'd\'\'\'', 'e\'\'\'', 'f\'\'\'', 'g\'\'\'', 'a\'\'\'', 'b\'\'\'', 'c\'\'\'\'', 'd\'\'\'\'', 'e\'\'\'\'', 'f\'\'\'\'', 'g\'\'\'\'', 'a\'\'\'\'', 'b\'\'\'\''];
 
 const incrementBy = new Map();
 incrementBy.set('c', 2);
@@ -24,25 +27,25 @@ incrementBy.set('B', 1);
 export const NOTE_CONVERSION_MAP = (() => {
   const map = new Map();
 
-  map.set(abcNoteNames[0], MIDI_NOTE_NAMES[0]);
-  map.set(`^${abcNoteNames[0]}`, MIDI_NOTE_NAMES[1]);
-  map.set(`^^${abcNoteNames[0]}`, MIDI_NOTE_NAMES[2]);
+  map.set(abcNaturalNoteNames[0], MIDI_NOTE_NAMES[0]);
+  map.set(`^${abcNaturalNoteNames[0]}`, MIDI_NOTE_NAMES[1]);
+  map.set(`^^${abcNaturalNoteNames[0]}`, MIDI_NOTE_NAMES[2]);
 
   let midiValue = 2;
 
-  for (let i = 1; i < abcNoteNames.length - 2; i += 1) {
-    map.set(abcNoteNames[i], MIDI_NOTE_NAMES[midiValue]);
-    map.set(`^${abcNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue + 1]);
-    map.set(`^^${abcNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue + 2]);
-    map.set(`_${abcNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue - 1]);
-    map.set(`__${abcNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue - 2]);
+  for (let i = 1; i < abcNaturalNoteNames.length - 2; i += 1) {
+    map.set(abcNaturalNoteNames[i], MIDI_NOTE_NAMES[midiValue]);
+    map.set(`^${abcNaturalNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue + 1]);
+    map.set(`^^${abcNaturalNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue + 2]);
+    map.set(`_${abcNaturalNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue - 1]);
+    map.set(`__${abcNaturalNoteNames[i]}`, MIDI_NOTE_NAMES[midiValue - 2]);
 
-    midiValue += incrementBy.get(abcNoteNames[i][0]);
+    midiValue += incrementBy.get(abcNaturalNoteNames[i][0]);
   }
 
-  map.set(abcNoteNames[abcNoteNames.length - 1], MIDI_NOTE_NAMES[MIDI_NOTE_NAMES.length - 1]);
-  map.set(`_${abcNoteNames[abcNoteNames.length - 1]}`, MIDI_NOTE_NAMES[MIDI_NOTE_NAMES.length - 2]);
-  map.set(`__${abcNoteNames[abcNoteNames.length - 1]}`, MIDI_NOTE_NAMES[MIDI_NOTE_NAMES.length - 3]);
+  map.set(abcNaturalNoteNames[abcNaturalNoteNames.length - 1], MIDI_NOTE_NAMES[MIDI_NOTE_NAMES.length - 1]);
+  map.set(`_${abcNaturalNoteNames[abcNaturalNoteNames.length - 1]}`, MIDI_NOTE_NAMES[MIDI_NOTE_NAMES.length - 2]);
+  map.set(`__${abcNaturalNoteNames[abcNaturalNoteNames.length - 1]}`, MIDI_NOTE_NAMES[MIDI_NOTE_NAMES.length - 3]);
 
   return map;
 })();
@@ -86,3 +89,36 @@ export const MIDI_COMMANDS = {
   noteOff: 128,
   sustainOff: 176
 };
+
+export const EXERCISE_TYPES = {
+  interval: 'interval',
+  chord: 'chord',
+  noteSequence: 'noteSequence'
+};
+
+export const INTERVAL_VECTORS = {
+  all: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+  prime: 0,
+  second: {
+    minor: 1,
+    major: 2
+  },
+  third: {
+    minor: 3,
+    major: 4
+  },
+  fourth: 5,
+  tritone: 6,
+  fifth: 7,
+  sixth: {
+    minor: 8,
+    major: 9
+  },
+  seventh: {
+    minor: 10,
+    major: 11
+  },
+  octave: 12
+};
+
+export const INTERVAL_NAMES = ['prime', 'second', 'third', 'fourth', 'tritone', 'fifth', 'sixth', 'seventh', 'octave'];

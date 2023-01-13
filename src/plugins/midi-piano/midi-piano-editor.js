@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import React, { useState, useRef } from 'react';
 import validation from '../../ui/validation.js';
 import { pianoLayout } from './custom-piano.js';
+import { INTERVAL_NAMES } from './constants.js';
 import MidiPianoInfo from './midi-piano-info.js';
 import { PlusOutlined } from '@ant-design/icons';
 import cloneDeep from '../../utils/clone-deep.js';
@@ -403,76 +404,73 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </FormItem>
   );
 
-  const renderIntervalSelector = (checkboxStates, testType, testIndex) => {
-    const intervals = ['prime', 'second', 'third', 'fourth', 'tritone', 'fifth', 'sixth', 'seventh', 'octave'];
-    return (
-      <React.Fragment>
-        <FormItem label={t('intervals')} {...formItemLayout} hasFeedback>
-          <div>
-            <Checkbox
-              defaultChecked={checkboxStates.all}
-              testType={testType}
-              interval="all"
-              onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
-              >{t('all')}
-            </Checkbox>
-          </div>
-          {intervals.map((interval, index) => {
-            return (
-              <div key={createId()}>
-                <Checkbox
-                  defaultChecked={checkboxStates[interval] === true || checkboxStates[interval].minor || checkboxStates[interval].major}
-                  style={{ minWidth: '6rem' }}
-                  interval={interval}
-                  testType={testType}
-                  onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
-                  >
-                  {t(interval)}
-                </Checkbox>
-                {[1, 2, 6, 7].includes(index) && (
-                  <React.Fragment>
-                    <Checkbox
-                      defaultChecked={checkboxStates[interval].minor}
-                      interval={interval}
-                      intervalType="minor"
-                      testType={testType}
-                      onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
-                      >
-                      {t('minor')}
-                    </Checkbox>
-                    <Checkbox
-                      defaultChecked={checkboxStates[interval].major}
-                      interval={interval}
-                      intervalType="major"
-                      testType={testType}
-                      onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
-                      >{t('major')}
-                    </Checkbox>
-                  </React.Fragment>
-                )}
-              </div>
-            );
-          })}
+  const renderIntervalSelector = (checkboxStates, testType, testIndex) => (
+    <React.Fragment>
+      <FormItem label={t('intervals')} {...formItemLayout} hasFeedback>
+        <div>
+          <Checkbox
+            defaultChecked={checkboxStates.all}
+            testType={testType}
+            interval="all"
+            onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+            >{t('all')}
+          </Checkbox>
+        </div>
+        {INTERVAL_NAMES.map((interval, index) => {
+          return (
+            <div key={createId()}>
+              <Checkbox
+                defaultChecked={checkboxStates[interval] === true || checkboxStates[interval].minor || checkboxStates[interval].major}
+                style={{ minWidth: '6rem' }}
+                interval={interval}
+                testType={testType}
+                onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+                >
+                {t(interval)}
+              </Checkbox>
+              {[1, 2, 6, 7].includes(index) && !tests[testIndex].whiteKeysOnly && (
+                <React.Fragment>
+                  <Checkbox
+                    defaultChecked={checkboxStates[interval].minor}
+                    interval={interval}
+                    intervalType="minor"
+                    testType={testType}
+                    onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+                    >
+                    {t('minor')}
+                  </Checkbox>
+                  <Checkbox
+                    defaultChecked={checkboxStates[interval].major}
+                    interval={interval}
+                    intervalType="major"
+                    testType={testType}
+                    onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+                    >{t('major')}
+                  </Checkbox>
+                </React.Fragment>
+              )}
+            </div>
+          );
+        })}
+      </FormItem>
+      {testType === 'interval' && (
+        <FormItem label={t('direction')} {...formItemLayout}>
+          <Checkbox
+            defaultChecked={tests[testIndex].directionCheckboxStates.up}
+            onChange={event => handleDirectionCheckboxStateChanged(event, 'up', testIndex)}
+            >
+            {t('upwards')}
+          </Checkbox>
+          <Checkbox
+            defaultChecked={tests[testIndex].directionCheckboxStates.down}
+            onChange={event => handleDirectionCheckboxStateChanged(event, 'down', testIndex)}
+            >
+            {t('downwards')}
+          </Checkbox>
         </FormItem>
-        {testType === 'interval' && (
-          <FormItem label={t('direction')} {...formItemLayout}>
-            <Checkbox
-              defaultChecked={tests[testIndex].directionCheckboxStates.up}
-              onChange={event => handleDirectionCheckboxStateChanged(event, 'up', testIndex)}
-              >
-              {t('upwards')}
-            </Checkbox>
-            <Checkbox
-              defaultChecked={tests[testIndex].directionCheckboxStates.down}
-              onChange={event => handleDirectionCheckboxStateChanged(event, 'down', testIndex)}
-              >
-              {t('downwards')}
-            </Checkbox>
-          </FormItem>
-        )}
-      </React.Fragment>
-    );
-  };
+      )}
+    </React.Fragment>
+  );
 
   const renderChordSelector = index => {
     const triads = ['majorTriad', 'minorTriad', 'diminished', 'augmented'];

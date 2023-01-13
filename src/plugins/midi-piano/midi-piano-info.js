@@ -41,7 +41,7 @@ class MidiPianoInfo {
   }
 
   getDefaultTest() {
-    const defaultCheckboxStates = {
+    const defaultIntervalCheckboxStates = {
       all: false,
       prime: false,
       second: {
@@ -98,10 +98,10 @@ class MidiPianoInfo {
         thirdInversion: false
       },
       intervalCheckboxStates: {
-        ...defaultCheckboxStates
+        ...defaultIntervalCheckboxStates
       },
       noteSequenceCheckboxStates: {
-        ...defaultCheckboxStates
+        ...defaultIntervalCheckboxStates
       }
     };
   }

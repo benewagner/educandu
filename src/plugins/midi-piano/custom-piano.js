@@ -20,10 +20,13 @@ export default function CustomPiano(props) {
     pianoId,
     sampler,
     keyRange,
+    inputNote,
     activeNotes,
     updateKeyStyle,
-    samplerHasLoaded,
+    hasSamplerLoaded,
     updateActiveNotes,
+    isNoteInputEnabled,
+    indicationMidiValue,
     isExercisePlaying } = props;
   const piano = useRef(null);
   const exerciseType = test.exerciseType;
@@ -42,14 +45,14 @@ export default function CustomPiano(props) {
   };
 
   const playNote = midiValue => {
-    if (!samplerHasLoaded) {
+    if (!hasSamplerLoaded) {
       return;
     }
     sampler.triggerAttack(getNoteNameFromMidiValue(midiValue));
   };
 
   const stopNote = midiValue => {
-    if (!samplerHasLoaded) {
+    if (!hasSamplerLoaded) {
       return;
     }
     setTimeout(() => {
@@ -58,10 +61,19 @@ export default function CustomPiano(props) {
   };
 
   const handleMouseDown = e => {
-    if (typeof e.target.dataset.midiValue === 'undefined' || isExercisePlaying.current) {
+    if (typeof e.target.dataset.midiValue === 'undefined') {
       return;
     }
     const midiValue = parseInt(e.target.dataset.midiValue, 10);
+
+    if (isNoteInputEnabled.current) {
+      inputNote(midiValue);
+    }
+
+    if (isExercisePlaying.current) {
+      return;
+    }
+
     if (exerciseType !== 'noteSequence') {
       updateKeyStyle('toggle', midiValue);
     }
@@ -106,18 +118,18 @@ export default function CustomPiano(props) {
       updateActiveNotes('Note off', midiValue);
       stopNote(midiValue);
     }
-    if (!['interval', 'chord'].includes(exerciseType)) {
+    if (!['interval', 'chord'].includes(exerciseType) && midiValue !== indicationMidiValue) {
       updateKeyStyle('Note off', midiValue);
     }
   };
 
   useEffect(() => {
-    if (!samplerHasLoaded || !sampler) {
+    if (!hasSamplerLoaded || !sampler) {
       return;
     }
     piano.current.addEventListener('mousedown', handleMouseDown);
     piano.current.addEventListener('mouseup', handleMouseUp);
-  }, [sampler, samplerHasLoaded]);
+  }, [sampler, hasSamplerLoaded]);
 
   useEffect(() => {
     const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);
@@ -132,13 +144,21 @@ export default function CustomPiano(props) {
     }
   });
 
+  // Make sure active keys can be styled via DOM manipulation when note input via midi device has triggered rerender
+  useEffect(() => {
+    for (const midiValue of activeNotes.current) {
+      const key = keys.current[midiValue];
+      key.style.backgroundColor = key.style.backgroundColor === colors.activeKey ? key.dataset.defaultColor : colors.activeKey;
+    }
+  });
+
   return (
     <div ref={piano} id={pianoId} className="MidiPiano-pianoContainer">
       {keyRangeLayout.map((elem, index) => {
         if (elem[0] === 0 && index < keyRangeLayout.length - 1) {
-          return <KeyWhiteWithBlack key={createId()} midiValue={elem[1]} colors={colors} />;
+          return <KeyWhiteWithBlack key={createId()} midiValue={elem[1]} colors={colors} indicationMidiValue={indicationMidiValue} />;
         }
-        return <KeyWhite key={createId()} midiValue={elem[1]} colors={colors} />;
+        return <KeyWhite key={createId()} midiValue={elem[1]} colors={colors} indicationMidiValue={indicationMidiValue} />;
       })}
     </div>
   );
@@ -147,18 +167,24 @@ export default function CustomPiano(props) {
 CustomPiano.propTypes = {
   activeNotes: PropTypes.object.isRequired,
   colors: PropTypes.object.isRequired,
+  hasSamplerLoaded: PropTypes.bool.isRequired,
+  indicationMidiValue: PropTypes.number,
+  inputNote: PropTypes.func,
   isExercisePlaying: PropTypes.object.isRequired,
+  isNoteInputEnabled: PropTypes.object,
   keyRange: PropTypes.object.isRequired,
   keys: PropTypes.object.isRequired,
   pianoId: PropTypes.string.isRequired,
   sampler: PropTypes.object,
-  samplerHasLoaded: PropTypes.bool.isRequired,
   test: PropTypes.object,
   updateActiveNotes: PropTypes.func.isRequired,
   updateKeyStyle: PropTypes.func.isRequired
 };
 
 CustomPiano.defaultProps = {
+  indicationMidiValue: null,
+  inputNote: () => {},
+  isNoteInputEnabled: {},
   sampler: {},
   test: { exerciseType: '' }
 };

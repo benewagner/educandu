@@ -2,10 +2,11 @@ import * as Tone from 'tone';
 import { useEffect, useState, useCallback } from 'react';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
-import { NOTES, WHITE_KEYS_MIDI_VALUES } from './constants.js';
+import { NOTES, WHITE_KEYS_MIDI_VALUES, EXERCISE_TYPES, INTERVAL_VECTORS, INTERVAL_NAMES } from './constants.js';
 
 const getMidiValueFromNoteName = noteName => NOTES.indexOf(noteName);
 const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
+const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue);
 // X const getWhiteKeyIndexFromMidiValue = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue); XXX
 
 /**
@@ -53,7 +54,7 @@ export function useMidiLoader(src) {
     const httpClient = new HttpClient();
     httpClient.get(src, { responseType: 'arraybuffer' })
       .then(response => {
-        setMidiData(response.data);
+        setMidiData(response.exerciseData);
       });
   }, [src, midiData]);
 
@@ -66,14 +67,14 @@ export function useMidiLoader(src) {
  * Currently there are only piano samples available. By including the sampleType variable it will be easy to add further samples like Harpsichord later.
  */
 export function useToneJsSampler(sampleType) {
-  const [samplerHasLoaded, setSamplerHasLoaded] = useState(false);
+  const [hasSamplerLoaded, setHasSamplerLoaded] = useState(false);
   const [sampler, setSampler] = useState(null);
 
   useEffect(() => {
 
     if (document.toneJsSamplers?.[sampleType]) {
-      if (!samplerHasLoaded) {
-        setSamplerHasLoaded(true);
+      if (!hasSamplerLoaded) {
+        setHasSamplerLoaded(true);
         setSampler(document.toneJsSamplers[sampleType]);
       }
       return;
@@ -117,14 +118,14 @@ export function useToneJsSampler(sampleType) {
         'C8': 'C8.mp3'
       },
       onload: () => {
-        setSamplerHasLoaded(true);
+        setHasSamplerLoaded(true);
         setSampler(document.toneJsSamplers[sampleType]);
       },
       baseUrl: `https://anmeldung-sprechstunde.herokuapp.com/instrument-samples/${sampleType}/` // Samples better be hosted in project. XXX
     }).toDestination();
-  }, [samplerHasLoaded, setSamplerHasLoaded, sampleType]);
+  }, [hasSamplerLoaded, setHasSamplerLoaded, sampleType]);
 
-  return [sampler, samplerHasLoaded];
+  return [sampler, hasSamplerLoaded];
 }
 
 // Set unique pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches in midi-piano-display.js
@@ -144,19 +145,47 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
   const currentTest = useCallback(() => content.tests[currentTestIndex], [content.tests, currentTestIndex]);
   const currentNoteSequence = useCallback(() => currentTest().customNoteSequences[currentExerciseIndex], [currentExerciseIndex, currentTest]);
 
+  const getIntervalVectors = useCallback(intervalCheckboxStates => {
+    let intervalVectors = [];
+    if (intervalCheckboxStates.all) {
+      intervalVectors = INTERVAL_VECTORS.all;
+    } else {
+      for (const interval of INTERVAL_NAMES) {
+        if (typeof intervalCheckboxStates[interval].minor !== 'undefined') {
+          const isMinorIntervalTypeChecked = intervalCheckboxStates.minor;
+          const isMajorIntervalTypeChecked = intervalCheckboxStates.major;
+          const whiteKeysOnly = currentTest().whiteKeysOnly;
+          intervalVectors.push(intervalCheckboxStates[interval].minor ? INTERVAL_VECTORS[interval].minor : null);
+          intervalVectors.push(intervalCheckboxStates[interval].major ? INTERVAL_VECTORS[interval].major : null);
+
+          /**
+           * If white keys only and interval is checked, only minor interval type vector is included.
+           * If minor interval type vector leads to black key, minor interval type vector + 1 (major interval type vector) will be used to generate new note.
+           */
+          whiteKeysOnly && (isMinorIntervalTypeChecked || isMajorIntervalTypeChecked) && intervalVectors.push(INTERVAL_VECTORS[interval].minor);
+          whiteKeysOnly && (isMinorIntervalTypeChecked || isMajorIntervalTypeChecked) && intervalVectors.push(INTERVAL_VECTORS[interval].major);
+        } else {
+          intervalVectors.push(intervalCheckboxStates[interval] ? INTERVAL_VECTORS[interval] : null);
+        }
+      }
+      intervalVectors = intervalVectors.filter(interval => interval !== null);
+    }
+    return intervalVectors;
+  }, [currentTest]);
+
   const getData = useCallback(
     () => {
       if (content.tests.length === 0) {
-        return content.keyRange;
+        return null;
       }
 
       const test = currentTest();
       const contentKeyRange = content.keyRange;
 
-      if (test.exerciseType === 'noteSequence' && test.isCustomNoteSequence) {
+      if (test.exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence) {
         const noteSequence = currentNoteSequence();
         const midiNoteNameSequence = noteSequence.midiNoteNameSequence;
-        const currentKeyRange = {};
+        const keyRange = {};
 
         let firstMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.first);
         let lastMidiValue = getMidiValueFromWhiteKeyIndex(noteSequence.noteRange.last);
@@ -175,36 +204,56 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
         lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
 
-        // Convert midi values to white key indices which are needed for rendering custom piano
-        currentKeyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
-        currentKeyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
+        // Convert midi values to white key indices which are needed for rendering CustomPiano
+        keyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
+        keyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
 
-        // CustomNoteSequence mode does not autogenerate exercises
-        const midiValueRange = null;
+        const indicationMidiValue = currentNoteSequence().midiValueSequence[0];
 
-        return { currentKeyRange,
-          midiValueRange,
+        return { keyRange,
           exerciseArray: midiNoteNameSequence,
           indication: noteSequence.abcNoteNameSequence[0],
+          indicationMidiValue,
           solution: noteSequence.filteredAbc };
       }
 
-      return contentKeyRange;
+      if (test.exerciseType === EXERCISE_TYPES.noteSequence && !test.isCustomNoteSequence) {
+        const intervalCheckboxStates = currentTest().intervalCheckboxStates;
+        const intervalVectors = getIntervalVectors(intervalCheckboxStates);
+
+        const keyRange = currentTest().noteRange;
+        for (const vector of intervalVectors) {
+          if (keyRange.first > keyRange.last - vector) {
+            keyRange.first = keyRange.last - vector;
+          }
+          if (keyRange.last < keyRange.first + vector) {
+            keyRange.last = keyRange.first + vector;
+          }
+        }
+
+        return {
+          intervalVectors,
+          keyRange
+        };
+      }
+
+      if (test.exerciseType === EXERCISE_TYPES.interval) {
+        const noteRange = currentTest().noteRange;
+        const keyRange = {};
+        const intervalVectors = [];
+        const intervalCheckboxStates = currentTest().intervalCheckboxStates;
+      }
+
+      return null;
     },
-    [content.keyRange, content.tests.length, currentNoteSequence, currentTest]
+    [content.keyRange, content.tests.length, currentNoteSequence, currentTest, getIntervalVectors]
   );
 
-  const [data, setData] = useState(() => getData());
+  const [exerciseData, setExerciseData] = useState(() => getData());
 
   useEffect(() => {
-    setData(() => getData());
+    setExerciseData(() => getData());
   }, [currentTestIndex, getData]);
 
-  return [
-    data.currentKeyRange,
-    data.midiValueRange,
-    data.exerciseArray,
-    data.indication,
-    data.solution
-  ];
+  return exerciseData;
 }
