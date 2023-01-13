@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next';
 import React, { useState, useRef } from 'react';
 import validation from '../../ui/validation.js';
 import { pianoLayout } from './custom-piano.js';
-import { INTERVAL_NAMES } from './constants.js';
+import { EXERCISE_TYPES, INTERVAL_NAMES } from './constants.js';
 import MidiPianoInfo from './midi-piano-info.js';
 import { PlusOutlined } from '@ant-design/icons';
 import cloneDeep from '../../utils/clone-deep.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
 import AbcNotation from '../../components/abc-notation.js';
-import { analyseABC, filterAbcString } from './abc-utils.js';
+import { analyseABC, filterAbcString } from './utils.js';
 import { create as createId } from '../../utils/unique-id.js';
 import { useService } from '../../components/container-context.js';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
@@ -400,7 +400,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
         tipFormatter={tipformatter}
         marks={{ 2: t('c1'), 9: t('c2'), 16: t('c3'), 23: t('c4'), 30: t('c5'), 37: t('c6'), 44: t('c7'), 51: t('c8') }}
         />
-      {tests[testIndex].exerciseType === 'noteSequence' && !tests[testIndex].isCustomNoteSequence && renderWhiteKeysCheckbox(testIndex)}
+      {tests[testIndex].exerciseType === EXERCISE_TYPES.noteSequence && !tests[testIndex].isCustomNoteSequence && renderWhiteKeysCheckbox(testIndex)}
     </FormItem>
   );
 
@@ -606,7 +606,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
         {renderSamplesTypeInput(samplesType, handleSamplesTypeValueChanged)}
         <Divider>MIDI</Divider>
         {renderMidiTrackTitleInput(midiTrackTitle, handleMidiTrackTitleValueChanged)}
-        {renderSourceTypeInput(sourceType, handleSourceTypeValueChanged)}
+        {renderSourceTypeInput(sourceType, handlexerciseTypeeSourceTypeValueChanged)}
         {sourceType === MIDI_SOURCE_TYPE.external
           && renderExternalSourceTypeInput(sourceUrl, handleExternalSourceUrlValueChanged)}
         {sourceType === MIDI_SOURCE_TYPE.internal
@@ -625,19 +625,19 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
               >
               <FormItem label={t('exerciseType')} {...formItemLayout} hasFeedback>
                 <RadioGroup onChange={event => handleExerciseTypeValueChanged(event, index)} value={test.exerciseType}>
-                  <RadioButton value="interval">{t('interval')}</RadioButton>
-                  <RadioButton value="chord">{t('chord')}</RadioButton>
-                  <RadioButton value="noteSequence">{t('noteSequence')}</RadioButton>
+                  <RadioButton value={EXERCISE_TYPES.interval}>{t('interval')}</RadioButton>
+                  <RadioButton value={EXERCISE_TYPES.chord}>{t('chord')}</RadioButton>
+                  <RadioButton value={EXERCISE_TYPES.noteSequence}>{t('noteSequence')}</RadioButton>
                 </RadioGroup>
               </FormItem>
-              {test.exerciseType === 'noteSequence' && renderNoteSequenceTypeSelector(index)}
-              {(['interval', 'chord'].includes(test.exerciseType)
-                || (test.exerciseType === 'noteSequence'
+              {test.exerciseType === EXERCISE_TYPES.noteSequence && renderNoteSequenceTypeSelector(index)}
+              {([EXERCISE_TYPES.interval, EXERCISE_TYPES.chord].includes(test.exerciseType)
+                || (test.exerciseType === EXERCISE_TYPES.noteSequence
                 && !test.isCustomNoteSequence))
                 && renderNoteRangeSelector(index, handleNoteRangeChanged, tests[index].noteRange)}
-              {test.exerciseType === 'interval' && renderIntervalSelector(test.intervalCheckboxStates, 'interval', index)}
-              {test.exerciseType === 'chord' && renderChordSelector(index)}
-              {test.exerciseType === 'noteSequence' && renderNoteSequenceSelector(test.numberOfNotes, index)}
+              {test.exerciseType === EXERCISE_TYPES.interval && renderIntervalSelector(test.intervalCheckboxStates, 'interval', index)}
+              {test.exerciseType === EXERCISE_TYPES.chord && renderChordSelector(index)}
+              {test.exerciseType === EXERCISE_TYPES.noteSequence && renderNoteSequenceSelector(test.numberOfNotes, index)}
             </ItemPanel>
           ))
         }

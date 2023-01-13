@@ -1,4 +1,5 @@
 import * as Tone from 'tone';
+import { randomIntBetween } from './utils.js';
 import { useEffect, useState, useCallback } from 'react';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
@@ -145,6 +146,38 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
   const currentTest = useCallback(() => content.tests[currentTestIndex], [content.tests, currentTestIndex]);
   const currentNoteSequence = useCallback(() => currentTest().customNoteSequences[currentExerciseIndex], [currentExerciseIndex, currentTest]);
 
+  const getKeyRange = useCallback(paramObj => {
+    const { intervalVectors, midiNoteNameSequence, noteRange } = paramObj;
+    const exerciseType = currentTest().exerciseType;
+
+    let firstMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.first);
+    let lastMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.last);
+
+    if (exerciseType === EXERCISE_TYPES.noteSequence && currentTest().isCustomNoteSequence) {
+
+      for (let i = 0; i < midiNoteNameSequence.length; i += 1) {
+        const midiValue = getMidiValueFromNoteName(midiNoteNameSequence[i]);
+        if (midiValue < firstMidiValue) {
+          firstMidiValue = midiValue;
+        }
+        if (midiValue > lastMidiValue) {
+          lastMidiValue = midiValue;
+        }
+      }
+    }
+
+    // Make sure first and last midi value belongs to white key
+    firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
+    lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
+
+    const keyRange = {};
+
+    // Convert midi values to white key indices which are needed for rendering CustomPiano
+    keyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstMidiValue);
+    keyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastMidiValue);
+
+  }, [currentTest]);
+
   const getIntervalVectors = useCallback(intervalCheckboxStates => {
     let intervalVectors = [];
     if (intervalCheckboxStates.all) {
@@ -221,15 +254,34 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         const intervalCheckboxStates = currentTest().intervalCheckboxStates;
         const intervalVectors = getIntervalVectors(intervalCheckboxStates);
 
-        const keyRange = currentTest().noteRange;
+        // Set keyRange
+        let firstMidiValue = getMidiValueFromWhiteKeyIndex(currentTest().noteRange.first);
+        let lastMidiValue = getMidiValueFromWhiteKeyIndex(currentTest().noteRange.last);
+
         for (const vector of intervalVectors) {
-          if (keyRange.first > keyRange.last - vector) {
-            keyRange.first = keyRange.last - vector;
+          if (firstMidiValue > lastMidiValue - vector) {
+            firstMidiValue = lastMidiValue - vector;
           }
-          if (keyRange.last < keyRange.first + vector) {
-            keyRange.last = keyRange.first + vector;
+          if (lastMidiValue < firstMidiValue + vector) {
+            lastMidiValue = firstMidiValue + vector;
           }
         }
+
+        // Make sure first and last midi value belongs to white key
+        firstMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstMidiValue) ? firstMidiValue : firstMidiValue - 1;
+        lastMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastMidiValue) ? lastMidiValue : lastMidiValue + 1;
+
+        const keyRange = { first: firstMidiValue, last: lastMidiValue };
+
+        const numberOfNotes = currentTest().numberofNotes;
+        const midiValueSequence = [];
+
+        let indicationMidiValue = randomIntBetween(keyRange.first, keyRange.last);
+        const whiteKeysOnly = currentTest().whiteKeysOnly;
+        if (whiteKeysOnly && !isWhiteKey(indicationMidiValue)) {
+          indicationMidiValue += 1;
+        }
+        midiValueSequence.push();
 
         return {
           intervalVectors,
@@ -244,7 +296,9 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         const intervalCheckboxStates = currentTest().intervalCheckboxStates;
       }
 
-      return null;
+      return {
+        keyRange: contentKeyRange
+      };
     },
     [content.keyRange, content.tests.length, currentNoteSequence, currentTest, getIntervalVectors]
   );
