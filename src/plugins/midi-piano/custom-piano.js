@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import midiPlayerNs from 'midi-player-js';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
 import { create as createId } from '../../utils/unique-id.js';
 import { EXERCISE_TYPES } from './constants.js';
@@ -24,12 +24,15 @@ export default function CustomPiano(props) {
     inputNote,
     activeNotes,
     updateKeyStyle,
-    canShowSolution,
     hasSamplerLoaded,
+    midiValueSequence,
     updateActiveNotes,
+    canShowSolutionRef,
     isNoteInputEnabled,
     indicationMidiValue,
-    isExercisePlaying } = props;
+    isExercisePlaying,
+    // inputAbcNoteNameSequence,
+    answerMidiValueSequence } = props;
   const piano = useRef(null);
   const exerciseType = test.exerciseType;
   const { NOTES } = midiPlayerNs.Constants;
@@ -68,18 +71,24 @@ export default function CustomPiano(props) {
     }
     const midiValue = parseInt(e.target.dataset.midiValue, 10);
 
-    if (isNoteInputEnabled.current) {
-      inputNote(midiValue);
-    }
+    // if (isNoteInputEnabled.current) {
+    //   inputNote(midiValue);
+    // }
 
     if (isExercisePlaying.current) {
       return;
     }
 
-    if (exerciseType !== 'noteSequence') {
-      updateKeyStyle('toggle', midiValue);
-    }
+    // if (exerciseType !== EXERCISE_TYPES.noteSequence && !canShowSolutionRef.current) {
+    //   updateKeyStyle('toggle', midiValue);
+    // }
+
+    // if (!isNoteInputEnabled.current) {
+    //   updateActiveNotes('Note on', midiValue);
+    // }
+
     updateActiveNotes('Note on', midiValue);
+
     playNote(midiValue);
   };
 
@@ -87,13 +96,19 @@ export default function CustomPiano(props) {
     if (typeof e.target.dataset.midiValue === 'undefined' || isExercisePlaying.current) {
       return;
     }
+
     const midiValue = parseInt(e.target.dataset.midiValue, 10);
+
+    if (isNoteInputEnabled.current) {
+      inputNote(midiValue);
+    }
+
     updateActiveNotes('Note off', midiValue);
     stopNote(midiValue);
   };
 
   const handleMouseOver = e => {
-    if (exerciseType !== 'noteSequence') {
+    if (exerciseType !== EXERCISE_TYPES.noteSequence) {
       return;
     }
     const key = e.target;
@@ -129,20 +144,10 @@ export default function CustomPiano(props) {
     if (!hasSamplerLoaded || !sampler) {
       return;
     }
-    const pianoNode = document.querySelector(`#${pianoId}`);
-    pianoNode.addEventListener('mousedown', handleMouseDown);
-    pianoNode.addEventListener('mouseup', handleMouseUp);
-    // piano.current.addEventListener('mousedown', handleMouseDown);
-    // piano.current.addEventListener('mouseup', handleMouseUp);
-
-  });
-
-  // useEffect(() => {
-  //   return () => {
-  //     piano.current.removeEventListener('mouseover', handleMouseOver);
-  //     piano.current.removeEventListener('mouseleave', handleMouseOut);
-  //   };
-  // });
+    piano.current.addEventListener('mousedown', handleMouseDown);
+    piano.current.addEventListener('mouseup', handleMouseUp);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasSamplerLoaded, sampler]);
 
   useEffect(() => {
     const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);
@@ -157,21 +162,47 @@ export default function CustomPiano(props) {
     }
   });
 
-  // Make sure active keys can be styled via DOM manipulation when note input via midi device has triggered rerender
+  // Make sure active keys will be styled via DOM manipulation when note input via midi device has triggered rerender
   useEffect(() => {
     for (const midiValue of activeNotes.current) {
-      const key = keys.current[midiValue];
-      key.style.backgroundColor = key.style.backgroundColor === colors.activeKey ? key.dataset.defaultColor : colors.activeKey;
+      if (!answerMidiValueSequence.includes(midiValue)) {
+        const key = keys.current[midiValue];
+        key.style.backgroundColor = colors.activeKey;
+      }
     }
   });
+
+  console.log('Render Piano');
 
   return (
     <div ref={piano} id={pianoId} className="MidiPiano-pianoContainer">
       {keyRangeLayout.map((elem, index) => {
         if (elem[0] === 0 && index < keyRangeLayout.length - 1) {
-          return <KeyWhiteWithBlack key={createId()} midiValue={elem[1]} colors={colors} indicationMidiValue={indicationMidiValue} />;
+          return (
+            <KeyWhiteWithBlack
+              key={createId()}
+              midiValue={elem[1]}
+              colors={colors}
+              midiValueSequence={midiValueSequence}
+              // inputAbcNoteNameSequence={inputAbcNoteNameSequence}
+              answerMidiValueSequence={answerMidiValueSequence}
+              canShowSolutionRef={canShowSolutionRef}
+              exerciseType={exerciseType}
+              />
+          );
         }
-        return <KeyWhite key={createId()} midiValue={elem[1]} colors={colors} indicationMidiValue={indicationMidiValue} />;
+        return (
+          <KeyWhite
+            key={createId()}
+            midiValue={elem[1]}
+            colors={colors}
+            midiValueSequence={midiValueSequence}
+            // inputAbcNoteNameSequence={inputAbcNoteNameSequence}
+            answerMidiValueSequence={answerMidiValueSequence}
+            canShowSolutionRef={canShowSolutionRef}
+            exerciseType={exerciseType}
+            />
+        );
       })}
     </div>
   );
@@ -179,15 +210,18 @@ export default function CustomPiano(props) {
 
 CustomPiano.propTypes = {
   activeNotes: PropTypes.object.isRequired,
-  canShowSolution: PropTypes.bool,
+  answerMidiValueSequence: PropTypes.array,
+  canShowSolutionRef: PropTypes.object,
   colors: PropTypes.object.isRequired,
   hasSamplerLoaded: PropTypes.bool.isRequired,
   indicationMidiValue: PropTypes.number,
+  // inputAbcNoteNameSequence: PropTypes.array,
   inputNote: PropTypes.func,
   isExercisePlaying: PropTypes.object.isRequired,
   isNoteInputEnabled: PropTypes.object,
   keyRange: PropTypes.object.isRequired,
   keys: PropTypes.object.isRequired,
+  midiValueSequence: PropTypes.array,
   pianoId: PropTypes.string.isRequired,
   sampler: PropTypes.object,
   test: PropTypes.object,
@@ -196,10 +230,13 @@ CustomPiano.propTypes = {
 };
 
 CustomPiano.defaultProps = {
-  canShowSolution: false,
+  answerMidiValueSequence: [],
+  canShowSolutionRef: {},
   indicationMidiValue: null,
+  // inputAbcNoteNameSequence: null,
   inputNote: () => {},
   isNoteInputEnabled: {},
+  midiValueSequence: null,
   sampler: {},
   test: { exerciseType: '' }
 };

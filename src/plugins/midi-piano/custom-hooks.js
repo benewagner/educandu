@@ -7,7 +7,7 @@ import { WHITE_KEYS_MIDI_VALUES, EXERCISE_TYPES, INTERVAL_VECTORS, INTERVAL_NAME
 
 const getMidiValueFromNoteName = noteName => MIDI_NOTE_NAMES.indexOf(noteName);
 const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
-const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1 ? true : false;
+const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
 // X const getWhiteKeyIndexFromMidiValue = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue); XXX
 
 /**
