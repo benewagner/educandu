@@ -15,8 +15,8 @@ import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
 import PauseIcon from '../../components/icons/media-player/pause-icon.js';
-import { SAMPLE_TYPES, NOTES, MIDI_COMMANDS, ABC_NOTE_NAMES } from './constants.js';
 import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice, useExercise } from './custom-hooks.js';
+import { SAMPLE_TYPES, MIDI_NOTE_NAMES, MIDI_COMMANDS, ABC_NOTE_NAMES, EXERCISE_TYPES, EVENT_TYPES } from './constants.js';
 
 export default function MidiPianoDisplay({ content }) {
 
@@ -33,7 +33,7 @@ export default function MidiPianoDisplay({ content }) {
   const intervalMode = useRef('successive');
   const clientConfig = useService(ClientConfig);
   const [canShowSolution, setCanShowSolution] = useState(false);
-  const getNoteNameFromMidiValue = midiValue => NOTES[midiValue];
+  const getNoteNameFromMidiValue = midiValue => MIDI_NOTE_NAMES[midiValue];
   const [playExerciseStartIndex, setPlayExerciseStartIndex] = useState(0);
   const { sourceType, sourceUrl, midiTrackTitle, colors, tests } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
@@ -51,12 +51,17 @@ export default function MidiPianoDisplay({ content }) {
   const exerciseData = useExercise(content, currentTestIndex, currentExerciseIndex);
 
   const {
+    clef,
     keyRange,
-    exerciseArray,
+    solution,
     indication,
+    midiValueSequence,
     indicationMidiValue,
-    solution
+    abcNoteNameSequence,
+    midiNoteNameSequence
   } = exerciseData;
+
+  console.log(exerciseData);
 
   const inputAbcNoteNameSequence = useRef([]);
   const [inputAbc, setInputAbc] = useState('');
@@ -66,17 +71,17 @@ export default function MidiPianoDisplay({ content }) {
    * be previous note sequence which is why max note input number and number of solution notes - 1 will not necessarily match
    */
   const currentTest = () => tests[currentTestIndexRef.current];
-  const currentNoteSequence = () => currentTest().customNoteSequences[currentExerciseIndexRef.current];
+  const { exerciseType, whiteKeysOnly, isCustomNoteSequence, customNoteSequences } = currentTest();
 
   const getEventTypeFromMidiCommand = (command, velocity) => {
     switch (command) {
       case MIDI_COMMANDS.noteOn:
         if (velocity > 0) {
-          return 'Note on';
+          return EVENT_TYPES.noteOn;
         }
-        return 'Note off';
+        return EVENT_TYPES.noteOff;
       case MIDI_COMMANDS.noteOff:
-        return 'Note off';
+        return EVENT_TYPES.noteOff;
       default:
         return '';
     }
@@ -84,7 +89,7 @@ export default function MidiPianoDisplay({ content }) {
 
   const tipformatter = value => `${(value / 1000).toFixed(1)}s`;
 
-  // Keeps track of active notes of both midi player and midi device input. Used in handleMouseOver, handleMouseOut, useEffect in custom-piano.js
+  // Keeps track of active notes of both midi player and midi device input.
   const updateActiveNotes = (eventType, midiValue) => {
     const arr = activeNotes.current;
     const index = arr.indexOf(midiValue);
@@ -92,13 +97,11 @@ export default function MidiPianoDisplay({ content }) {
       if (index === -1) {
         arr.push(midiValue);
       }
-      return;
     }
     if (eventType === 'Note off') {
       if (index !== -1) {
         arr.splice(index, 1);
       }
-      return;
     }
     if (eventType === 'Reset') {
       arr.length = 0;
@@ -124,12 +127,12 @@ export default function MidiPianoDisplay({ content }) {
     }
     isExercisePlaying.current = true;
 
-    for (let i = playExerciseStartIndex; i < exerciseArray.length; i += 1) {
+    for (let i = playExerciseStartIndex; i < midiNoteNameSequence.length; i += 1) {
       // Check if stop button has been clicked
       if (!isExercisePlaying.current) {
         return;
       }
-      sampler.triggerAttackRelease(exerciseArray[i], noteDuration.current / 1000);
+      sampler.triggerAttackRelease(midiNoteNameSequence[i], noteDuration.current / 1000);
       // eslint-disable-next-line no-await-in-loop
       await new Promise(res => {
         setTimeout(() => {
@@ -147,9 +150,9 @@ export default function MidiPianoDisplay({ content }) {
     isExercisePlaying.current = false;
     inputAbcNoteNameSequence.current.length = 0;
 
-    if (currentTest().exerciseType === 'noteSequence'
-      && currentTest().isCustomNoteSequence
-      && currentTest().customNoteSequences.length - 1 < currentExerciseIndex + 1) {
+    if (exerciseType === EXERCISE_TYPES.noteSequence
+    && isCustomNoteSequence
+    && customNoteSequences.length - 1 < currentExerciseIndex + 1) {
 
       setCurrentExerciseIndex(0);
       currentExerciseIndexRef.current = 0;
@@ -172,13 +175,13 @@ export default function MidiPianoDisplay({ content }) {
     if (typeof key === 'undefined') {
       return;
     }
-    if (eventType === 'Note on') {
+    if (eventType === EVENT_TYPES.noteOn) {
       key.style.backgroundColor = colors.activeKey;
     }
-    if (eventType === 'Note off' && midiValue !== indicationMidiValue) {
+    if (eventType === EVENT_TYPES.noteOff && midiValue !== indicationMidiValue) {
       key.style.backgroundColor = key.dataset.defaultColor;
     }
-    if (eventType === 'toggle') {
+    if (eventType === EVENT_TYPES.toggle) {
       key.style.backgroundColor = key.style.backgroundColor === colors.activeKey ? key.dataset.defaultColor : colors.activeKey;
     }
   };
@@ -196,13 +199,13 @@ export default function MidiPianoDisplay({ content }) {
 
   const inputNote = midiValue => {
     // Don't allow to input more notes than needed. Max note input number is number of solution notes - 1: First note (indication) can not be input or deleted.
-    if (inputAbcNoteNameSequence.current.length >= currentNoteSequence().abcNoteNameSequence.length - 1) {
+    if (inputAbcNoteNameSequence.current.length >= abcNoteNameSequence.length - 1) {
       return;
     }
 
     const autoAbcNoteName = ABC_NOTE_NAMES[midiValue];
-    const solutionAbcNoteName = currentNoteSequence().abcNoteNameSequence[inputAbcNoteNameSequence.current.length + 1];
-    const isCorrect = midiValue === currentNoteSequence().midiValueSequence[inputAbcNoteNameSequence.current.length + 1];
+    const solutionAbcNoteName = abcNoteNameSequence[inputAbcNoteNameSequence.current.length + 1];
+    const isCorrect = midiValue === midiValueSequence[inputAbcNoteNameSequence.current.length + 1];
 
     // Make sure same accidental type note is rendered for chromatic notes as in solution
     if (isCorrect) {
@@ -233,7 +236,7 @@ export default function MidiPianoDisplay({ content }) {
     playOrStopNote(eventType, noteName);
     updateKeyStyle(eventType, midiValue);
 
-    if (isNoteInputEnabled.current && eventType === 'Note on') {
+    if (isNoteInputEnabled.current && eventType === EVENT_TYPES.noteOn) {
       inputNote(midiValue);
     }
   }
@@ -247,10 +250,10 @@ export default function MidiPianoDisplay({ content }) {
     const noteName = message.noteName;
     let eventType;
     if (message.name === 'Note on') {
-      eventType = velocity <= 0 ? 'Note off' : 'Note on';
+      eventType = velocity <= 0 ? EVENT_TYPES.noteOff : EVENT_TYPES.noteOn;
     }
     if (message.name === 'Note off') {
-      eventType = 'Note off';
+      eventType = EVENT_TYPES.noteOff;
     }
 
     playOrStopNote(eventType, noteName);
@@ -416,7 +419,7 @@ export default function MidiPianoDisplay({ content }) {
         <InputNumber
           value={playExerciseStartIndex + 1}
           min={1}
-          max={currentNoteSequence().abcNoteNameSequence.length}
+          max={abcNoteNameSequence.length}
           onChange={value => { setPlayExerciseStartIndex(value - 1); }}
           />
       </Form.Item>
@@ -425,17 +428,17 @@ export default function MidiPianoDisplay({ content }) {
 
   const renderEarTrainingControls = () => (
     <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', alignItems: 'center' }}>
-      <h4>{`${t(currentTest().exerciseType)} (${currentTest().whiteKeysOnly ? t('whiteKeysOnly') : null})`}</h4>
+      <h4>{`${t(exerciseType)} ${exerciseType === EXERCISE_TYPES.noteSequence && !isCustomNoteSequence && whiteKeysOnly ? `(${t('whiteKeysOnly')})` : ''}`}</h4>
       <div style={itemStyle}>
         <Button onClick={playExercise} icon={<PlayIcon />} />
         <Button onClick={() => { isExercisePlaying.current = false; }} icon={<StopIcon />} />
       </div>
       <Form>
         <Form.Item label={t('noteDuration')} style={itemStyle}>
-          <Slider tipFormatter={tipformatter} defaultValue={2000} min={500} max={4000} step={100} onChange={value => { noteDuration.current = value; }} />
+          <Slider tipFormatter={tipformatter} defaultValue={2000} min={200} max={4000} step={100} onChange={value => { noteDuration.current = value; }} />
         </Form.Item>
-        {currentTest().exerciseType === 'noteSequence' && renderNoteSequenceControls()}
-        {currentTest().exerciseType === 'interval' && renderIntervallControls()}
+        {exerciseType === 'noteSequence' && renderNoteSequenceControls()}
+        {exerciseType === 'interval' && renderIntervallControls()}
       </Form>
       <div>
         <Button style={{ width: 'fit-content' }} onClick={() => setCanShowSolution(prev => !prev)}>{canShowSolution ? t('hideSolution') : t('showSolution')}</Button>
@@ -447,10 +450,6 @@ export default function MidiPianoDisplay({ content }) {
   useEffect(() => {
     updateMidiMessageHandlers();
     updateMidiInputSwitches();
-  });
-
-  useEffect(() => {
-
   });
 
   useEffect(() => {
@@ -503,14 +502,14 @@ export default function MidiPianoDisplay({ content }) {
                 <div>{t('noteInput')}</div>
               </div>
               <div style={{ minHeight: '7rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <AbcNotation abcCode={`L:1/4 \n K:C ${currentNoteSequence().clef || 'treble'} \n ${indication + inputAbc}`} />
+                <AbcNotation abcCode={`L:1/4 \n K:C ${clef || 'treble'} \n ${indication + inputAbc}`} />
               </div>
               <Button onClick={deleteNote}>{'<-'}</Button>
             </div>
             <div className="AbcNotation-wrapper u-width-65" style={{ position: 'absolute', left: '50%', textAlign: 'left' }}>
               <div>{canShowSolution ? t('solution') : t('firstNote')}</div>
               <div style={{ minHeight: '7rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <AbcNotation abcCode={`L:1/4 \n K:C ${currentNoteSequence().clef || 'treble'} \n ${canShowSolution ? solution : indication}`} />
+                <AbcNotation abcCode={`L:1/4 \n K:C ${clef || 'treble'} \n ${canShowSolution ? solution : indication}`} />
               </div>
             </div>
           </div>
@@ -530,7 +529,8 @@ export default function MidiPianoDisplay({ content }) {
         isNoteInputEnabled={isNoteInputEnabled}
         test={currentTest()}
         inputNote={inputNote}
-        indicationMidiValue={indicationMidiValue}
+        midiValueSequence={midiValueSequence}
+        canShowSolution={canShowSolution}
         />
       <div className="MidiPiano-controlsContainer">
         <div style={{ width: '100%', padding: '1rem 0' }}>

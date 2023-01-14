@@ -99,3 +99,7 @@ export function analyseABC(string) {
 export const randomIntBetween = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
+
+export const randomArrayElem = array => {
+  return array[randomIntBetween(0, array.length - 1)];
+};

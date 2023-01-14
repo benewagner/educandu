@@ -141,13 +141,13 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     }
 
     if (checkbox.interval === 'all') {
+      newCheckboxStates.all = checkedState;
       Object.keys(newCheckboxStates).forEach(key => {
         updateAllCheckboxStates(key);
       });
     } else {
       updateCheckboxStates(interval);
     }
-
     newTests[index][`${testType}CheckboxStates`] = newCheckboxStates;
     changeContent({ tests: newTests });
   };
@@ -200,11 +200,14 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const handleNoteRangeChanged = (event, index) => {
     const newTests = cloneDeep(tests);
+    // NoteRange is range of notes provided for ear training exercise. Will be turned into keyRange (part of piano to be rendered) in custom hook useExercise
+    // Both noteRange and keyRange define first and last white key index (not midi values) of part of piano to be rendered
     newTests[index].noteRange = { first: event[0], last: event[1] };
     changeContent({ tests: newTests });
   };
 
   const handleCustomNoteSequenceNoteRangeChanged = (event, testIndex, index) => {
+    // See handleNoteRangeChanged
     const newTests = cloneDeep(tests);
     newTests[testIndex].customNoteSequences[index].noteRange = { first: event[0], last: event[1] };
     changeContent({ tests: newTests });
@@ -287,7 +290,14 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     changeContent({ tests: newTests });
   };
 
-  const handleClefTypeChanged = (event, testIndex, noteSequenceIndex) => {
+  const handleClefTypeChanged = (event, testIndex) => {
+    const { value } = event.target;
+    const newTests = cloneDeep(tests);
+    newTests[testIndex].clef = value;
+    changeContent({ tests: newTests });
+  };
+
+  const handleCustomNoteSequenceClefTypeChanged = (event, testIndex, noteSequenceIndex) => {
     const { value } = event.target;
     const newTests = cloneDeep(tests);
     newTests[testIndex].customNoteSequences[noteSequenceIndex].clef = value;
@@ -401,6 +411,15 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
         marks={{ 2: t('c1'), 9: t('c2'), 16: t('c3'), 23: t('c4'), 30: t('c5'), 37: t('c6'), 44: t('c7'), 51: t('c8') }}
         />
       {tests[testIndex].exerciseType === EXERCISE_TYPES.noteSequence && !tests[testIndex].isCustomNoteSequence && renderWhiteKeysCheckbox(testIndex)}
+    </FormItem>
+  );
+
+  const renderClefTypeSelector = (testIndex, clef, onChangeHandler, index) => (
+    <FormItem label={t('clef')} {...formItemLayout}>
+      <RadioGroup value={clef}>
+        <RadioButton value="treble" onChange={event => onChangeHandler(event, testIndex, index)}>{t('trebleClef')}</RadioButton>
+        <RadioButton value="bass" onChange={event => onChangeHandler(event, testIndex, index)}>{t('bassClef')}</RadioButton>
+      </RadioGroup>
     </FormItem>
   );
 
@@ -535,12 +554,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     const { abc, clef } = noteSequence;
     return (
       <React.Fragment>
-        <FormItem label={t('clef')} {...formItemLayout}>
-          <RadioGroup value={clef}>
-            <RadioButton value="treble" onChange={event => handleClefTypeChanged(event, testIndex, index)}>{t('trebleClef')}</RadioButton>
-            <RadioButton value="bass" onChange={event => handleClefTypeChanged(event, testIndex, index)}>{t('bassClef')}</RadioButton>
-          </RadioGroup>
-        </FormItem>
+        {renderClefTypeSelector(testIndex, clef, handleCustomNoteSequenceClefTypeChanged, index)}
         <FormItem label={t('preview')} {...formItemLayout} hasFeedback>
           <AbcNotation abcCode={`L:1/4 \n K:C ${clef} \n ${filterAbcString(abc)}`} />
         </FormItem>
@@ -583,7 +597,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
               />
           </FormItem>
         )}
-        {!tests[index].isCustomNoteSequence && renderIntervalSelector(tests[index].noteSequenceCheckboxStates, 'noteSequence', index)}
+        {!tests[index].isCustomNoteSequence && renderIntervalSelector(tests[index].noteSequenceCheckboxStates, EXERCISE_TYPES.noteSequence, index)}
         {!!tests[index].isCustomNoteSequence && renderCustomNoteSequencePanels(index)}
         {!!tests[index].isCustomNoteSequence
         && (
@@ -606,7 +620,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
         {renderSamplesTypeInput(samplesType, handleSamplesTypeValueChanged)}
         <Divider>MIDI</Divider>
         {renderMidiTrackTitleInput(midiTrackTitle, handleMidiTrackTitleValueChanged)}
-        {renderSourceTypeInput(sourceType, handlexerciseTypeeSourceTypeValueChanged)}
+        {renderSourceTypeInput(sourceType, handleSourceTypeValueChanged)}
         {sourceType === MIDI_SOURCE_TYPE.external
           && renderExternalSourceTypeInput(sourceUrl, handleExternalSourceUrlValueChanged)}
         {sourceType === MIDI_SOURCE_TYPE.internal
@@ -631,6 +645,9 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
                 </RadioGroup>
               </FormItem>
               {test.exerciseType === EXERCISE_TYPES.noteSequence && renderNoteSequenceTypeSelector(index)}
+              {test.exerciseType === EXERCISE_TYPES.noteSequence
+                && !test.isCustomNoteSequence
+                && renderClefTypeSelector(index, test.clef, handleClefTypeChanged)}
               {([EXERCISE_TYPES.interval, EXERCISE_TYPES.chord].includes(test.exerciseType)
                 || (test.exerciseType === EXERCISE_TYPES.noteSequence
                 && !test.isCustomNoteSequence))

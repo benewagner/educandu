@@ -3,6 +3,7 @@ import midiPlayerNs from 'midi-player-js';
 import React, { useEffect, useRef } from 'react';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
 import { create as createId } from '../../utils/unique-id.js';
+import { EXERCISE_TYPES } from './constants.js';
 
 // 0 represents white and black key, 1 respresents white key. Second element is midiValue for white key.
 export const pianoLayout = [
@@ -23,6 +24,7 @@ export default function CustomPiano(props) {
     inputNote,
     activeNotes,
     updateKeyStyle,
+    canShowSolution,
     hasSamplerLoaded,
     updateActiveNotes,
     isNoteInputEnabled,
@@ -118,7 +120,7 @@ export default function CustomPiano(props) {
       updateActiveNotes('Note off', midiValue);
       stopNote(midiValue);
     }
-    if (!['interval', 'chord'].includes(exerciseType) && midiValue !== indicationMidiValue) {
+    if (![EXERCISE_TYPES.interval, EXERCISE_TYPES.chord].includes(exerciseType) && midiValue !== indicationMidiValue) {
       updateKeyStyle('Note off', midiValue);
     }
   };
@@ -127,9 +129,20 @@ export default function CustomPiano(props) {
     if (!hasSamplerLoaded || !sampler) {
       return;
     }
-    piano.current.addEventListener('mousedown', handleMouseDown);
-    piano.current.addEventListener('mouseup', handleMouseUp);
-  }, [sampler, hasSamplerLoaded]);
+    const pianoNode = document.querySelector(`#${pianoId}`);
+    pianoNode.addEventListener('mousedown', handleMouseDown);
+    pianoNode.addEventListener('mouseup', handleMouseUp);
+    // piano.current.addEventListener('mousedown', handleMouseDown);
+    // piano.current.addEventListener('mouseup', handleMouseUp);
+
+  });
+
+  // useEffect(() => {
+  //   return () => {
+  //     piano.current.removeEventListener('mouseover', handleMouseOver);
+  //     piano.current.removeEventListener('mouseleave', handleMouseOut);
+  //   };
+  // });
 
   useEffect(() => {
     const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);
@@ -166,6 +179,7 @@ export default function CustomPiano(props) {
 
 CustomPiano.propTypes = {
   activeNotes: PropTypes.object.isRequired,
+  canShowSolution: PropTypes.bool,
   colors: PropTypes.object.isRequired,
   hasSamplerLoaded: PropTypes.bool.isRequired,
   indicationMidiValue: PropTypes.number,
@@ -182,6 +196,7 @@ CustomPiano.propTypes = {
 };
 
 CustomPiano.defaultProps = {
+  canShowSolution: false,
   indicationMidiValue: null,
   inputNote: () => {},
   isNoteInputEnabled: {},

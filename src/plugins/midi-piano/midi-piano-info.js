@@ -71,6 +71,7 @@ class MidiPianoInfo {
       noteRange: { first: 12, last: 39 },
       whiteKeysOnly: false,
       numberOfNotes: 4,
+      clef: 'treble',
       isCustomNoteSequence: true,
       customNoteSequences: [this.getDefaultCustomNoteSequence()],
       directionCheckboxStates: {
