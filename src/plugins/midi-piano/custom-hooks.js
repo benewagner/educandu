@@ -14,6 +14,12 @@ import { create as createId } from '../../utils/unique-id.js';
 import { randomIntBetween, randomArrayElem } from './utils.js';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
+const getNextMidiValue = (currentMidiVal, vector) => currentMidiVal + vector;
+
+const getPossibleNextMidiValues = (lowestMidiVal, highestMidiVal, currentMidiVal, vector) => {
+
+};
+
 const getMidiValueFromNoteName = noteName => MIDI_NOTE_NAMES.indexOf(noteName);
 const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
 const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
@@ -248,17 +254,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const isNoteSequenceExercise = exerciseType === EXERCISE_TYPES.noteSequence;
 
     const allowsLargeIntervals = (() => {
-      if (test[`${exerciseType}AllowsLargeIntervals`] && !test.isCustomNoteSequence) {
-        return true;
-      }
-      return false;
+      return test[`${exerciseType}AllowsLargeIntervals`];
     })();
-
-    console.log(test);
-    // console.log(exerciseType);
-
-    // console.log(test);
-    // console.log(allowsLargeIntervals);
 
     const midiValueSequence = [];
     const abcNoteNameSequence = [];
@@ -349,7 +346,9 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
             vectorWithDirection += 12;
           }
         }
-        nextMidiValue = randomArrayElem(possibleNextMidiValues);
+        if (possibleNextMidiValues.length !== 0) {
+          nextMidiValue = randomArrayElem(possibleNextMidiValues);
+        }
       }
 
       if (isNoteSequenceExercise
@@ -379,7 +378,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence];
   }, [currentTest]);
 
-  const getSequencesForRandomNotSequenceMode = useCallback((keyRange, intervalVectors) => {
+  const getSequencesForRandomNoteSequenceMode = useCallback((keyRange, intervalVectors) => {
     const test = currentTest();
     const exerciseType = currentTest().exerciseType;
     const allowsLargeIntervals = (() => {
@@ -593,7 +592,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         const intervalVectors = getIntervalVectors(intervalCheckboxStates);
         const noteRange = currentTest().noteRange;
         const keyRange = getKeyRange({ intervalVectors, noteRange });
-        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNotSequenceMode(keyRange, intervalVectors);
+        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNoteSequenceMode(keyRange, intervalVectors);
         const solution = getSolution(abcNoteNameSequence);
 
         return {
@@ -661,7 +660,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       content.tests.length,
       getKeyRangeForChordMode,
       getSequencesForChordMode,
-      getSequencesForRandomNotSequenceMode
+      getSequencesForRandomNoteSequenceMode
     ]
   );
 

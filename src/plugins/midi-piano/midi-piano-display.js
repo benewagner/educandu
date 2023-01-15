@@ -55,6 +55,8 @@ export default function MidiPianoDisplay({ content }) {
   const [sampler, hasSamplerLoaded] = useToneJsSampler(sampleType);
   const exerciseData = useExercise(content, currentTestIndex, currentExerciseIndex);
 
+  console.log(exerciseData);
+
   const {
     clef,
     keyRange,
