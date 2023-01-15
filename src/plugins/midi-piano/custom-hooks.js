@@ -153,6 +153,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
   const currentTest = useCallback(() => content.tests[currentTestIndex], [content.tests, currentTestIndex]);
   const currentNoteSequence = useCallback(() => currentTest().customNoteSequences[currentExerciseIndex], [currentExerciseIndex, currentTest]);
 
+  // Used for all exercise modes except chord mode. NoteRange defined in editor becomes rendered piano keyRange.
+  // Checks if noteRange is too narrow for exercise and if so widens it.
   const getKeyRange = useCallback(paramObj => {
     const { intervalVectors, midiNoteNameSequence, noteRange } = paramObj;
     const exerciseType = currentTest().exerciseType;
@@ -236,11 +238,12 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     return intervalVectors;
   }, [currentTest]);
 
+  // Used for exercise modes 'interval' and 'noteSequence' without customeNoteSequence
   const getSequences = useCallback((keyRange, intervalVectors) => {
     const test = currentTest();
     const exerciseType = currentTest().exerciseType;
     const allowsLargeIntervals = (() => {
-      if (test[`${exerciseType}AllowsLargeIntervals`] && !(exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence)) {
+      if (test[`${exerciseType}AllowsLargeIntervals`] && !test.isCustomNoteSequence) {
         return true;
       }
       return false;
@@ -367,7 +370,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence];
   }, [currentTest]);
 
-  const getSequencesForRandomNotSequence = useCallback((keyRange, intervalVectors) => {
+  const getSequencesForRandomNotSequenceMode = useCallback((keyRange, intervalVectors) => {
     const test = currentTest();
     const exerciseType = currentTest().exerciseType;
     const allowsLargeIntervals = (() => {
@@ -467,6 +470,16 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     return solution;
   }, []);
 
+  const getChordVectors = useCallback(() => {
+    const chordVectors = [];
+    return chordVectors;
+  }, []);
+
+  const getKeyRangeForChordMode = useCallback(() => {
+    const keyRange = {};
+    return keyRange;
+  }, []);
+
   const getData = useCallback(
     () => {
       if (content.tests.length === 0) {
@@ -497,7 +510,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         const intervalVectors = getIntervalVectors(intervalCheckboxStates);
         const noteRange = currentTest().noteRange;
         const keyRange = getKeyRange({ intervalVectors, noteRange });
-        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNotSequence(keyRange, intervalVectors);
+        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNotSequenceMode(keyRange, intervalVectors);
         const solution = getSolution(abcNoteNameSequence);
 
         return {
@@ -526,11 +539,27 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
           midiValueSequence,
           abcNoteNameSequence,
           midiNoteNameSequence,
-          clef: currentTest().clef,
           indication: abcNoteNameSequence[0],
           indicationMidiValue: midiValueSequence[0]
         };
+      }
 
+      if (test.exerciseType === EXERCISE_TYPES.chord) {
+        const noteRange = currentTest().noteRange;
+        const chordVectors = getChordVectors();
+        const keyRange = getKeyRangeForChordMode({ noteRange, chordVectors });
+        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequences(keyRange, intervalVectors);
+        const solution = getSolution(abcNoteNameSequence);
+
+        return {
+          keyRange,
+          solution,
+          midiValueSequence,
+          abcNoteNameSequence,
+          midiNoteNameSequence,
+          indication: abcNoteNameSequence[0],
+          indicationMidiValue: midiValueSequence[0]
+        };
       }
 
       return {
@@ -538,18 +567,21 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       };
     },
     [
-      content.keyRange,
-      content.tests.length,
-      currentNoteSequence,
       currentTest,
-      getIntervalVectors,
       getKeyRange,
+      getSolution,
       getSequences,
-      getSequencesForRandomNotSequence,
-      getSolution
+      getChordVectors,
+      content.keyRange,
+      getIntervalVectors,
+      currentNoteSequence,
+      content.tests.length,
+      getKeyRangeForChordMode,
+      getSequencesForRandomNotSequenceMode
     ]
   );
 
+  // Needs to execute only once. No need to execute when getData changes.
   const defaultData = useMemo(() => {
     return {
       abcNoteNameSequence: [],

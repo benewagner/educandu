@@ -67,7 +67,7 @@ class MidiPianoInfo {
     };
 
     return {
-      exerciseType: 'noteSequence',
+      exerciseType: '',
       noteRange: { first: 12, last: 39 },
       whiteKeysOnly: false,
       numberOfNotes: 4,
@@ -115,10 +115,7 @@ class MidiPianoInfo {
     return {
       sourceType: MIDI_SOURCE_TYPE.internal,
       sourceUrl: '',
-      keyRange: {
-        first: 12,
-        last: 39
-      },
+      keyRange: { first: 12, last: 39 },
       hasMidiFile: false,
       midiTrackTitle: '',
       colors: {

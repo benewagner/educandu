@@ -11,7 +11,6 @@ import AbcNotation from '../../components/abc-notation.js';
 import ClientConfig from '../../bootstrap/client-config.js';
 import CardSelector from '../../components/card-selector.js';
 import { Button, Radio, InputNumber, Slider, Form } from 'antd';
-import IterationPanel from '../../components/iteration-panel.js';
 import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
@@ -41,10 +40,12 @@ export default function MidiPianoDisplay({ content }) {
   const canShowSolutionRef = useRef(false); // For getStyle in components KeyWhite and KeyWhiteWithBlack XXX Nochmal checken ob state variable gehen würde
   const [canShowSolution, setCanShowSolution] = useState(false);
 
-  const currentTestIndexRef = useRef(0); // With state variable instead of Ref test index / note sequence index and displayed exercises did not necessarily match in noteSequence mode
+  // With state variable instead of Ref test index / note sequence index and displayed exercises do not necessarily match in noteSequence mode
+  const currentTestIndexRef = useRef(0);
   const [currentTestIndex, setCurrentTestIndex] = useState(0);
 
-  const currentExerciseIndexRef = useRef(0); // With state variable instead of Ref test index / note sequence index and displayed exercises did not necessarily match in noteSequence mode
+  // With state variable instead of Ref test index / note sequence index and displayed exercises do not necessarily match in noteSequence mode
+  const currentExerciseIndexRef = useRef(0);
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
 
   // Custom hooks returning state variables
@@ -541,17 +542,9 @@ export default function MidiPianoDisplay({ content }) {
               cards={testCards}
               onCardSelected={handleTestCardSelected}
               selectedCardIndex={currentTestIndex}
-              // visitedCardIndices={viewedTestIndices}
               treatSelectedCardAsVisited
               />
           </div>
-          {/* <IterationPanel
-            itemCount={testCards.length}
-            selectedItemIndex={currentTestIndex}
-            onNextClick={handleNextTestClick}
-            onPreviousClick={handlePreviousTestClick}
-            onResetClick={handleResetTestsClick}
-            /> */}
         </div>
       )}
       <div style={{ paddingBottom: '1rem' }}>
@@ -596,7 +589,6 @@ export default function MidiPianoDisplay({ content }) {
         test={currentTest()}
         inputNote={inputNote}
         midiValueSequence={midiValueSequence}
-        // inputAbcNoteNameSequence={answerMidiValueSequence.current}
         answerMidiValueSequence={answerMidiValueSequence}
         canShowSolutionRef={canShowSolutionRef}
         />
@@ -607,7 +599,7 @@ export default function MidiPianoDisplay({ content }) {
           {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}
         </div>
         <div className="MidiPiano-earTrainingControls" style={{ width: '100%' }} >
-          {renderEarTrainingControls()}
+          {exerciseType !== '' && renderEarTrainingControls()}
         </div>
         <div className="MidiPiano-inputSwitch">
           {!!isMidiDeviceConnected && renderInputSwitch()}
