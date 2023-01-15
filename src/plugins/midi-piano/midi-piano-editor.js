@@ -543,6 +543,14 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
           ))}
         </div>
       </FormItem>
+      <FormItem label={t('largeIntervals')} {...formItemLayout}>
+        <Checkbox
+          defaultChecked={tests[index][`${tests[index].exerciseType}AllowsLargeIntervals`]}
+          onChange={event => { handleLargeIntervalsCheckboxStateChanged(event, index); }}
+          >
+          {t('allowLargeIntervals')}
+        </Checkbox>
+      </FormItem>
     </React.Fragment>
   );
 

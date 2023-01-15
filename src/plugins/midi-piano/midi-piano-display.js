@@ -235,6 +235,7 @@ export default function MidiPianoDisplay({ content }) {
         setAnswerMidiValueSequence(prev => {
           const arr = [...prev];
           arr.splice(index, 1);
+          console.log(answerMidiValueSequenceRef.current);
           return arr;
         });
       } else if (!isAnswerComplete) {
@@ -242,6 +243,7 @@ export default function MidiPianoDisplay({ content }) {
         setAnswerMidiValueSequence(prev => {
           const arr = [...prev];
           arr.push(midiValue);
+          console.log(answerMidiValueSequenceRef.current);
           return arr;
         });
       }
@@ -451,7 +453,7 @@ export default function MidiPianoDisplay({ content }) {
     <div className="MidiPiano-midiTrackTitle">{midiTrackTitle}</div>
   );
 
-  const renderIntervalControls = () => (
+  const renderSuccessiveSimultaneousRadioGroup = () => (
     <div style={{ marginTop: '-0.5rem', marginBottom: '0.5rem', padding: '0.5rem' }}>
       <RadioGroup defaultValue="successive">
         <RadioButton value="successive" onChange={() => { playExerciseMode.current = 'successive'; }}>{t('successive')}</RadioButton>
@@ -491,8 +493,8 @@ export default function MidiPianoDisplay({ content }) {
         <Form.Item label={t('noteDuration')} style={itemStyle}>
           <Slider tipFormatter={tipformatter} defaultValue={2000} min={200} max={4000} step={100} onChange={value => { noteDuration.current = value; }} />
         </Form.Item>
-        {exerciseType === 'noteSequence' && renderNoteSequenceControls()}
-        {exerciseType === 'interval' && renderIntervalControls()}
+        {exerciseType === EXERCISE_TYPES.noteSequence && renderNoteSequenceControls()}
+        {exerciseType !== EXERCISE_TYPES.noteSequence && renderSuccessiveSimultaneousRadioGroup()}
       </Form>
       <div>
         <Button

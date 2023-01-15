@@ -241,3 +241,6 @@ largeIntervals:
 intervalsPlusOctave:
   en: Selected Intervals + Octave(s)
   de: Ausgewählte Intervalle + Oktave(n)
+allowLargeIntervals:
+  en: Allow intervals larger than octave
+  de: Intervalle größer als Oktave zulassen

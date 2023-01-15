@@ -188,3 +188,40 @@ export const CHORD_VECTORS = {
   }
 };
 
+export const chordVectorMap = new Map([
+  [[[4, 7]], ['Major triad', 'Fundamental']],
+  [[[3, 8]], ['Major triad', 'First inversion']],
+  [[[5, 9]], ['Major triad', 'Second inversion']],
+  [[[3, 7]], ['Minor triad', 'Fundamental']],
+  [[[4, 9]], ['Minor triad', 'First inversion']],
+  [[[5, 8]], ['Minor triad', 'Second inversion']],
+  [[[3, 6]], ['Diminished triad', 'Fundamental']],
+  [[[3, 9]], ['Diminished triad', 'First inversion']],
+  [[[6, 9]], ['Diminished triad', 'Second inversion']],
+  [[[4, 8]], ['Augmented triad', 'Any inversion']],
+  [[[4, 7, 10]], ['Major triad with minor seventh', 'Fundamental']],
+  [[[3, 6, 8]], ['Major triad with minor seventh', 'First inversion']],
+  [[[3, 5, 9]], ['Major triad with minor seventh', 'Second inversion']],
+  [[[2, 6, 9]], ['Major triad with minor seventh', 'Third inversion']],
+  [[[4, 7, 11]], ['Major triad with major seventh', 'Fundamental']],
+  [[[3, 7, 8]], ['Major triad with major seventh', 'First inversion']],
+  [[[4, 5, 9]], ['Major triad with major seventh', 'Second inversion']],
+  [[[1, 5, 8]], ['Major triad with major seventh', 'Third inversion']],
+  [[[3, 7, 10]], ['Minor triad with minor seventh', 'Fundamental']],
+  [[[4, 7, 9]], ['Minor triad with minor seventh', 'First inversion']],
+  [[[3, 5, 8]], ['Minor triad with minor seventh', 'Second inversion']],
+  [[[2, 5, 9]], ['Minor triad with minor seventh', 'Third inversion']],
+  [[[3, 7, 11]], ['Minor triad with major seventh', 'Fundamental']],
+  [[[4, 8, 9]], ['Minor triad with major seventh', 'First inversion']],
+  [[[4, 5, 8]], ['Minor triad with major seventh', 'Second inversion']],
+  [[[1, 4, 8]], ['Minor triad with major seventh', 'Third inversion']],
+  [[[3, 7, 11]], ['Minor triad with major seventh', 'Fundamental']],
+  [[[4, 8, 9]], ['Minor triad with major seventh', 'First inversion']],
+  [[[4, 5, 8]], ['Minor triad with major seventh', 'Second inversion']],
+  [[[1, 4, 8]], ['Minor triad with major seventh', 'Third inversion']],
+  [[[3, 6, 10]], ['Half-diminished', 'Fundamental']],
+  [[[3, 7, 9]], ['Half-diminished', 'First inversion']],
+  [[[4, 6, 9]], ['Half-diminished', 'Second inversion']],
+  [[[2, 5, 8]], ['Half-diminished', 'Third inversion']]
+]);
+

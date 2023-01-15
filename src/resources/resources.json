@@ -2015,7 +2015,8 @@
       "firstNote": "First Note",
       "solution": "Solution",
       "largeIntervals": "Large Intervals",
-      "intervalsPlusOctave": "Selected Intervals + Octave(s)"
+      "intervalsPlusOctave": "Selected Intervals + Octave(s)",
+      "allowLargeIntervals": "Allow intervals larger than octave"
     }
   },
   {
@@ -2102,7 +2103,8 @@
       "firstNote": "Erster Ton",
       "solution": "Lösung",
       "largeIntervals": "Große Intervalle",
-      "intervalsPlusOctave": "Ausgewählte Intervalle + Oktave(n)"
+      "intervalsPlusOctave": "Ausgewählte Intervalle + Oktave(n)",
+      "allowLargeIntervals": "Intervalle größer als Oktave zulassen"
     }
   },
   {
