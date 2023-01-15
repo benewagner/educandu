@@ -31,7 +31,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const midiPianoInfo = useService(MidiPianoInfo);
   const selectorPianoColors = { whiteKey: 'white', blackKey: 'black' };
   const [canRenderSelectorPiano, setCanRenderSelectorPiano] = useState(false);
-  const { tests, sourceUrl, sourceType, samplesType, midiTrackTitle } = content;
+  const { tests, sourceUrl, sourceType, sampleType, midiTrackTitle } = content;
 
   const tipformatter = value => {
     const tooltips = {
@@ -229,9 +229,9 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     changeContent({ sourceType: value, sourceUrl: '' });
   };
 
-  const handleSamplesTypeValueChanged = event => {
+  const handleSampleTypeValueChanged = event => {
     const { value } = event.target;
-    changeContent({ samplesType: value });
+    changeContent({ sampleType: value });
   };
 
   const handleExerciseTypeValueChanged = (event, index) => {
@@ -321,7 +321,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     setCanRenderSelectorPiano(!canRenderSelectorPiano);
   };
 
-  const renderSamplesTypeInput = (value, onChangeHandler) => (
+  const renderSampleTypeInput = (value, onChangeHandler) => (
     <FormItem label="Samples" {...formItemLayout}>
       <RadioGroup value={value} onChange={onChangeHandler}>
         <RadioButton value="piano">{t('piano')}</RadioButton>
@@ -622,7 +622,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     <div className="MidiPianoEditor">
       <Form>
         {renderKeyRangeSelector(toggleSelectorPiano)}
-        {renderSamplesTypeInput(samplesType, handleSamplesTypeValueChanged)}
+        {renderSampleTypeInput(sampleType, handleSampleTypeValueChanged)}
         <Divider>MIDI</Divider>
         {renderMidiTrackTitleInput(midiTrackTitle, handleMidiTrackTitleValueChanged)}
         {renderSourceTypeInput(sourceType, handleSourceTypeValueChanged)}

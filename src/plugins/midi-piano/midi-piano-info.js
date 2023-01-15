@@ -126,7 +126,7 @@ class MidiPianoInfo {
         answer: '#FFF58C',
         wrong: '#FF8C8C'
       },
-      samplesType: 'piano',
+      sampleType: 'piano',
       tests: [this.getDefaultTest()]
     };
   }

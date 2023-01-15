@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /* eslint-disable complexity */
 import * as Tone from 'tone';
 import { WHITE_KEYS_MIDI_VALUES,
@@ -6,7 +7,8 @@ import { WHITE_KEYS_MIDI_VALUES,
   ABC_NOTE_NAMES,
   MIDI_NOTE_NAMES,
   INTERVAL_VECTORS,
-  CHORD_VECTORS } from './constants.js';
+  CHORD_VECTORS,
+  INVERSIONS} from './constants.js';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
 import { randomIntBetween, randomArrayElem } from './utils.js';
@@ -471,13 +473,38 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
   }, []);
 
   const getChordVectors = useCallback(() => {
+    const test = currentTest();
     const chordVectors = [];
-    return chordVectors;
-  }, []);
+    const triadCheckboxStates = test.triadCheckboxStates;
+    const seventhChordCheckboxStates = test.seventhChordCheckboxStates;
+    const inversionCheckboxStates = test.inversionCheckboxStates;
+    const triads = Object.keys(triadCheckboxStates).map(key => triadCheckboxStates[key] && key).filter(elem => elem);
+    const seventhChords = Object.keys(seventhChordCheckboxStates).map(key => seventhChordCheckboxStates[key] && key).filter(elem => elem);
+    const inversions = Object.keys(inversionCheckboxStates).map(key => inversionCheckboxStates[key] && key).filter(elem => elem);
 
-  const getKeyRangeForChordMode = useCallback(() => {
-    const keyRange = {};
-    return keyRange;
+    for (const inversion of inversions) {
+      chordVectors.push(...triads.map(triad => CHORD_VECTORS.triads[triad][inversion]).filter(elem => elem));
+      chordVectors.push(...seventhChords.map(seventhChord => CHORD_VECTORS.seventhChords[seventhChord][inversion]));
+    }
+
+    return chordVectors;
+  }, [currentTest]);
+
+  const getKeyRangeForChordMode = useCallback((noteRange, chordVectors) => {
+    let firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.first);
+    let lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.last);
+
+    for (const chordVector of chordVectors) {
+      for (const number of chordVector) {
+        firstKeyRangeMidiValue + number > lastKeyRangeMidiValue && (lastKeyRangeMidiValue = firstKeyRangeMidiValue + number);
+        lastKeyRangeMidiValue - number < firstKeyRangeMidiValue && (firstKeyRangeMidiValue = lastKeyRangeMidiValue - number);
+      }
+    }
+
+    return {
+      first: WHITE_KEYS_MIDI_VALUES.indexOf(firstKeyRangeMidiValue),
+      last: WHITE_KEYS_MIDI_VALUES.indexOf(lastKeyRangeMidiValue)
+    };
   }, []);
 
   const getData = useCallback(
@@ -547,8 +574,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       if (test.exerciseType === EXERCISE_TYPES.chord) {
         const noteRange = currentTest().noteRange;
         const chordVectors = getChordVectors();
-        const keyRange = getKeyRangeForChordMode({ noteRange, chordVectors });
-        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequences(keyRange, intervalVectors);
+        const keyRange = getKeyRangeForChordMode(noteRange, chordVectors);
+        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForChordMode(keyRange, chordVectors);
         const solution = getSolution(abcNoteNameSequence);
 
         return {

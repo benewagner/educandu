@@ -34,7 +34,7 @@ export default function MidiPianoDisplay({ content }) {
   const clientConfig = useService(ClientConfig);
   const getNoteNameFromMidiValue = midiValue => MIDI_NOTE_NAMES[midiValue];
   const [playExerciseStartIndex, setPlayExerciseStartIndex] = useState(0);
-  const { sourceType, sourceUrl, midiTrackTitle, colors, tests } = content;
+  const { sourceType, sourceUrl, midiTrackTitle, colors, tests, sampleType } = content;
   const src = urlUtils.getMidiUrl({ cdnRootUrl: clientConfig.cdnRootUrl, sourceType, sourceUrl });
 
   const canShowSolutionRef = useRef(false); // For getStyle in components KeyWhite and KeyWhiteWithBlack XXX Nochmal checken ob state variable gehen würde
@@ -52,7 +52,7 @@ export default function MidiPianoDisplay({ content }) {
   const midiData = useMidiLoader(src);
   const pianoId = usePianoId('default');
   const isMidiDeviceConnected = useMidiDevice();
-  const [sampler, hasSamplerLoaded] = useToneJsSampler(SAMPLE_TYPES.piano);
+  const [sampler, hasSamplerLoaded] = useToneJsSampler(sampleType);
   const exerciseData = useExercise(content, currentTestIndex, currentExerciseIndex);
 
   const {
