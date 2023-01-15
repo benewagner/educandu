@@ -36,7 +36,7 @@ class MidiPianoInfo {
       filteredAbc: 'c',
       midiNoteNameSequence: ['C5'],
       midiValueSequence: [72],
-      noteRange: { first: 12, last: 39 }
+      noteRange: { first: 19, last: 39 }
     };
   }
 
@@ -74,6 +74,9 @@ class MidiPianoInfo {
       clef: 'treble',
       isCustomNoteSequence: true,
       customNoteSequences: [this.getDefaultCustomNoteSequence()],
+      intervalAllowsLargeIntervals: false,
+      chordAllowsLargeIntervals: false,
+      noteSequenceAllowsLargeIntervals: true,
       directionCheckboxStates: {
         up: true,
         down: false
@@ -120,11 +123,11 @@ class MidiPianoInfo {
       midiTrackTitle: '',
       colors: {
         blackKey: 'rgb(56, 56, 56)',
-        activeKey: 'rgb(127, 202, 230)',
         whiteKey: 'rgb(255, 255, 255)',
-        correct: 'rgb(130, 230, 127)',
-        wrong: 'rgb(230, 127, 127)',
-        answer: 'rgb(230, 221, 127)'
+        activeKey: '#8CE0FF',
+        correct: '#8CFF92',
+        answer: '#FFF58C',
+        wrong: '#FF8C8C'
       },
       samplesType: 'piano',
       tests: [this.getDefaultTest()]

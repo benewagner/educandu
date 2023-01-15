@@ -4,19 +4,23 @@ import { EXERCISE_TYPES } from './constants.js';
 
 const getStyle = (keyMidiValue, midiValueSequence, colors, canShowSolutionRef, answerMidiValueSequence, exerciseType) => {
 
-  // In noteSequence mode keys don't need to be styled on render because of abcNotation
-  if (exerciseType === EXERCISE_TYPES.noteSequence) {
-    return null;
-  }
   if (midiValueSequence === null) {
     return null;
   }
 
-  const style = {};
   const indicationMidiValue = midiValueSequence[0];
   const isIndicationKey = keyMidiValue === indicationMidiValue;
-  const isSolutionKey = midiValueSequence.includes(keyMidiValue);
 
+  // In noteSequence mode, except for indication key, keys don't need to be styled on render because of abcNotation
+  if (exerciseType === EXERCISE_TYPES.noteSequence) {
+    if (isIndicationKey) {
+      return { backgroundColor: colors.activeKey };
+    }
+    return null;
+  }
+
+  const style = {};
+  const isSolutionKey = midiValueSequence.includes(keyMidiValue);
   const isAnswerKey = answerMidiValueSequence.includes(keyMidiValue);
 
   if (isSolutionKey && canShowSolutionRef.current) {

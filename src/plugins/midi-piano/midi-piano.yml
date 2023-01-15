@@ -235,3 +235,9 @@ firstNote:
 solution:
   en: Solution
   de: Lösung
+largeIntervals:
+  en: Large Intervals
+  de: Große Intervalle
+intervalsPlusOctave:
+  en: Selected Intervals + Octave(s)
+  de: Ausgewählte Intervalle + Oktave(n)

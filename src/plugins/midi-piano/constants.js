@@ -74,16 +74,6 @@ export const SAMPLE_TYPES = {
   piano: 'piano'
 };
 
-// Also included in midiPlayerNs
-// export const NOTES = [
-//   'C-1', 'Db-1', 'D-1', 'Eb-1', 'E-1', 'F-1', 'Gb-1', 'G-1', 'Ab-1', 'A-1', 'Bb-1', 'B-1', 'C0', 'Db0', 'D0', 'Eb0', 'E0', 'F0', 'Gb0', 'G0', 'Ab0',
-//   'A0', 'Bb0', 'B0', 'C1', 'Db1', 'D1', 'Eb1', 'E1', 'F1', 'Gb1', 'G1', 'Ab1', 'A1', 'Bb1', 'B1', 'C2', 'Db2', 'D2', 'Eb2', 'E2', 'F2', 'Gb2', 'G2',
-//   'Ab2', 'A2', 'Bb2', 'B2', 'C3', 'Db3', 'D3', 'Eb3', 'E3', 'F3', 'Gb3', 'G3', 'Ab3', 'A3', 'Bb3', 'B3', 'C4', 'Db4', 'D4', 'Eb4', 'E4', 'F4', 'Gb4',
-//   'G4', 'Ab4', 'A4', 'Bb4', 'B4', 'C5', 'Db5', 'D5', 'Eb5', 'E5', 'F5', 'Gb5', 'G5', 'Ab5', 'A5', 'Bb5', 'B5', 'C6', 'Db6', 'D6', 'Eb6', 'E6', 'F6',
-//   'Gb6', 'G6', 'Ab6', 'A6', 'Bb6', 'B6', 'C7', 'Db7', 'D7', 'Eb7', 'E7', 'F7', 'Gb7', 'G7', 'Ab7', 'A7', 'Bb7', 'B7', 'C8', 'Db8', 'D8', 'Eb8', 'E8',
-//   'F8', 'Gb8', 'G8', 'Ab8', 'A8', 'Bb8', 'B8', 'C9', 'Db9', 'D9', 'Eb9', 'E9', 'F9', 'Gb9', 'G9', 'Ab9', 'A9', 'Bb9', 'B9'
-// ];
-
 export const MIDI_COMMANDS = {
   noteOn: 144,
   noteOff: 128,
@@ -127,5 +117,74 @@ export const EVENT_TYPES = {
   noteOn: 'Note on',
   noteOff: 'Note off',
   toggle: 'toggle'
+};
+
+export const TRIADS = ['majorTriad', 'minorTriad', 'diminished', 'augmented'];
+
+export const SEVENTH_CHORDS = ['majorTriadMinorSeventh', 'majorTriadMajorSeventh', 'minorTriadMinorSeventh', 'minorTriadMajorSeventh', 'halfDiminished', 'diminishedSeventh'];
+
+export const INVERSIONS = ['fundamental', 'firstInversion', 'secondInversion', 'thirdInversion'];
+
+export const CHORD_VECTORS = {
+  triads: {
+    majorTriad: {
+      fundamental: [4, 7],
+      firstInversion: [3, 8],
+      secondInversion: [5, 9]
+    },
+    minorTriad: {
+      fundamental: [3, 7],
+      firstInversion: [4, 9],
+      secondInversion: [5, 8]
+    },
+    diminished: {
+      fundamental: [3, 6],
+      firstInversion: [3, 9],
+      secondInversion: [6, 9]
+    },
+    augmented: {
+      fundamental: [4, 8],
+      firstInversion: [4, 8],
+      secondInversion: [4, 8]
+    }
+  },
+  seventhChords: {
+    majorTriadMinorSeventh: {
+      fundamental: [4, 7, 10],
+      firstInversion: [3, 6, 8],
+      secondInversion: [3, 5, 9],
+      thirdInversion: [2, 6, 9]
+    },
+    majorTriadMajorSeventh: {
+      fundamental: [4, 7, 11],
+      firstInversion: [3, 7, 8],
+      secondInversion: [4, 5, 9],
+      thirdInversion: [1, 5, 8]
+    },
+    minorTriadMinorSeventh: {
+      fundamental: [3, 7, 10],
+      firstInversion: [4, 7, 9],
+      secondInversion: [3, 5, 8],
+      thirdInversion: [2, 5, 9]
+    },
+    minorTriadMajorSeventh: {
+      fundamental: [3, 7, 11],
+      firstInversion: [4, 8, 9],
+      secondInversion: [4, 5, 8],
+      thirdInversion: [1, 4, 8]
+    },
+    halfDiminished: {
+      fundamental: [3, 6, 10],
+      firstInversion: [3, 7, 9],
+      secondInversion: [4, 6, 9],
+      thirdInversion: [2, 5, 8]
+    },
+    diminishedSeventh: {
+      fundamental: [3, 6, 9],
+      firstInversion: [3, 6, 9],
+      secondInversion: [3, 6, 9],
+      thirdInversion: [3, 6, 9]
+    }
+  }
 };
 

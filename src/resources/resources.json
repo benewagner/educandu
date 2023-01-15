@@ -2013,7 +2013,9 @@
       "newExercise": "New Exercise",
       "noteInput": "Note Input",
       "firstNote": "First Note",
-      "solution": "Solution"
+      "solution": "Solution",
+      "largeIntervals": "Large Intervals",
+      "intervalsPlusOctave": "Selected Intervals + Octave(s)"
     }
   },
   {
@@ -2098,7 +2100,9 @@
       "newExercise": "Neue Übung",
       "noteInput": "Noteneingabe",
       "firstNote": "Erster Ton",
-      "solution": "Lösung"
+      "solution": "Lösung",
+      "largeIntervals": "Große Intervalle",
+      "intervalsPlusOctave": "Ausgewählte Intervalle + Oktave(n)"
     }
   },
   {

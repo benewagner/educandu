@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import React, { useState, useRef } from 'react';
 import validation from '../../ui/validation.js';
 import { pianoLayout } from './custom-piano.js';
-import { EXERCISE_TYPES, INTERVAL_NAMES } from './constants.js';
 import MidiPianoInfo from './midi-piano-info.js';
 import { PlusOutlined } from '@ant-design/icons';
 import cloneDeep from '../../utils/clone-deep.js';
@@ -19,6 +18,7 @@ import { Form, Input, Radio, Button, Slider, Checkbox, Divider } from 'antd';
 import { CDN_URL_PREFIX, MIDI_SOURCE_TYPE } from '../../domain/constants.js';
 import ResourcePicker from '../../components/resource-picker/resource-picker.js';
 import { storageLocationPathToUrl, urlToStorageLocationPath } from '../../utils/storage-utils.js';
+import { EXERCISE_TYPES, INTERVAL_NAMES, TRIADS, SEVENTH_CHORDS, INVERSIONS } from './constants.js';
 
 export default function MidiPianoEditor({ content, onContentChanged }) {
 
@@ -107,7 +107,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     changeContent({ tests: newTests });
   };
 
-  const handleIntervalCheckboxStateChanged = (event, testType, checkboxStates, index) => {
+  const handleIntervalCheckboxStateChanged = (event, exerciseType, checkboxStates, index) => {
     const [checkedState, newTests] = getCheckboxStateAndNewTests(event);
     const checkbox = event.target;
     const interval = checkbox.interval;
@@ -148,7 +148,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     } else {
       updateCheckboxStates(interval);
     }
-    newTests[index][`${testType}CheckboxStates`] = newCheckboxStates;
+    newTests[index][`${exerciseType}CheckboxStates`] = newCheckboxStates;
     changeContent({ tests: newTests });
   };
 
@@ -157,7 +157,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     const otherDirection = direction === 'up' ? 'down' : 'up';
     newTests[index].directionCheckboxStates[direction] = checkedState;
     if (!checkedState) {
-      newTests[index].directionCheckboxStates[otherDirection] = !checkedState;
+      newTests[index].directionCheckboxStates[otherDirection] = true;
     }
     changeContent({ tests: newTests });
   };
@@ -310,6 +310,13 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     changeContent({ tests: newTests });
   };
 
+  const handleLargeIntervalsCheckboxStateChanged = (event, index) => {
+    const [checkedState, newTests] = getCheckboxStateAndNewTests(event);
+    const exerciseType = tests[index].exerciseType;
+    newTests[index][`${exerciseType}AllowsLargeIntervals`] = checkedState;
+    changeContent({ tests: newTests });
+  };
+
   const toggleSelectorPiano = () => {
     setCanRenderSelectorPiano(!canRenderSelectorPiano);
   };
@@ -423,15 +430,14 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </FormItem>
   );
 
-  const renderIntervalSelector = (checkboxStates, testType, testIndex) => (
+  const renderIntervalSelector = (checkboxStates, exerciseType, testIndex) => (
     <React.Fragment>
       <FormItem label={t('intervals')} {...formItemLayout} hasFeedback>
         <div>
           <Checkbox
             defaultChecked={checkboxStates.all}
-            testType={testType}
             interval="all"
-            onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+            onChange={event => handleIntervalCheckboxStateChanged(event, exerciseType, checkboxStates, testIndex)}
             >{t('all')}
           </Checkbox>
         </div>
@@ -442,8 +448,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
                 defaultChecked={checkboxStates[interval] === true || checkboxStates[interval].minor || checkboxStates[interval].major}
                 style={{ minWidth: '6rem' }}
                 interval={interval}
-                testType={testType}
-                onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+                onChange={event => handleIntervalCheckboxStateChanged(event, exerciseType, checkboxStates, testIndex)}
                 >
                 {t(interval)}
               </Checkbox>
@@ -453,8 +458,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
                     defaultChecked={checkboxStates[interval].minor}
                     interval={interval}
                     intervalType="minor"
-                    testType={testType}
-                    onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+                    onChange={event => handleIntervalCheckboxStateChanged(event, exerciseType, checkboxStates, testIndex)}
                     >
                     {t('minor')}
                   </Checkbox>
@@ -462,8 +466,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
                     defaultChecked={checkboxStates[interval].major}
                     interval={interval}
                     intervalType="major"
-                    testType={testType}
-                    onChange={event => handleIntervalCheckboxStateChanged(event, testType, checkboxStates, testIndex)}
+                    onChange={event => handleIntervalCheckboxStateChanged(event, exerciseType, checkboxStates, testIndex)}
                     >{t('major')}
                   </Checkbox>
                 </React.Fragment>
@@ -472,7 +475,15 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
           );
         })}
       </FormItem>
-      {testType === 'interval' && (
+      <FormItem label={t('largeIntervals')} {...formItemLayout}>
+        <Checkbox
+          defaultChecked={tests[testIndex][`${exerciseType}AllowsLargeIntervals`]}
+          onChange={event => { handleLargeIntervalsCheckboxStateChanged(event, testIndex); }}
+          >
+          {t('intervalsPlusOctave')}
+        </Checkbox>
+      </FormItem>
+      {exerciseType === 'interval' && (
         <FormItem label={t('direction')} {...formItemLayout}>
           <Checkbox
             defaultChecked={tests[testIndex].directionCheckboxStates.up}
@@ -491,55 +502,49 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </React.Fragment>
   );
 
-  const renderChordSelector = index => {
-    const triads = ['majorTriad', 'minorTriad', 'diminished', 'augmented'];
-    const seventhChords = ['majorTriadMinorSeventh', 'majorTriadMajorSeventh', 'minorTriadMinorSeventh', 'minorTriadMajorSeventh', 'halfDiminished', 'diminishedSeventh'];
-    const inversions = ['fundamental', 'firstInversion', 'secondInversion', 'thirdInversion'];
-
-    return (
-      <React.Fragment>
-        <FormItem label={t('triads')} {...formItemLayout} hasFeedback>
-          <div>
-            {triads.map(triad => (
-              <Checkbox
-                key={createId()}
-                defaultChecked={tests[index].triadCheckboxStates[triad]}
-                onChange={event => handleTriadCheckboxStateChanged(event, index, triad)}
-                >
-                {t(triad)}
-              </Checkbox>
-            ))}
-          </div>
-        </FormItem>
-        <FormItem label={t('seventhChords')} {...formItemLayout} hasFeedback>
-          {seventhChords.map(chord => (
-            <div key={createId()}>
-              <Checkbox
-                key={createId()}
-                defaultChecked={tests[index].seventhChordCheckboxStates[chord]}
-                onChange={event => handleSeventhChordCheckboxStateChanged(event, index, chord)}
-                >
-                {t(chord)}
-              </Checkbox>
-            </div>
+  const renderChordSelector = index => (
+    <React.Fragment>
+      <FormItem label={t('triads')} {...formItemLayout} hasFeedback>
+        <div>
+          {TRIADS.map(triad => (
+            <Checkbox
+              key={createId()}
+              defaultChecked={tests[index].triadCheckboxStates[triad]}
+              onChange={event => handleTriadCheckboxStateChanged(event, index, triad)}
+              >
+              {t(triad)}
+            </Checkbox>
           ))}
-        </FormItem>
-        <FormItem label={t('inversions')} {...formItemLayout} hasFeedback>
-          <div>
-            {inversions.map(inversion => (
-              <Checkbox
-                key={createId()}
-                defaultChecked={tests[index].inversionCheckboxStates[inversion]}
-                onChange={event => handleInversionCheckboxStateChanged(event, index, inversion)}
-                >
-                {t(inversion)}
-              </Checkbox>
-            ))}
+        </div>
+      </FormItem>
+      <FormItem label={t('seventhChords')} {...formItemLayout} hasFeedback>
+        {SEVENTH_CHORDS.map(chord => (
+          <div key={createId()}>
+            <Checkbox
+              key={createId()}
+              defaultChecked={tests[index].seventhChordCheckboxStates[chord]}
+              onChange={event => handleSeventhChordCheckboxStateChanged(event, index, chord)}
+              >
+              {t(chord)}
+            </Checkbox>
           </div>
-        </FormItem>
-      </React.Fragment>
-    );
-  };
+        ))}
+      </FormItem>
+      <FormItem label={t('inversions')} {...formItemLayout} hasFeedback>
+        <div>
+          {INVERSIONS.map(inversion => (
+            <Checkbox
+              key={createId()}
+              defaultChecked={tests[index].inversionCheckboxStates[inversion]}
+              onChange={event => handleInversionCheckboxStateChanged(event, index, inversion)}
+              >
+              {t(inversion)}
+            </Checkbox>
+          ))}
+        </div>
+      </FormItem>
+    </React.Fragment>
+  );
 
   const renderNoteSequenceTypeSelector = index => (
     <FormItem label={t('type')} {...formItemLayout}>

@@ -1,9 +1,16 @@
+/* eslint-disable complexity */
 import * as Tone from 'tone';
-import { useEffect, useState, useCallback } from 'react';
+import { WHITE_KEYS_MIDI_VALUES,
+  EXERCISE_TYPES,
+  INTERVAL_NAMES,
+  ABC_NOTE_NAMES,
+  MIDI_NOTE_NAMES,
+  INTERVAL_VECTORS,
+  CHORD_VECTORS } from './constants.js';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
 import { randomIntBetween, randomArrayElem } from './utils.js';
-import { WHITE_KEYS_MIDI_VALUES, EXERCISE_TYPES, INTERVAL_VECTORS, INTERVAL_NAMES, ABC_NOTE_NAMES, MIDI_NOTE_NAMES } from './constants.js';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 
 const getMidiValueFromNoteName = noteName => MIDI_NOTE_NAMES.indexOf(noteName);
 const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
@@ -230,7 +237,14 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
   }, [currentTest]);
 
   const getSequences = useCallback((keyRange, intervalVectors) => {
+    const test = currentTest();
     const exerciseType = currentTest().exerciseType;
+    const allowsLargeIntervals = (() => {
+      if (test[`${exerciseType}AllowsLargeIntervals`] && !(exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence)) {
+        return true;
+      }
+      return false;
+    })();
 
     const midiValueSequence = [];
     const abcNoteNameSequence = [];
@@ -247,9 +261,6 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       && !isWhiteKey(indicationMidiValue)) {
       indicationMidiValue += 1;
     }
-    midiValueSequence.push(indicationMidiValue);
-    abcNoteNameSequence.push(ABC_NOTE_NAMES[indicationMidiValue]);
-    midiNoteNameSequence.push(MIDI_NOTE_NAMES[indicationMidiValue]);
 
     let currentMidiValue = indicationMidiValue;
     let numberOfNotes = currentTest().numberOfNotes;
@@ -257,21 +268,76 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     if (exerciseType === EXERCISE_TYPES.interval) {
       numberOfNotes = 2;
     }
+    if (exerciseType === EXERCISE_TYPES.chord) {
+      numberOfNotes = 4;
+    }
+
+    const [useVectorUpOnly, useVectorDownOnly] = (() => {
+      if (exerciseType !== EXERCISE_TYPES.interval) {
+        return [false, false];
+      }
+      const directionCheckboxStates = currentTest().directionCheckboxStates;
+      if (directionCheckboxStates.up && !directionCheckboxStates.down) {
+        return [true, false];
+      }
+      if (!directionCheckboxStates.up && directionCheckboxStates.down) {
+        return [false, true];
+      }
+      return [false, false];
+    })();
 
     for (let i = 0; i < numberOfNotes - 1; i += 1) {
       let vector = randomArrayElem(intervalVectors);
 
-      while (firstKeyRangeMidiValue + vector > lastKeyRangeMidiValue || lastKeyRangeMidiValue - vector < firstKeyRangeMidiValue) {
-        vector = randomArrayElem(intervalVectors);
+      if (useVectorDownOnly) {
+        vector *= -1;
       }
 
-      let vectorWithDirection = vector * randomArrayElem([-1, 1]);
+      if (midiValueSequence.length === 0) {
+        if (indicationMidiValue + vector < firstKeyRangeMidiValue || indicationMidiValue + vector > lastKeyRangeMidiValue) {
+          if (indicationMidiValue + vector < firstKeyRangeMidiValue) {
+            indicationMidiValue = lastKeyRangeMidiValue;
+          } else {
+            indicationMidiValue = firstKeyRangeMidiValue;
+          }
+        }
+      }
 
+      let vectorWithDirection;
+
+      if (!useVectorUpOnly && !useVectorDownOnly) {
+        vectorWithDirection = vector * randomArrayElem([-1, 1]);
+      } else {
+        vectorWithDirection = vector;
+      }
+
+      if (midiValueSequence.length === 0) {
+        currentMidiValue = indicationMidiValue;
+      }
       let nextMidiValue = currentMidiValue + vectorWithDirection;
 
-      if (nextMidiValue < firstKeyRangeMidiValue || nextMidiValue > lastKeyRangeMidiValue) {
-        vectorWithDirection = -vectorWithDirection;
-        nextMidiValue = currentMidiValue + vectorWithDirection;
+      if (!useVectorUpOnly && !useVectorDownOnly) {
+        if (nextMidiValue < firstKeyRangeMidiValue || nextMidiValue > lastKeyRangeMidiValue) {
+          vectorWithDirection *= -1;
+          nextMidiValue = currentMidiValue + vectorWithDirection;
+        }
+      }
+
+      if (allowsLargeIntervals) {
+        const possibleNextMidiValues = [];
+        if (vectorWithDirection < 0) {
+          while (indicationMidiValue + vectorWithDirection > firstKeyRangeMidiValue) {
+            possibleNextMidiValues.push(indicationMidiValue + vectorWithDirection);
+            vectorWithDirection -= 12;
+          }
+        }
+        if (vectorWithDirection > 0) {
+          while (indicationMidiValue + vectorWithDirection < lastKeyRangeMidiValue) {
+            possibleNextMidiValues.push(indicationMidiValue + vectorWithDirection);
+            vectorWithDirection += 12;
+          }
+        }
+        nextMidiValue = randomArrayElem(possibleNextMidiValues);
       }
 
       if (exerciseType === EXERCISE_TYPES.noteSequence
@@ -284,6 +350,103 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         if (vectorWithDirection > 0) {
           nextMidiValue = currentMidiValue + vectorWithDirection + 1;
         }
+      }
+
+      if (midiValueSequence.length === 0) {
+        midiValueSequence.push(indicationMidiValue);
+        abcNoteNameSequence.push(ABC_NOTE_NAMES[indicationMidiValue]);
+        midiNoteNameSequence.push(MIDI_NOTE_NAMES[indicationMidiValue]);
+      }
+      midiValueSequence.push(nextMidiValue);
+      abcNoteNameSequence.push(ABC_NOTE_NAMES[nextMidiValue]);
+      midiNoteNameSequence.push(MIDI_NOTE_NAMES[nextMidiValue]);
+
+      currentMidiValue = nextMidiValue;
+    }
+
+    return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence];
+  }, [currentTest]);
+
+  const getSequencesForRandomNotSequence = useCallback((keyRange, intervalVectors) => {
+    const test = currentTest();
+    const exerciseType = currentTest().exerciseType;
+    const allowsLargeIntervals = (() => {
+      if (test.noteSequenceAllowsLargeIntervals) {
+        return true;
+      }
+      return false;
+    })();
+
+    const midiValueSequence = [];
+    const abcNoteNameSequence = [];
+    const midiNoteNameSequence = [];
+
+    const firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.first);
+    const lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.last);
+
+    let indicationMidiValue = randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
+    const whiteKeysOnly = currentTest().whiteKeysOnly;
+    if (whiteKeysOnly && !isWhiteKey(indicationMidiValue)) {
+      indicationMidiValue += 1;
+    }
+
+    let currentMidiValue = indicationMidiValue;
+    const numberOfNotes = currentTest().numberOfNotes;
+
+    for (let i = 0; i < numberOfNotes - 1; i += 1) {
+      let vector = randomArrayElem(intervalVectors);
+
+      if (midiValueSequence.length === 0) {
+        if (indicationMidiValue + vector < firstKeyRangeMidiValue) {
+          indicationMidiValue = lastKeyRangeMidiValue;
+        } else if (indicationMidiValue + vector > lastKeyRangeMidiValue) {
+          indicationMidiValue = firstKeyRangeMidiValue;
+        }
+      }
+
+      let vectorWithDirection = vector * randomArrayElem([-1, 1]);
+      let nextMidiValue = currentMidiValue + vectorWithDirection;
+
+      while (nextMidiValue < firstKeyRangeMidiValue || nextMidiValue > lastKeyRangeMidiValue) {
+        vector = randomArrayElem(intervalVectors);
+        vectorWithDirection = vector * randomArrayElem([-1, 1]);
+        nextMidiValue = currentMidiValue + vectorWithDirection;
+      }
+
+      if (allowsLargeIntervals) {
+        const possibleNextMidiValues = [];
+        if (vectorWithDirection < 0) {
+          while (currentMidiValue + vectorWithDirection > firstKeyRangeMidiValue) {
+            possibleNextMidiValues.push(currentMidiValue + vectorWithDirection);
+            vectorWithDirection -= 12;
+          }
+        } else if (vectorWithDirection > 0) {
+          while (currentMidiValue + vectorWithDirection < lastKeyRangeMidiValue) {
+            possibleNextMidiValues.push(currentMidiValue + vectorWithDirection);
+            vectorWithDirection += 12;
+          }
+        }
+        if (possibleNextMidiValues.length > 0) {
+          nextMidiValue = randomArrayElem(possibleNextMidiValues);
+        }
+      }
+
+      if (exerciseType === EXERCISE_TYPES.noteSequence
+        && !currentTest().isCustomNoteSequence
+        && whiteKeysOnly
+        && !isWhiteKey(nextMidiValue)) {
+        if (vectorWithDirection < 0) {
+          nextMidiValue = currentMidiValue + vectorWithDirection - 1;
+        }
+        if (vectorWithDirection > 0) {
+          nextMidiValue = currentMidiValue + vectorWithDirection + 1;
+        }
+      }
+
+      if (midiValueSequence.length === 0) {
+        midiValueSequence.push(indicationMidiValue);
+        abcNoteNameSequence.push(ABC_NOTE_NAMES[indicationMidiValue]);
+        midiNoteNameSequence.push(MIDI_NOTE_NAMES[indicationMidiValue]);
       }
 
       midiValueSequence.push(nextMidiValue);
@@ -334,7 +497,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         const intervalVectors = getIntervalVectors(intervalCheckboxStates);
         const noteRange = currentTest().noteRange;
         const keyRange = getKeyRange({ intervalVectors, noteRange });
-        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequences(keyRange, intervalVectors);
+        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNotSequence(keyRange, intervalVectors);
         const solution = getSolution(abcNoteNameSequence);
 
         return {
@@ -374,15 +537,28 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         keyRange: contentKeyRange
       };
     },
-    [content.keyRange, content.tests.length, currentNoteSequence, currentTest, getIntervalVectors, getKeyRange, getSequences, getSolution]
+    [
+      content.keyRange,
+      content.tests.length,
+      currentNoteSequence,
+      currentTest,
+      getIntervalVectors,
+      getKeyRange,
+      getSequences,
+      getSequencesForRandomNotSequence,
+      getSolution
+    ]
   );
 
-  const defaultData = {
-    abcNoteNameSequence: [],
-    keyRange: getData().keyRange,
-    indication: '',
-    solution: ''
-  };
+  const defaultData = useMemo(() => {
+    return {
+      abcNoteNameSequence: [],
+      keyRange: getData().keyRange,
+      indication: '',
+      solution: ''
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /**
    * If getData was called as useState callback, server and client would generate different indicationMidiValues,

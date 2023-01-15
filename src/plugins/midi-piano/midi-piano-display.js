@@ -31,7 +31,7 @@ export default function MidiPianoDisplay({ content }) {
   const isMidiInputEnabled = useRef(false);
   const isNoteInputEnabled = useRef(false);
   const { t } = useTranslation('midiPiano');
-  const intervalMode = useRef('successive');
+  const playExerciseMode = useRef('successive');
   const clientConfig = useService(ClientConfig);
   const getNoteNameFromMidiValue = midiValue => MIDI_NOTE_NAMES[midiValue];
   const [playExerciseStartIndex, setPlayExerciseStartIndex] = useState(0);
@@ -91,8 +91,6 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
-  const tipformatter = value => `${(value / 1000).toFixed(1)}s`;
-
   // Keeps track of active notes for midi player events as well as midi device and mouse input.
   const updateActiveNotes = (eventType, midiValue) => {
     const arr = activeNotes.current;
@@ -130,6 +128,17 @@ export default function MidiPianoDisplay({ content }) {
       return;
     }
     isExercisePlaying.current = true;
+
+    if (exerciseType !== EXERCISE_TYPES.noteSequence && playExerciseMode.current === 'simultaneous') {
+      sampler.triggerAttackRelease(midiNoteNameSequence, noteDuration.current / 1000);
+      await new Promise(res => {
+        setTimeout(() => {
+          isExercisePlaying.current = false;
+          res();
+        }, noteDuration.current);
+      });
+      return;
+    }
 
     for (let i = playExerciseStartIndex; i < midiNoteNameSequence.length; i += 1) {
       // Check if stop button has been clicked
@@ -237,21 +246,6 @@ export default function MidiPianoDisplay({ content }) {
       }
       return;
     }
-
-    // const isAnswerComplete = answerMidiValueSequence.current.length >= midiValueSequence.length - 1;
-
-    // if (currentTest().exerciseType !== EXERCISE_TYPES.noteSequence) {
-    //   // Toggle answer key
-    //   if (answerMidiValueSequence.current.includes(midiValue)) {
-    //     const index = answerMidiValueSequence.current.indexOf(midiValue);
-    //     answerMidiValueSequence.current.splice(index, 1);
-    //   } else if (!isAnswerComplete) {
-    //     answerMidiValueSequence.current.push(midiValue);
-    //   }
-    //   console.log(answerMidiValueSequence.current);
-    //   setInputAbc(inputAbc);
-    //   return;
-    // }
 
     // Note sequence mode only from here
 
@@ -456,11 +450,11 @@ export default function MidiPianoDisplay({ content }) {
     <div className="MidiPiano-midiTrackTitle">{midiTrackTitle}</div>
   );
 
-  const renderIntervallControls = () => (
-    <div style={{ padding: '0.5rem' }}>
+  const renderIntervalControls = () => (
+    <div style={{ marginTop: '-0.5rem', marginBottom: '0.5rem', padding: '0.5rem' }}>
       <RadioGroup defaultValue="successive">
-        <RadioButton value="successive" onChange={() => { intervalMode.current = 'successive'; }}>{t('successive')}</RadioButton>
-        <RadioButton value="simultaneous" onChange={() => { intervalMode.current = 'simultaneous'; }}>{t('simultaneous')}</RadioButton>
+        <RadioButton value="successive" onChange={() => { playExerciseMode.current = 'successive'; }}>{t('successive')}</RadioButton>
+        <RadioButton value="simultaneous" onChange={() => { playExerciseMode.current = 'simultaneous'; }}>{t('simultaneous')}</RadioButton>
       </RadioGroup>
     </div>
   );
@@ -483,6 +477,8 @@ export default function MidiPianoDisplay({ content }) {
     );
   };
 
+  const tipformatter = value => `${(value / 1000).toFixed(1)}s`;
+
   const renderEarTrainingControls = () => (
     <div style={{ display: 'flex', flexDirection: 'column', textAlign: 'center', alignItems: 'center' }}>
       <h4>{`${t(exerciseType)} ${exerciseType === EXERCISE_TYPES.noteSequence && !isCustomNoteSequence && whiteKeysOnly ? `(${t('whiteKeysOnly')})` : ''}`}</h4>
@@ -495,7 +491,7 @@ export default function MidiPianoDisplay({ content }) {
           <Slider tipFormatter={tipformatter} defaultValue={2000} min={200} max={4000} step={100} onChange={value => { noteDuration.current = value; }} />
         </Form.Item>
         {exerciseType === 'noteSequence' && renderNoteSequenceControls()}
-        {exerciseType === 'interval' && renderIntervallControls()}
+        {exerciseType === 'interval' && renderIntervalControls()}
       </Form>
       <div>
         <Button
