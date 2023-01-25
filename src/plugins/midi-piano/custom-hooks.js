@@ -335,13 +335,13 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       if (allowsLargeIntervals) {
         const possibleNextMidiValues = [];
         if (vectorWithDirection < 0) {
-          while (indicationMidiValue + vectorWithDirection > firstKeyRangeMidiValue) {
+          while ((indicationMidiValue + vectorWithDirection) > firstKeyRangeMidiValue) {
             possibleNextMidiValues.push(indicationMidiValue + vectorWithDirection);
             vectorWithDirection -= 12;
           }
         }
         if (vectorWithDirection > 0) {
-          while (indicationMidiValue + vectorWithDirection < lastKeyRangeMidiValue) {
+          while ((indicationMidiValue + vectorWithDirection) < lastKeyRangeMidiValue) {
             possibleNextMidiValues.push(indicationMidiValue + vectorWithDirection);
             vectorWithDirection += 12;
           }

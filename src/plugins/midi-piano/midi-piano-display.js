@@ -5,6 +5,7 @@ import CustomPiano from './custom-piano.js';
 import CustomSwitch from './custom-switch.js';
 import { useTranslation } from 'react-i18next';
 import urlUtils from '../../utils/url-utils.js';
+import BackspaceIcon from './backspace-icon.js';
 import Markdown from '../../components/markdown.js';
 import React, { useEffect, useRef, useState } from 'react';
 import AbcNotation from '../../components/abc-notation.js';
@@ -54,8 +55,6 @@ export default function MidiPianoDisplay({ content }) {
   const isMidiDeviceConnected = useMidiDevice();
   const [sampler, hasSamplerLoaded] = useToneJsSampler(sampleType);
   const exerciseData = useExercise(content, currentTestIndex, currentExerciseIndex);
-
-  console.log(exerciseData);
 
   const {
     clef,
@@ -562,7 +561,7 @@ export default function MidiPianoDisplay({ content }) {
               <div style={{ minHeight: '7rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <AbcNotation abcCode={`L:1/4 \n K:C ${clef || 'treble'} \n ${indication + inputAbc}`} />
               </div>
-              <Button onClick={deleteNote}>{'<-'}</Button>
+              <Button onClick={deleteNote} icon={<BackspaceIcon />} style={{ minWidth: '3rem' }} />
             </div>
             <div className="AbcNotation-wrapper u-width-65" style={{ position: 'absolute', left: '50%', textAlign: 'left' }}>
               <div>{canShowSolution ? t('solution') : t('firstNote')}</div>

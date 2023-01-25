@@ -121,10 +121,10 @@ class MidiPianoInfo {
       colors: {
         blackKey: 'rgb(56, 56, 56)',
         whiteKey: 'rgb(255, 255, 255)',
-        activeKey: '#8CE0FF',
-        correct: '#8CFF92',
-        answer: '#FFF58C',
-        wrong: '#FF8C8C'
+        activeKey: '#82E2FF',
+        correct: '#94F09D',
+        answer: '#F9F793',
+        wrong: '#FF8D8D'
       },
       sampleType: 'piano',
       tests: [this.getDefaultTest()]

@@ -1,0 +1,17 @@
+"filename", "language", "JavaScript", "YAML", "XML", "Less", "comment", "blank", "total"
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\constants.js", "JavaScript", 196, 0, 0, 0, 5, 27, 228
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\custom-hooks.js", "JavaScript", 546, 0, 0, 0, 31, 113, 690
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\custom-piano.js", "JavaScript", 197, 0, 0, 0, 3, 25, 225
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\custom-switch.js", "JavaScript", 22, 0, 0, 0, 1, 7, 30
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\keys.js", "JavaScript", 111, 0, 0, 0, 1, 20, 132
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\midi-piano-display.js", "JavaScript", 527, 0, 0, 0, 25, 67, 619
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\midi-piano-editor.js", "JavaScript", 616, 0, 0, 0, 7, 63, 686
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\midi-piano-icon.js", "JavaScript", 18, 0, 0, 0, 0, 5, 23
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\midi-piano-icon.svg", "XML", 0, 0, 80, 0, 1, 1, 82
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\midi-piano-info.js", "JavaScript", 132, 0, 0, 0, 0, 18, 150
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\midi-piano.less", "Less", 0, 0, 0, 120, 1, 19, 140
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\midi-piano.yml", "YAML", 0, 246, 0, 0, 0, 1, 247
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\stop-icon.js", "JavaScript", 16, 0, 0, 0, 0, 5, 21
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\stop.svg", "XML", 0, 0, 68, 0, 1, 1, 70
+"c:\Users\Benni\dev\educandu\src\plugins\midi-piano\utils.js", "JavaScript", 84, 0, 0, 0, 3, 19, 106
+"Total", "-", 2465, 246, 148, 120, 79, 391, 3449
