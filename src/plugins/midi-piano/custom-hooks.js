@@ -14,12 +14,6 @@ import { create as createId } from '../../utils/unique-id.js';
 import { randomIntBetween, randomArrayElem } from './utils.js';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
-const getNextMidiValue = (currentMidiVal, vector) => currentMidiVal + vector;
-
-const getPossibleNextMidiValues = (lowestMidiVal, highestMidiVal, currentMidiVal, vector) => {
-
-};
-
 const getMidiValueFromNoteName = noteName => MIDI_NOTE_NAMES.indexOf(noteName);
 const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
 const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
@@ -496,7 +490,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     return chordVectors;
   }, [currentTest]);
 
-  const getSequencesForChordMode = useCallback((keyRange, chordVectors) => {
+  const getSequencesAndChordVector = useCallback((keyRange, chordVectors) => {
 
     const allowsLargeIntervals = currentTest().chordAllowsLargeIntervals;
 
@@ -542,7 +536,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const abcNoteNameSequence = midiValueSequence.map(value => ABC_NOTE_NAMES[value]);
     const midiNoteNameSequence = midiValueSequence.map(value => MIDI_NOTE_NAMES[value]);
 
-    return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence];
+    return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence, vector];
   }, [currentTest]);
 
   const getKeyRangeForChordMode = useCallback((noteRange, chordVectors) => {
@@ -630,12 +624,13 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         const noteRange = currentTest().noteRange;
         const chordVectors = getChordVectors();
         const keyRange = getKeyRangeForChordMode(noteRange, chordVectors);
-        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForChordMode(keyRange, chordVectors);
+        const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence, chordVector] = getSequencesAndChordVector(keyRange, chordVectors);
         const solution = getSolution(abcNoteNameSequence);
 
         return {
           keyRange,
           solution,
+          chordVector,
           midiValueSequence,
           abcNoteNameSequence,
           midiNoteNameSequence,
@@ -659,7 +654,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       currentNoteSequence,
       content.tests.length,
       getKeyRangeForChordMode,
-      getSequencesForChordMode,
+      getSequencesAndChordVector,
       getSequencesForRandomNoteSequenceMode
     ]
   );

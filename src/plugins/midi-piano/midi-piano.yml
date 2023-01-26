@@ -130,6 +130,9 @@ secondInversion:
 thirdInversion:
   en: Third Inversion
   de: Dritte Umkehrung
+anyInversion:
+  en: Any inversion possible
+  de: Jede Umkehrung möglich
 direction:
   en: Direction
   de: Richtung
@@ -244,3 +247,17 @@ intervalsPlusOctave:
 allowLargeIntervals:
   en: Allow intervals larger than octave
   de: Intervalle größer als Oktave zulassen
+majorChord:
+  en: Major triad
+  de: Dur-Dreiklang
+minorChord:
+  en: Minor triad
+  de: Moll-Dreiklang
+diminishedTriad:
+  en: Diminished triad
+  de: Verminderter Dreiklang
+augmentedTriad:
+  en: Augmented triad
+  de: Übermäßiger Dreiklang
+
+

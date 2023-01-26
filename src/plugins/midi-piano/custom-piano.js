@@ -30,7 +30,7 @@ export default function CustomPiano(props) {
     canShowSolutionRef,
     isNoteInputEnabled,
     indicationMidiValue,
-    isExercisePlaying,
+    isExercisePlayingRef,
     answerMidiValueSequence } = props;
   const piano = useRef(null);
   const exerciseType = test.exerciseType;
@@ -70,7 +70,7 @@ export default function CustomPiano(props) {
     }
     const midiValue = parseInt(e.target.dataset.midiValue, 10);
 
-    if (isExercisePlaying.current) {
+    if (isExercisePlayingRef.current) {
       return;
     }
 
@@ -80,7 +80,7 @@ export default function CustomPiano(props) {
   };
 
   const handleMouseUp = e => {
-    if (typeof e.target.dataset.midiValue === 'undefined' || isExercisePlaying.current) {
+    if (typeof e.target.dataset.midiValue === 'undefined' || isExercisePlayingRef.current) {
       return;
     }
 
@@ -151,10 +151,12 @@ export default function CustomPiano(props) {
 
   // Make sure active keys will be styled via DOM manipulation when note input via midi device has triggered rerender
   useEffect(() => {
-    for (const midiValue of activeNotes.current) {
-      if (!answerMidiValueSequence.includes(midiValue)) {
-        const key = keys.current[midiValue];
-        key.style.backgroundColor = colors.activeKey;
+    if (exerciseType === EXERCISE_TYPES.noteSequence) {
+      for (const midiValue of activeNotes.current) {
+        if (!answerMidiValueSequence.includes(midiValue)) {
+          const key = keys.current[midiValue];
+          key.style.backgroundColor = colors.activeKey;
+        }
       }
     }
   });
@@ -199,7 +201,7 @@ CustomPiano.propTypes = {
   hasSamplerLoaded: PropTypes.bool.isRequired,
   indicationMidiValue: PropTypes.number,
   inputNote: PropTypes.func,
-  isExercisePlaying: PropTypes.object.isRequired,
+  isExercisePlayingRef: PropTypes.object.isRequired,
   isNoteInputEnabled: PropTypes.object,
   keyRange: PropTypes.object.isRequired,
   keys: PropTypes.object.isRequired,
