@@ -68,6 +68,8 @@ export default function MidiPianoDisplay({ content }) {
     midiNoteNameSequence
   } = exerciseData;
 
+  const solutionSequence = midiValueSequence ? [...midiValueSequence] : null;
+
   const chord = CHORD_VECTOR_MAP.get(JSON.stringify(chordVector));
 
   const inputAbcNoteNameSequence = useRef([]);
@@ -199,15 +201,19 @@ export default function MidiPianoDisplay({ content }) {
     });
   };
 
+  console.log(solutionSequence);
+
   const inputNote = midiValue => {
+
+    console.log('inputNote()');
 
     if (canShowSolutionRef.current || isKeyOutOfRange(keyRange, midiValue)) {
       return;
     }
 
     // Don't allow to input more notes than needed. Max note input number is number of solution notes - 1: First note (indication) can not be input or deleted.
-    const isAnswerComplete = answerMidiValueSequenceRef.current.length >= midiValueSequence.length - 1;
-    console.log(isAnswerComplete);
+    const isAnswerComplete = answerMidiValueSequenceRef.current.length >= solutionSequence.length - 1;
+    console.log(solutionSequence);
 
     if (currentTest().exerciseType !== EXERCISE_TYPES.noteSequence) {
 
@@ -559,7 +565,8 @@ export default function MidiPianoDisplay({ content }) {
             </div>
           </div>
           <div style={{ width: '100%', display: 'flex', justifyContent: 'center', fontWeight: 'bold' }}>
-            <div>{!!canShowSolution && exerciseType === EXERCISE_TYPES.chord && `${t(chord.type)}, ${t(chord.inversion)}`}</div>
+            {/* <div>{!!canShowSolution && exerciseType === EXERCISE_TYPES.chord && `${t(chord.type)}, ${t(chord.inversion)}`}</div> */}
+            {!!canShowSolution && exerciseType === EXERCISE_TYPES.chord && <div>{`${t(chord.type)}, ${t(chord.inversion)}`}</div>}
           </div>
           <div style={{ width: '100%', display: 'flex' }}>
             <div />

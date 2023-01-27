@@ -659,7 +659,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     ]
   );
 
-  // Needs to execute only once. No need to execute when getData changes.
+  // Needs to execute only once. No need to execute when getData changes
   const defaultData = useMemo(() => {
     return {
       abcNoteNameSequence: [],
