@@ -98,7 +98,7 @@
 
 .MidiPiano-keyBlack {
   position: absolute;
-  top: 0;
+  top: -1px;
   width: 52%;
   height: 60%;
   right: -28%;
@@ -136,4 +136,80 @@
 .MidiPiano-Switch.MidiPiano-SwitchChecked .MidiPiano-SwitchHandle {
   left: calc(100% - 18px - 2px);
   transition: all 0.2s ease-in-out;
+}
+
+.MidiPiano-PlayExerciseModeRG {
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+.MidiPiano-EarTrainingControls {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  align-items: center;
+}
+
+.MidiPiano-EarTrainingControlsItem {
+  margin-bottom: 0.8rem;
+}
+
+.MidiPiano-BtnShowHideSolution {
+  width: fit-content;
+}
+
+.MidiPiano-BtnNewExercise {
+  width: fit-content;
+}
+
+.MidiPiano-AbcDisplayContainer {
+  padding-bottom: 1rem;
+}
+
+.MidiPiano-AbcDisplay {
+  display: flex;
+}
+
+.MidiPiano-AnswerAbcDisplay {
+  margin-left: 0 !important;
+  text-align: left !important;
+}
+
+.MidiPiano-NoteInputSwitch {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.MidiPiano-AnswerAbcNotation {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 7rem;
+}
+
+.MidiPiano-BtnDeleteNote {
+  min-width: 3rem;
+  display: flex;
+  justify-content: right;
+  align-items: center;
+  padding: 0.5rem;
+}
+
+.MidiPiano-SolutionAbcDisplay {
+  position: absolute;
+  left: 50%;
+  text-align: left !important;
+}
+
+.MidiPiano-SolutionAbcNotation {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 7rem;
+}
+
+.MidiPiano-OneOfThreeFlexColumns {
+  display: flex;
+  width: 100%;
 }

@@ -20,18 +20,19 @@ export default function CustomPiano(props) {
     colors,
     pianoId,
     sampler,
-    keyRange,
     inputNote,
     activeNotes,
+    exerciseData,
     updateKeyStyle,
     hasSamplerLoaded,
-    midiValueSequence,
     updateActiveNotes,
     canShowSolutionRef,
     isNoteInputEnabled,
-    indicationMidiValue,
     isExercisePlayingRef,
     answerMidiValueSequence } = props;
+
+  const { keyRange, midiValueSequence } = exerciseData;
+  const indicationMidiValue = midiValueSequence ? midiValueSequence[0] : null;
   const piano = useRef(null);
   const exerciseType = test.exerciseType;
   const { NOTES } = midiPlayerNs.Constants;
@@ -95,9 +96,6 @@ export default function CustomPiano(props) {
   };
 
   const handleMouseOver = e => {
-    if (exerciseType !== EXERCISE_TYPES.noteSequence) {
-      return;
-    }
     const key = e.target;
     const midiValue = parseInt(key.dataset.midiValue, 10);
     if (isBlackKey(key)) {
@@ -111,7 +109,10 @@ export default function CustomPiano(props) {
         updateActiveNotes('Note off', parentMidiValue);
       }
     }
-    updateKeyStyle('Note on', midiValue);
+
+    if (exerciseType === EXERCISE_TYPES.noteSequence) {
+      updateKeyStyle('Note on', midiValue);
+    }
   };
 
   const handleMouseOut = e => {
@@ -167,25 +168,25 @@ export default function CustomPiano(props) {
         if (elem[0] === 0 && index < keyRangeLayout.length - 1) {
           return (
             <KeyWhiteWithBlack
+              colors={colors}
               key={createId()}
               midiValue={elem[1]}
-              colors={colors}
-              midiValueSequence={midiValueSequence}
-              answerMidiValueSequence={answerMidiValueSequence}
-              canShowSolutionRef={canShowSolutionRef}
               exerciseType={exerciseType}
+              midiValueSequence={midiValueSequence}
+              canShowSolutionRef={canShowSolutionRef}
+              answerMidiValueSequence={answerMidiValueSequence}
               />
           );
         }
         return (
           <KeyWhite
+            colors={colors}
             key={createId()}
             midiValue={elem[1]}
-            colors={colors}
-            midiValueSequence={midiValueSequence}
-            answerMidiValueSequence={answerMidiValueSequence}
-            canShowSolutionRef={canShowSolutionRef}
             exerciseType={exerciseType}
+            midiValueSequence={midiValueSequence}
+            canShowSolutionRef={canShowSolutionRef}
+            answerMidiValueSequence={answerMidiValueSequence}
             />
         );
       })}
@@ -198,12 +199,11 @@ CustomPiano.propTypes = {
   answerMidiValueSequence: PropTypes.array,
   canShowSolutionRef: PropTypes.object,
   colors: PropTypes.object.isRequired,
+  exerciseData: PropTypes.object.isRequired, // Required only because exerciseData provides keyRange, even if there is no test defined in editor
   hasSamplerLoaded: PropTypes.bool.isRequired,
-  indicationMidiValue: PropTypes.number,
   inputNote: PropTypes.func,
   isExercisePlayingRef: PropTypes.object.isRequired,
   isNoteInputEnabled: PropTypes.object,
-  keyRange: PropTypes.object.isRequired,
   keys: PropTypes.object.isRequired,
   midiValueSequence: PropTypes.array,
   pianoId: PropTypes.string.isRequired,
@@ -216,7 +216,6 @@ CustomPiano.propTypes = {
 CustomPiano.defaultProps = {
   answerMidiValueSequence: [],
   canShowSolutionRef: {},
-  indicationMidiValue: null,
   inputNote: () => {},
   isNoteInputEnabled: {},
   midiValueSequence: null,

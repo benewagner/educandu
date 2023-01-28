@@ -1,22 +1,15 @@
 /* eslint-disable max-lines */
 /* eslint-disable complexity */
 import * as Tone from 'tone';
-import { WHITE_KEYS_MIDI_VALUES,
-  EXERCISE_TYPES,
-  INTERVAL_NAMES,
-  ABC_NOTE_NAMES,
-  MIDI_NOTE_NAMES,
-  INTERVAL_VECTORS,
-  CHORD_VECTORS,
-  INVERSIONS} from './constants.js';
+import { C } from './constants.js';
+import { u } from './exercise-utils.js';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
-import { randomIntBetween, randomArrayElem } from './utils.js';
 import { useEffect, useState, useCallback, useMemo } from 'react';
 
-const getMidiValueFromNoteName = noteName => MIDI_NOTE_NAMES.indexOf(noteName);
-const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
-const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
+const getMidiValueFromNoteName = noteName => C.MIDI_NOTE_NAMES.indexOf(noteName);
+const getMidiValueFromWhiteKeyIndex = index => C.WHITE_KEYS_MIDI_VALUES[index];
+const isWhiteKey = midiValue => C.WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
 // X const getWhiteKeyIndexFromMidiValue = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue); XXX
 
 /**
@@ -164,7 +157,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     let firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.first);
     let lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.last);
 
-    if (exerciseType === EXERCISE_TYPES.noteSequence && currentTest().isCustomNoteSequence) {
+    if (exerciseType === C.EXERCISE_TYPES.noteSequence && currentTest().isCustomNoteSequence) {
 
       for (let i = 0; i < midiNoteNameSequence.length; i += 1) {
         const midiValue = getMidiValueFromNoteName(midiNoteNameSequence[i]);
@@ -177,7 +170,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       }
     }
 
-    if (exerciseType === EXERCISE_TYPES.noteSequence && !currentTest().isCustomNoteSequence) {
+    if (exerciseType === C.EXERCISE_TYPES.noteSequence && !currentTest().isCustomNoteSequence) {
       for (const vector of intervalVectors) {
         if (firstKeyRangeMidiValue > lastKeyRangeMidiValue - vector) {
           firstKeyRangeMidiValue = lastKeyRangeMidiValue - vector;
@@ -189,14 +182,14 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     }
 
     // Make sure first and last midi value belongs to white key
-    firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES.includes(firstKeyRangeMidiValue) ? firstKeyRangeMidiValue : firstKeyRangeMidiValue - 1;
-    lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES.includes(lastKeyRangeMidiValue) ? lastKeyRangeMidiValue : lastKeyRangeMidiValue + 1;
+    firstKeyRangeMidiValue = C.WHITE_KEYS_MIDI_VALUES.includes(firstKeyRangeMidiValue) ? firstKeyRangeMidiValue : firstKeyRangeMidiValue - 1;
+    lastKeyRangeMidiValue = C.WHITE_KEYS_MIDI_VALUES.includes(lastKeyRangeMidiValue) ? lastKeyRangeMidiValue : lastKeyRangeMidiValue + 1;
 
     const keyRange = {};
 
     // Convert midi values to white key indices which are needed for rendering CustomPiano
-    keyRange.first = WHITE_KEYS_MIDI_VALUES.indexOf(firstKeyRangeMidiValue);
-    keyRange.last = WHITE_KEYS_MIDI_VALUES.indexOf(lastKeyRangeMidiValue);
+    keyRange.first = C.WHITE_KEYS_MIDI_VALUES.indexOf(firstKeyRangeMidiValue);
+    keyRange.last = C.WHITE_KEYS_MIDI_VALUES.indexOf(lastKeyRangeMidiValue);
 
     return keyRange;
 
@@ -211,11 +204,11 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
 
     let intervalVectors = [];
     if (intervalCheckboxStates.all) {
-      intervalVectors = INTERVAL_VECTORS.all;
+      intervalVectors = C.INTERVAL_VECTORS.all;
       return intervalVectors;
     }
 
-    for (const interval of INTERVAL_NAMES) {
+    for (const interval of C.INTERVAL_NAMES) {
       if (typeof intervalCheckboxStates[interval].minor !== 'undefined') {
         const isMinorIntervalTypeChecked = intervalCheckboxStates[interval].minor;
         const isMajorIntervalTypeChecked = intervalCheckboxStates[interval].major;
@@ -225,15 +218,15 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
          * If minor interval type vector leads to black key, minor interval type vector + 1 (major interval type vector) will be used to generate new note.
          */
         if (whiteKeysOnly
-          && exerciseType === EXERCISE_TYPES.noteSequence
+          && exerciseType === C.EXERCISE_TYPES.noteSequence
           && !isCustomNoteSequence) {
-          (isMinorIntervalTypeChecked || isMajorIntervalTypeChecked) && intervalVectors.push(INTERVAL_VECTORS[interval].minor);
+          (isMinorIntervalTypeChecked || isMajorIntervalTypeChecked) && intervalVectors.push(C.INTERVAL_VECTORS[interval].minor);
         } else {
-          intervalVectors.push(isMinorIntervalTypeChecked ? INTERVAL_VECTORS[interval].minor : null);
-          intervalVectors.push(isMajorIntervalTypeChecked ? INTERVAL_VECTORS[interval].major : null);
+          intervalVectors.push(isMinorIntervalTypeChecked ? C.INTERVAL_VECTORS[interval].minor : null);
+          intervalVectors.push(isMajorIntervalTypeChecked ? C.INTERVAL_VECTORS[interval].major : null);
         }
       } else {
-        intervalVectors.push(intervalCheckboxStates[interval] ? INTERVAL_VECTORS[interval] : null);
+        intervalVectors.push(intervalCheckboxStates[interval] ? C.INTERVAL_VECTORS[interval] : null);
       }
     }
     intervalVectors = intervalVectors.filter(interval => interval !== null);
@@ -244,8 +237,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
   const getSequences = useCallback((keyRange, intervalVectors) => {
     const test = currentTest();
     const exerciseType = test.exerciseType;
-    const isIntervalExercise = exerciseType === EXERCISE_TYPES.interval;
-    const isNoteSequenceExercise = exerciseType === EXERCISE_TYPES.noteSequence;
+    const isIntervalExercise = exerciseType === C.EXERCISE_TYPES.interval;
+    const isNoteSequenceExercise = exerciseType === C.EXERCISE_TYPES.noteSequence;
 
     const allowsLargeIntervals = (() => {
       return test[`${exerciseType}AllowsLargeIntervals`];
@@ -258,7 +251,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.first);
     const lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.last);
 
-    let indicationMidiValue = randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
+    let indicationMidiValue = u.randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
     const whiteKeysOnly = currentTest().whiteKeysOnly;
 
     if (isNoteSequenceExercise
@@ -290,7 +283,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     })();
 
     for (let i = 0; i < numberOfNotes - 1; i += 1) {
-      let vector = randomArrayElem(intervalVectors);
+      let vector = u.randomArrayElem(intervalVectors);
 
       if (useVectorDownOnly) {
         vector *= -1;
@@ -309,7 +302,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       let vectorWithDirection;
 
       if (!useVectorUpOnly && !useVectorDownOnly) {
-        vectorWithDirection = vector * randomArrayElem([-1, 1]);
+        vectorWithDirection = vector * u.randomArrayElem([-1, 1]);
       } else {
         vectorWithDirection = vector;
       }
@@ -341,7 +334,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
           }
         }
         if (possibleNextMidiValues.length !== 0) {
-          nextMidiValue = randomArrayElem(possibleNextMidiValues);
+          nextMidiValue = u.randomArrayElem(possibleNextMidiValues);
         }
       }
 
@@ -359,12 +352,12 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
 
       if (midiValueSequence.length === 0) {
         midiValueSequence.push(indicationMidiValue);
-        abcNoteNameSequence.push(ABC_NOTE_NAMES[indicationMidiValue]);
-        midiNoteNameSequence.push(MIDI_NOTE_NAMES[indicationMidiValue]);
+        abcNoteNameSequence.push(C.ABC_NOTE_NAMES[indicationMidiValue]);
+        midiNoteNameSequence.push(C.MIDI_NOTE_NAMES[indicationMidiValue]);
       }
       midiValueSequence.push(nextMidiValue);
-      abcNoteNameSequence.push(ABC_NOTE_NAMES[nextMidiValue]);
-      midiNoteNameSequence.push(MIDI_NOTE_NAMES[nextMidiValue]);
+      abcNoteNameSequence.push(C.ABC_NOTE_NAMES[nextMidiValue]);
+      midiNoteNameSequence.push(C.MIDI_NOTE_NAMES[nextMidiValue]);
 
       currentMidiValue = nextMidiValue;
     }
@@ -374,13 +367,6 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
 
   const getSequencesForRandomNoteSequenceMode = useCallback((keyRange, intervalVectors) => {
     const test = currentTest();
-    const exerciseType = currentTest().exerciseType;
-    const allowsLargeIntervals = (() => {
-      if (test.noteSequenceAllowsLargeIntervals) {
-        return true;
-      }
-      return false;
-    })();
 
     const midiValueSequence = [];
     const abcNoteNameSequence = [];
@@ -389,17 +375,13 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.first);
     const lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.last);
 
-    let indicationMidiValue = randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
-    const whiteKeysOnly = currentTest().whiteKeysOnly;
-    if (whiteKeysOnly && !isWhiteKey(indicationMidiValue)) {
-      indicationMidiValue += 1;
-    }
+    let indicationMidiValue = u.getIndicationMidiValue(test, keyRange);
 
     let currentMidiValue = indicationMidiValue;
     const numberOfNotes = currentTest().numberOfNotes;
 
     for (let i = 0; i < numberOfNotes - 1; i += 1) {
-      let vector = randomArrayElem(intervalVectors);
+      let vector = u.randomArrayElem(intervalVectors);
 
       if (midiValueSequence.length === 0) {
         if (indicationMidiValue + vector < firstKeyRangeMidiValue) {
@@ -409,16 +391,16 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         }
       }
 
-      let vectorWithDirection = vector * randomArrayElem([-1, 1]);
+      let vectorWithDirection = vector * u.randomArrayElem([-1, 1]);
       let nextMidiValue = currentMidiValue + vectorWithDirection;
 
       while (nextMidiValue < firstKeyRangeMidiValue || nextMidiValue > lastKeyRangeMidiValue) {
-        vector = randomArrayElem(intervalVectors);
-        vectorWithDirection = vector * randomArrayElem([-1, 1]);
+        vector = u.randomArrayElem(intervalVectors);
+        vectorWithDirection = vector * u.randomArrayElem([-1, 1]);
         nextMidiValue = currentMidiValue + vectorWithDirection;
       }
 
-      if (allowsLargeIntervals) {
+      if (u.allowsLargeIntervals(test)) {
         const possibleNextMidiValues = [];
         if (vectorWithDirection < 0) {
           while (currentMidiValue + vectorWithDirection > firstKeyRangeMidiValue) {
@@ -432,31 +414,23 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
           }
         }
         if (possibleNextMidiValues.length > 0) {
-          nextMidiValue = randomArrayElem(possibleNextMidiValues);
+          nextMidiValue = u.randomArrayElem(possibleNextMidiValues);
         }
       }
 
-      if (exerciseType === EXERCISE_TYPES.noteSequence
-        && !currentTest().isCustomNoteSequence
-        && whiteKeysOnly
-        && !isWhiteKey(nextMidiValue)) {
-        if (vectorWithDirection < 0) {
-          nextMidiValue = currentMidiValue + vectorWithDirection - 1;
-        }
-        if (vectorWithDirection > 0) {
-          nextMidiValue = currentMidiValue + vectorWithDirection + 1;
-        }
+      if (u.usesWhiteKeysOnly(test) && !isWhiteKey(nextMidiValue)) {
+        nextMidiValue = u.getWhiteKey(currentMidiValue, vectorWithDirection);
       }
 
       if (midiValueSequence.length === 0) {
         midiValueSequence.push(indicationMidiValue);
-        abcNoteNameSequence.push(ABC_NOTE_NAMES[indicationMidiValue]);
-        midiNoteNameSequence.push(MIDI_NOTE_NAMES[indicationMidiValue]);
+        abcNoteNameSequence.push(C.ABC_NOTE_NAMES[indicationMidiValue]);
+        midiNoteNameSequence.push(C.MIDI_NOTE_NAMES[indicationMidiValue]);
       }
 
       midiValueSequence.push(nextMidiValue);
-      abcNoteNameSequence.push(ABC_NOTE_NAMES[nextMidiValue]);
-      midiNoteNameSequence.push(MIDI_NOTE_NAMES[nextMidiValue]);
+      abcNoteNameSequence.push(C.ABC_NOTE_NAMES[nextMidiValue]);
+      midiNoteNameSequence.push(C.MIDI_NOTE_NAMES[nextMidiValue]);
 
       currentMidiValue = nextMidiValue;
     }
@@ -483,8 +457,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const inversions = Object.keys(inversionCheckboxStates).map(key => inversionCheckboxStates[key] && key).filter(elem => elem);
 
     for (const inversion of inversions) {
-      chordVectors.push(...triads.map(triad => CHORD_VECTORS.triads[triad][inversion]).filter(elem => elem));
-      chordVectors.push(...seventhChords.map(seventhChord => CHORD_VECTORS.seventhChords[seventhChord][inversion]));
+      chordVectors.push(...triads.map(triad => C.CHORD_VECTORS.triads[triad][inversion]).filter(elem => elem));
+      chordVectors.push(...seventhChords.map(seventhChord => C.CHORD_VECTORS.seventhChords[seventhChord][inversion]));
     }
 
     return chordVectors;
@@ -500,9 +474,9 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.last);
 
     // In chord mode indication key is bass note. Make sure bassNoteMidiValue is in lower half of keyRange
-    const bassNoteMidiValue = randomIntBetween(firstKeyRangeMidiValue, (firstKeyRangeMidiValue + lastKeyRangeMidiValue) / 2);
+    const bassNoteMidiValue = u.randomIntBetween(firstKeyRangeMidiValue, (firstKeyRangeMidiValue + lastKeyRangeMidiValue) / 2);
 
-    const vector = randomArrayElem(chordVectors);
+    const vector = u.randomArrayElem(chordVectors);
 
     let nextMidiValue;
 
@@ -519,7 +493,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
           possibleMidiValues.push(currentMidiValue + vector[i]);
           currentMidiValue += 12;
         }
-        nextMidiValue = randomArrayElem(possibleMidiValues);
+        nextMidiValue = u.randomArrayElem(possibleMidiValues);
       }
 
       if (midiValueSequence.length === 0) {
@@ -533,8 +507,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       return a - b;
     });
 
-    const abcNoteNameSequence = midiValueSequence.map(value => ABC_NOTE_NAMES[value]);
-    const midiNoteNameSequence = midiValueSequence.map(value => MIDI_NOTE_NAMES[value]);
+    const abcNoteNameSequence = midiValueSequence.map(value => C.ABC_NOTE_NAMES[value]);
+    const midiNoteNameSequence = midiValueSequence.map(value => C.MIDI_NOTE_NAMES[value]);
 
     return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence, vector];
   }, [currentTest]);
@@ -551,8 +525,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     }
 
     return {
-      first: WHITE_KEYS_MIDI_VALUES.indexOf(firstKeyRangeMidiValue),
-      last: WHITE_KEYS_MIDI_VALUES.indexOf(lastKeyRangeMidiValue)
+      first: C.WHITE_KEYS_MIDI_VALUES.indexOf(firstKeyRangeMidiValue),
+      last: C.WHITE_KEYS_MIDI_VALUES.indexOf(lastKeyRangeMidiValue)
     };
   }, []);
 
@@ -565,27 +539,25 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       const test = currentTest();
       const contentKeyRange = content.keyRange;
 
-      if (test.exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence) {
+      if (u.isCustomNoteSequenceExercise(test)) {
         const noteSequence = currentNoteSequence();
         const midiNoteNameSequence = noteSequence.midiNoteNameSequence;
-        const noteRange = noteSequence.noteRange;
-        const keyRange = getKeyRange({ midiNoteNameSequence, noteRange });
+        const keyRange = getKeyRange({ midiNoteNameSequence, noteRange: noteSequence.noteRange });
 
         return { keyRange,
           midiNoteNameSequence,
-          clef: currentNoteSequence().clef,
+          clef: noteSequence.clef,
           solution: noteSequence.filteredAbc,
           indication: noteSequence.abcNoteNameSequence[0],
-          midiValueSequence: currentNoteSequence().midiValueSequence,
-          abcNoteNameSequence: currentNoteSequence().abcNoteNameSequence,
-          indicationMidiValue: currentNoteSequence().midiValueSequence[0] };
+          midiValueSequence: noteSequence.midiValueSequence,
+          abcNoteNameSequence: noteSequence.abcNoteNameSequence,
+          indicationMidiValue: noteSequence.midiValueSequence[0] };
       }
 
-      if (test.exerciseType === EXERCISE_TYPES.noteSequence && !test.isCustomNoteSequence) {
-        const intervalCheckboxStates = currentTest().noteSequenceCheckboxStates;
+      if (u.isRandomNoteSequenceExercise(test)) {
+        const intervalCheckboxStates = test.noteSequenceCheckboxStates;
         const intervalVectors = getIntervalVectors(intervalCheckboxStates);
-        const noteRange = currentTest().noteRange;
-        const keyRange = getKeyRange({ intervalVectors, noteRange });
+        const keyRange = getKeyRange({ intervalVectors, noteRange: test.noteRange });
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNoteSequenceMode(keyRange, intervalVectors);
         const solution = getSolution(abcNoteNameSequence);
 
@@ -595,17 +567,16 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
           midiValueSequence,
           abcNoteNameSequence,
           midiNoteNameSequence,
-          clef: currentTest().clef,
+          clef: test.clef,
           indication: abcNoteNameSequence[0],
           indicationMidiValue: midiValueSequence[0]
         };
       }
 
-      if (test.exerciseType === EXERCISE_TYPES.interval) {
-        const noteRange = currentTest().noteRange;
-        const checkboxStates = currentTest().intervalCheckboxStates;
+      if (u.isIntervalExercise(test)) {
+        const checkboxStates = test.intervalCheckboxStates;
         const intervalVectors = getIntervalVectors(checkboxStates);
-        const keyRange = getKeyRange({ noteRange, intervalVectors });
+        const keyRange = getKeyRange({ intervalVectors, noteRange: test.noteRange });
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequences(keyRange, intervalVectors);
         const solution = getSolution(abcNoteNameSequence);
 
@@ -620,10 +591,9 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
         };
       }
 
-      if (test.exerciseType === EXERCISE_TYPES.chord) {
-        const noteRange = currentTest().noteRange;
+      if (u.isChordExercise(test)) {
         const chordVectors = getChordVectors();
-        const keyRange = getKeyRangeForChordMode(noteRange, chordVectors);
+        const keyRange = getKeyRangeForChordMode(test.noteRange, chordVectors);
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence, chordVector] = getSequencesAndChordVector(keyRange, chordVectors);
         const solution = getSolution(abcNoteNameSequence);
 
@@ -659,7 +629,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     ]
   );
 
-  // Needs to execute only once. No need to execute when getData changes
+  // No dependencies needed since needs to execute only once
   const defaultData = useMemo(() => {
     return {
       abcNoteNameSequence: [],
