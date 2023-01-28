@@ -34,11 +34,11 @@ export const isKeyOutOfRange = (keyRange, midiValue) => {
   return false;
 };
 
-export const isWhiteKeysOnly = test => {
-  return test.exerciseType === EXERCISE_TYPES.noteSequence
-    && !test.isCustomNoteSequence
-    && test.whiteKeysOnly;
-};
+// export const isWhiteKeysOnly = test => {
+//   return test.exerciseType === EXERCISE_TYPES.noteSequence
+//     && !test.isCustomNoteSequence
+//     && test.whiteKeysOnly;
+// };
 
 export const isCustomNoteSequenceExercise = test => {
   return test.exerciseType === EXERCISE_TYPES.noteSequence
@@ -146,14 +146,13 @@ const getNextChordMidiValue = (test, bassNoteMidiValue, vector, keyRange) => {
     nextMidiValue = randomArrayElem(possibleMidiValues);
   }
 
-  console.log(nextMidiValue);
   return nextMidiValue;
 };
 
 export const u = {
   getWhiteKey,
   isKeyOutOfRange,
-  isWhiteKeysOnly,
+  // isWhiteKeysOnly,
   randomArrayElem,
   isChordExercise,
   randomIntBetween,
