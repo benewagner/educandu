@@ -375,30 +375,17 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.first);
     const lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.last);
 
-    let indicationMidiValue = u.getIndicationMidiValue(test, keyRange);
+    const [indicationMidiValue, firstVector] = u.getIndicationMidiValueAndFirstVector(test, keyRange, intervalVectors);
+
+    midiValueSequence.push(indicationMidiValue);
+    abcNoteNameSequence.push(C.ABC_NOTE_NAMES[indicationMidiValue]);
+    midiNoteNameSequence.push(C.MIDI_NOTE_NAMES[indicationMidiValue]);
 
     let currentMidiValue = indicationMidiValue;
     const numberOfNotes = currentTest().numberOfNotes;
 
-    for (let i = 0; i < numberOfNotes - 1; i += 1) {
-      let vector = u.randomArrayElem(intervalVectors);
-
-      if (midiValueSequence.length === 0) {
-        if (indicationMidiValue + vector < firstKeyRangeMidiValue) {
-          indicationMidiValue = lastKeyRangeMidiValue;
-        } else if (indicationMidiValue + vector > lastKeyRangeMidiValue) {
-          indicationMidiValue = firstKeyRangeMidiValue;
-        }
-      }
-
-      let vectorWithDirection = vector * u.randomArrayElem([-1, 1]);
-      let nextMidiValue = currentMidiValue + vectorWithDirection;
-
-      while (nextMidiValue < firstKeyRangeMidiValue || nextMidiValue > lastKeyRangeMidiValue) {
-        vector = u.randomArrayElem(intervalVectors);
-        vectorWithDirection = vector * u.randomArrayElem([-1, 1]);
-        nextMidiValue = currentMidiValue + vectorWithDirection;
-      }
+    for (let i = 0; i < numberOfNotes; i += 1) {
+      let [vectorWithDirection, nextMidiValue] = u.getNextNoteSequenceVectorAndMidiValue(test, currentMidiValue, keyRange, intervalVectors, firstVector, i);
 
       if (u.allowsLargeIntervals(test)) {
         const possibleNextMidiValues = [];
@@ -420,12 +407,6 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
 
       if (u.usesWhiteKeysOnly(test) && !isWhiteKey(nextMidiValue)) {
         nextMidiValue = u.getWhiteKey(currentMidiValue, vectorWithDirection);
-      }
-
-      if (midiValueSequence.length === 0) {
-        midiValueSequence.push(indicationMidiValue);
-        abcNoteNameSequence.push(C.ABC_NOTE_NAMES[indicationMidiValue]);
-        midiNoteNameSequence.push(C.MIDI_NOTE_NAMES[indicationMidiValue]);
       }
 
       midiValueSequence.push(nextMidiValue);
