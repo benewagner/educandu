@@ -100,6 +100,8 @@ const getWhiteKey = (midiValue, vector) => {
 };
 
 const getNextNoteSequenceVectorAndMidiValue = (test, currentMidiValue, keyRange, intervalVectors, firstVector, i) => {
+  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
+  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
   let newVector = i === 0 ? firstVector : randomArrayElem(intervalVectors) * randomArrayElem([-1, 1]);
   let nextMidiValue = currentMidiValue + newVector;
 
@@ -108,7 +110,44 @@ const getNextNoteSequenceVectorAndMidiValue = (test, currentMidiValue, keyRange,
     nextMidiValue = currentMidiValue + newVector;
   }
 
-  return [newVector, nextMidiValue];
+  if (allowsLargeIntervals(test)) {
+    const possibleNextMidiValues = [];
+    if (newVector < 0) {
+      while (currentMidiValue + newVector > firstKeyRangeMidiValue) {
+        possibleNextMidiValues.push(currentMidiValue + newVector);
+        newVector -= 12;
+      }
+    } else if (newVector > 0) {
+      while (currentMidiValue + newVector < lastKeyRangeMidiValue) {
+        possibleNextMidiValues.push(currentMidiValue + newVector);
+        newVector += 12;
+      }
+    }
+    if (possibleNextMidiValues.length > 0) {
+      nextMidiValue = randomArrayElem(possibleNextMidiValues);
+    }
+  }
+
+  return nextMidiValue;
+};
+
+const getNextChordMidiValue = (test, bassNoteMidiValue, vector, keyRange) => {
+  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+  let currentMidiValue = bassNoteMidiValue;
+  let nextMidiValue = bassNoteMidiValue + vector;
+
+  if (allowsLargeIntervals(test)) {
+    const possibleMidiValues = [];
+
+    while (currentMidiValue + vector < lastKeyRangeMidiValue) {
+      possibleMidiValues.push(currentMidiValue + vector);
+      currentMidiValue += 12;
+    }
+    nextMidiValue = randomArrayElem(possibleMidiValues);
+  }
+
+  console.log(nextMidiValue);
+  return nextMidiValue;
 };
 
 export const u = {
@@ -121,6 +160,7 @@ export const u = {
   usesWhiteKeysOnly,
   isIntervalExercise,
   allowsLargeIntervals,
+  getNextChordMidiValue,
   playNotesSuccessively,
   playNotesSimultaneously,
   isRandomNoteSequenceExercise,
