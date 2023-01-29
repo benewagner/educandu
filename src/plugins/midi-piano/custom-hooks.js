@@ -3,12 +3,7 @@ import { C } from './constants.js';
 import * as ut from './utils.js';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
-import { useEffect, useState, useCallback, useMemo } from 'react';
-
-// const getMidiValueFromNoteName = noteName => C.MIDI_NOTE_NAMES.indexOf(noteName);
-const getMidiValueFromWhiteKeyIndex = index => C.WHITE_KEYS_MIDI_VALUES[index];
-// const isWhiteKey = midiValue => C.WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
-// X const getWhiteKeyIndexFromMidiValue = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue); XXX
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 
 /**
  * This hook uses the Web MIDI API for checking if a MIDI device is connected.
@@ -71,7 +66,24 @@ export function useToneJsSampler(sampleType) {
   const [hasSamplerLoaded, setHasSamplerLoaded] = useState(false);
   const [sampler, setSampler] = useState(null);
 
+  const toneRef = useRef(null);
+
+  const importToneJs = () => {
+    import('tone')
+      .then(module => {
+        console.log(module);
+        toneRef.current = module;
+        return module;
+      });
+  };
+
+  console.log(toneRef.current);
+
   useEffect(() => {
+
+    if (toneRef.current === null) {
+      toneRef.current = importToneJs();
+    }
 
     if (document.toneJsSamplers?.[sampleType]) {
       if (!hasSamplerLoaded) {
@@ -307,8 +319,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex, def
   const getSequencesAndChordVector = useCallback((keyRange, chordVectors) => {
 
     let midiValueSequence = [];
-    const firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.first);
-    const lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(keyRange.last);
+    const [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = ut.getBorderKeyRangeMidiValues(keyRange);
 
     // In chord mode indication key is always bass note. Make sure bassNote key is in lower half of keyRange
     const bassNoteMidiValue = ut.randomIntBetween(firstKeyRangeMidiValue, (firstKeyRangeMidiValue + lastKeyRangeMidiValue) / 2);

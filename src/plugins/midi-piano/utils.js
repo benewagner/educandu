@@ -1,5 +1,7 @@
 import { WHITE_KEYS_MIDI_VALUES, EXERCISE_TYPES, NOTE_CONVERSION_MAP, MIDI_NOTE_NAMES } from './constants.js';
 
+export const hallo = 'Hallo';
+
 export const randomIntBetween = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
