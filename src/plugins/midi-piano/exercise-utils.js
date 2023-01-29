@@ -1,5 +1,17 @@
 import { WHITE_KEYS_MIDI_VALUES, EXERCISE_TYPES } from './constants.js';
 
+export const randomIntBetween = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
+const sortLowToHigh = array => {
+  return array.sort((a, b) => a - b);
+};
+
+export const randomArrayElem = array => {
+  return array[randomIntBetween(0, array.length - 1)];
+};
+
 export const playNotesSimultaneously = async (sampler, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef) => {
   sampler.triggerAttackRelease(midiNoteNameSequence, noteDurationRef.current / 1000);
   await new Promise(res => {
@@ -34,27 +46,13 @@ export const isKeyOutOfRange = (keyRange, midiValue) => {
   return false;
 };
 
-// export const isWhiteKeysOnly = test => {
-//   return test.exerciseType === EXERCISE_TYPES.noteSequence
-//     && !test.isCustomNoteSequence
-//     && test.whiteKeysOnly;
-// };
-
-export const isCustomNoteSequenceExercise = test => {
-  return test.exerciseType === EXERCISE_TYPES.noteSequence
-    && test.isCustomNoteSequence;
-};
-
-export const isRandomNoteSequenceExercise = test => {
-  return test.exerciseType === EXERCISE_TYPES.noteSequence
-    && !test.isCustomNoteSequence;
-};
-
 const isIntervalExercise = test => test.exerciseType === EXERCISE_TYPES.interval;
 const isChordExercise = test => test.exerciseType === EXERCISE_TYPES.chord;
+const isRandomNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence && !test.isCustomNoteSequence;
+const isCustomNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence;
 const allowsLargeIntervals = test => test[`${test.exerciseType}AllowsLargeIntervals`];
 
-const usesWhiteKeysOnly = test => {
+export const usesWhiteKeysOnly = test => {
   return test.exerciseType === EXERCISE_TYPES.noteSequence
     && !test.isCustomNoteSequence
     && test.whiteKeysOnly;
@@ -66,14 +64,6 @@ const isInRange = (keyRange, midiValue) => {
   return midiValue >= firstKeyRangeMidiValue && midiValue <= lastKeyRangeMidiValue;
 };
 
-export const randomIntBetween = (min, max) => {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-};
-
-export const randomArrayElem = array => {
-  return array[randomIntBetween(0, array.length - 1)];
-};
-
 const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
 
 const getIndicationMidiValueAndFirstVector = (test, keyRange, intervalVectors) => {
@@ -81,7 +71,7 @@ const getIndicationMidiValueAndFirstVector = (test, keyRange, intervalVectors) =
   const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
   let indicationMidiValue = randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
   const firstVector = randomArrayElem(intervalVectors);
-  if (test.whiteKeysOnly && !isWhiteKey(indicationMidiValue)) {
+  if (usesWhiteKeysOnly(test) && !isWhiteKey(indicationMidiValue)) {
     indicationMidiValue = indicationMidiValue + 1 <= lastKeyRangeMidiValue ? indicationMidiValue + 1 : indicationMidiValue - 1;
     if ((!isWhiteKey(indicationMidiValue + firstVector) || !isInRange(keyRange, indicationMidiValue + firstVector)) && [5, 7].includes(firstVector)) {
       for (let i = firstKeyRangeMidiValue; i <= lastKeyRangeMidiValue; i += 1) {
@@ -93,6 +83,13 @@ const getIndicationMidiValueAndFirstVector = (test, keyRange, intervalVectors) =
     }
   }
   return [indicationMidiValue, firstVector];
+};
+
+const getIndicationMidiValue = keyRange => {
+  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
+  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+  const indicationMidiValue = randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
+  return indicationMidiValue;
 };
 
 const getWhiteKey = (midiValue, vector) => {
@@ -149,19 +146,96 @@ const getNextChordMidiValue = (test, bassNoteMidiValue, vector, keyRange) => {
   return nextMidiValue;
 };
 
+const getVectorDirections = test => {
+  const directionCheckboxStates = test.directionCheckboxStates;
+  if (directionCheckboxStates.up && !directionCheckboxStates.down) {
+    return [true, false];
+  }
+  if (!directionCheckboxStates.up && directionCheckboxStates.down) {
+    return [false, true];
+  }
+  return [false, false];
+};
+
+const getVector = intervalVectors => randomArrayElem(intervalVectors);
+
+const getVectorWithDirection = (vector, useVectorUpOnly, useVectorDownOnly) => {
+  let vectorWithDirection = vector;
+  if (useVectorDownOnly) {
+    vectorWithDirection *= -1;
+  }
+  if (!useVectorUpOnly && !useVectorDownOnly) {
+    vectorWithDirection *= randomArrayElem([-1, 1]);
+  }
+  return vectorWithDirection;
+};
+
+const adjustIndicationMidiValue = (keyRange, vectorWithDirection) => {
+  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
+  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+  let indicationMidiValue = Math.floor((firstKeyRangeMidiValue + lastKeyRangeMidiValue) / 2);
+  let nextMidiValue = indicationMidiValue + vectorWithDirection;
+  if (vectorWithDirection < 0) {
+    for (let i = indicationMidiValue; i <= lastKeyRangeMidiValue; i += 1) {
+      if (isInRange(keyRange, nextMidiValue)) {
+        break;
+      }
+      indicationMidiValue += 1;
+      nextMidiValue += 1;
+    }
+  }
+  if (vectorWithDirection > 0) {
+    for (let i = indicationMidiValue; i >= firstKeyRangeMidiValue; i -= 1) {
+      if (isInRange(keyRange, nextMidiValue)) {
+        break;
+      }
+      indicationMidiValue -= 1;
+      nextMidiValue -= 1;
+    }
+  }
+  return indicationMidiValue;
+};
+
+const getPossibleNextMidiValues = (indicationMidiValue, vectorWithDirection, keyRange) => {
+  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
+  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+  const arr = [];
+  let modifiedVector = vectorWithDirection;
+  if (modifiedVector < 0) {
+    while ((indicationMidiValue + modifiedVector) > firstKeyRangeMidiValue) {
+      arr.push(indicationMidiValue + modifiedVector);
+      modifiedVector -= 12;
+    }
+  }
+  if (modifiedVector > 0) {
+    while ((indicationMidiValue + modifiedVector) < lastKeyRangeMidiValue) {
+      arr.push(indicationMidiValue + modifiedVector);
+      modifiedVector += 12;
+    }
+  }
+  return arr;
+};
+
 export const u = {
+  getVector,
+  isInRange,
   getWhiteKey,
+  sortLowToHigh,
   isKeyOutOfRange,
-  // isWhiteKeysOnly,
   randomArrayElem,
   isChordExercise,
   randomIntBetween,
   usesWhiteKeysOnly,
   isIntervalExercise,
+  getVectorDirections,
   allowsLargeIntervals,
   getNextChordMidiValue,
   playNotesSuccessively,
+  getIndicationMidiValue,
+  getVectorWithDirection,
   playNotesSimultaneously,
+  getPossibleNextMidiValues,
+  adjustIndicationMidiValue,
   isRandomNoteSequenceExercise,
   isCustomNoteSequenceExercise,
   getIndicationMidiValueAndFirstVector,

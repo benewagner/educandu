@@ -1,8 +1,13 @@
 .MidiPiano {}
 
-.MidiPiano-controlsContainer {
+.MidiPiano-MidiControlsContainer {
   display: flex;
   width: 100%;
+}
+
+.MidiPiano-MidiControlsWrapper {
+  width: 100%;
+  padding: 1rem 0;
 }
 
 .MidiPiano-midiTrackTitle {
@@ -14,12 +19,6 @@
   display: flex;
   justify-content: left;
   padding: 0 0 0.5rem 0;
-}
-
-.MidiPiano-earTrainingControls {
-  display: flex;
-  justify-content: center;
-  padding: 1rem 0;
 }
 
 .MidiPiano-inputSwitch {
@@ -116,6 +115,13 @@
   transition: all 0.2s ease-in-out;
 }
 
+.MidiPiano-SwitchContainer {
+  margin-bottom: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
 .MidiPiano-SwitchChecked {
   background-color: rgb(109,139,177);
   transition: all 0.2s ease-in-out;
@@ -142,6 +148,20 @@
   margin-top: -0.5rem;
   margin-bottom: 0.5rem;
   padding: 0.5rem;
+}
+
+.MidiPiano-EarTrainingControlsContainer {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+
+.MidiPiano-earTrainingControls {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
 }
 
 .MidiPiano-EarTrainingControls {
@@ -212,4 +232,11 @@
 .MidiPiano-OneOfThreeFlexColumns {
   display: flex;
   width: 100%;
+}
+
+.MidiPiano-ChordSolutionDisplay {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  font-weight: bold;
 }

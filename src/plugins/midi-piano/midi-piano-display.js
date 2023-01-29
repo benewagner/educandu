@@ -17,7 +17,7 @@ import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
 import PauseIcon from '../../components/icons/media-player/pause-icon.js';
 import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice, useExercise } from './custom-hooks.js';
-import { playNotesSimultaneously, playNotesSuccessively, isKeyOutOfRange, isWhiteKeysOnly } from './exercise-utils.js';
+import { playNotesSimultaneously, playNotesSuccessively, isKeyOutOfRange, usesWhiteKeysOnly } from './exercise-utils.js';
 
 export default function MidiPianoDisplay({ content }) {
 
@@ -460,7 +460,7 @@ export default function MidiPianoDisplay({ content }) {
 
   const renderEarTrainingControls = () => (
     <div className="MidiPiano-EarTrainingControls">
-      <h4>{`${t('earTraining')}: ${t(exerciseType)} ${isWhiteKeysOnly(currentTest()) ? `(${t('whiteKeysOnly')})` : ''}`}</h4>
+      <h4>{`${t('earTraining')}: ${t(exerciseType)} ${usesWhiteKeysOnly(currentTest()) ? `(${t('whiteKeysOnly')})` : ''}`}</h4>
       <div className="MidiPiano-EarTrainingControlsItem">
         <Button onClick={playExercise} icon={<PlayIcon />} />
         <Button onClick={() => { isExercisePlayingRef.current = false; }} icon={<StopIcon />} />
@@ -517,7 +517,7 @@ export default function MidiPianoDisplay({ content }) {
           </div>
         </div>
       )}
-      <div style={{ paddingBottom: '1rem' }}>
+      <div className="MidiPiano-AbcDisplayContainer">
         {tests[currentTestIndex].exerciseType === 'noteSequence' && (
           <div className="AbcNotation" style={{ display: 'flex' }}>
             <div className="AbcNotation-wrapper u-width-65 MidiPiano-AnswerAbcDisplay">
@@ -542,12 +542,12 @@ export default function MidiPianoDisplay({ content }) {
       {[C.EXERCISE_TYPES.interval, C.EXERCISE_TYPES.chord].includes(exerciseType) && (
         <div className="MidiPiano-OneOfThreeFlexColumns">
           <div className="MidiPiano-OneOfThreeFlexColumns">
-            <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.5rem', width: '100%' }}>
+            <div className="MidiPiano-SwitchContainer">
               <CustomSwitch handleSwitchClick={isChecked => { isNoteInputEnabled.current = isChecked; }} />
               <div>{t('noteInput')}</div>
             </div>
           </div>
-          <div style={{ width: '100%', display: 'flex', justifyContent: 'center', fontWeight: 'bold' }}>
+          <div className="MidiPiano-ChordSolutionDisplay">
             {!!canShowSolution && exerciseType === C.EXERCISE_TYPES.chord && <div>{`${t(chord.type)}, ${t(chord.inversion)}`}</div>}
           </div>
           <div className="MidiPiano-OneOfThreeFlexColumns">
@@ -572,13 +572,13 @@ export default function MidiPianoDisplay({ content }) {
         isExercisePlayingRef={isExercisePlayingRef}
         answerMidiValueSequence={answerMidiValueSequence}
         />
-      <div className="MidiPiano-controlsContainer">
-        <div style={{ width: '100%', padding: '1rem 0' }}>
+      <div className="MidiPiano-MidiControlsContainer">
+        <div className="MidiPiano-MidiControlsWrapper">
           {!!sourceUrl && <h4>MIDI</h4>}
           {!!sourceUrl && renderMidiPlayerControls()}
           {!!sourceUrl && !!midiTrackTitle && renderMidiTrackTitle()}
         </div>
-        <div className="MidiPiano-earTrainingControls" style={{ width: '100%' }} >
+        <div className="MidiPiano-EarTrainingControlsContainer">
           {exerciseType !== '' && renderEarTrainingControls()}
         </div>
         <div className="MidiPiano-inputSwitch">
