@@ -53,7 +53,7 @@ export default function MidiPianoDisplay({ content }) {
   const midiData = useMidiLoader(src);
   const pianoId = usePianoId('default');
   const isMidiDeviceConnected = useMidiDevice();
-  const [sampler, hasSamplerLoaded] = useToneJsSampler(sampleType);
+  const [sampler, hasSamplerLoaded, setupToneJsSampler] = useToneJsSampler(sampleType);
   const exerciseData = useExercise(content, currentTestIndex, currentExerciseIndex, content.keyRange);
 
   const {
@@ -113,7 +113,16 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
-  function playOrStopNote(eventType, noteName) {
+  async function qwert() {
+    if (!sampler) {
+      await setupToneJsSampler();
+    }
+  }
+
+  async function playOrStopNote(eventType, noteName) {
+
+    await qwert();
+
     switch (eventType) {
       case 'Note on':
         sampler.triggerAttack(noteName);
