@@ -8,8 +8,8 @@ import { PlusOutlined } from '@ant-design/icons';
 import cloneDeep from '../../utils/clone-deep.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
-import AbcNotation from '../../components/abc-notation.js';
 import { analyseABC, filterAbcString } from './utils.js';
+import AbcNotation from '../../components/abc-notation.js';
 import { create as createId } from '../../utils/unique-id.js';
 import { useService } from '../../components/container-context.js';
 import { sectionEditorProps } from '../../ui/default-prop-types.js';
@@ -34,22 +34,11 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const { tests, sourceUrl, sourceType, sampleType, midiTrackTitle } = content;
 
   const tipformatter = value => {
-    const tooltips = {
-      1: t('noteB'),
-      2: 'C',
-      3: 'D',
-      4: 'E',
-      5: 'F',
-      6: 'G',
-      0: 'A'
-    };
+    const tooltips = { 1: t('noteB'), 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 0: 'A' };
     return tooltips[value % 7];
   };
 
-  const formItemLayout = {
-    labelCol: { span: 4 },
-    wrapperCol: { span: 14 }
-  };
+  const formItemLayout = { labelCol: { span: 4 }, wrapperCol: { span: 14 } };
 
   const getCheckboxStateAndNewTests = event => {
     const checkedState = event.target.checked;

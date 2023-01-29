@@ -1,4 +1,5 @@
 /* eslint-disable max-lines */
+import { u } from './utils.js';
 import { C } from './constants.js';
 import StopIcon from './stop-icon.js';
 import midiPlayerNs from 'midi-player-js';
@@ -17,7 +18,6 @@ import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
 import PauseIcon from '../../components/icons/media-player/pause-icon.js';
 import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice, useExercise } from './custom-hooks.js';
-import { playNotesSimultaneously, playNotesSuccessively, isKeyOutOfRange, usesWhiteKeysOnly } from './exercise-utils.js';
 
 export default function MidiPianoDisplay({ content }) {
 
@@ -62,8 +62,7 @@ export default function MidiPianoDisplay({ content }) {
     solution,
     indication,
     chordVector,
-    indicationMidiValue,
-    abcNoteNameSequence
+    indicationMidiValue
   } = exerciseData;
 
   const exerciseDataRef = useRef(null);
@@ -71,7 +70,7 @@ export default function MidiPianoDisplay({ content }) {
 
   const chord = C.CHORD_VECTOR_MAP.get(JSON.stringify(chordVector));
 
-  const inputAbcNoteNameSequence = useRef([]);
+  const answerAbcNoteNameSequence = useRef([]);
   const answerMidiValueSequenceRef = useRef([]);
   const [answerMidiValueSequence, setAnswerMidiValueSequence] = useState([]);
   const [answerAbc, setAnswerAbc] = useState('');
@@ -132,11 +131,11 @@ export default function MidiPianoDisplay({ content }) {
     isExercisePlayingRef.current = true;
     const midiNoteNameSequence = exerciseDataRef.current.midiNoteNameSequence;
     if (exerciseType !== C.EXERCISE_TYPES.noteSequence && playExerciseMode.current === 'simultaneous') {
-      await playNotesSimultaneously(sampler, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef);
+      await u.playNotesSimultaneously(sampler, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef);
       return;
     }
 
-    playNotesSuccessively(sampler, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef, playExerciseStartIndex);
+    u.playNotesSuccessively(sampler, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef, playExerciseStartIndex);
   };
 
   const resetEarTrainingControls = () => {
@@ -145,7 +144,7 @@ export default function MidiPianoDisplay({ content }) {
     canShowSolutionRef.current = false;
     setPlayExerciseStartIndex(0);
     isExercisePlayingRef.current = false;
-    inputAbcNoteNameSequence.current.length = 0;
+    answerAbcNoteNameSequence.current.length = 0;
     answerMidiValueSequenceRef.current.length = 0;
     setAnswerMidiValueSequence([]);
 
@@ -171,7 +170,8 @@ export default function MidiPianoDisplay({ content }) {
 
   const updateKeyStyle = (eventType, midiValue) => {
     const key = keys.current[midiValue];
-    if (typeof key === 'undefined' || isNoteInputEnabled.current) {
+
+    if (typeof key === 'undefined' || (!u.isNoteSequenceExercise(currentTest()) && isNoteInputEnabled.current)) {
       return;
     }
     if (eventType === C.EVENT_TYPES.noteOn) {
@@ -188,7 +188,7 @@ export default function MidiPianoDisplay({ content }) {
   const updateAnswerAbc = () => {
     setAnswerAbc(() => {
       let inputString = '';
-      for (const abcNoteName of inputAbcNoteNameSequence.current) {
+      for (const abcNoteName of answerAbcNoteNameSequence.current) {
         inputString += abcNoteName;
       }
       return inputString;
@@ -197,17 +197,16 @@ export default function MidiPianoDisplay({ content }) {
 
   const inputNote = midiValue => {
 
-    // Ref still needed? XXX
     const midiValueSequence = exerciseDataRef.current.midiValueSequence;
 
-    if (canShowSolutionRef.current || isKeyOutOfRange(keyRange, midiValue)) {
+    if (canShowSolutionRef.current || u.isKeyOutOfRange(keyRange, midiValue)) {
       return;
     }
 
     // Don't allow to input more notes than needed. Max note input number is number of solution notes - 1: First note (indication) can not be input or deleted.
     const isAnswerComplete = answerMidiValueSequenceRef.current.length >= midiValueSequence.length - 1;
 
-    if (currentTest().exerciseType !== C.EXERCISE_TYPES.noteSequence) {
+    if (!u.isNoteSequenceExercise(currentTest())) {
 
       // Toggle answer key
       if (answerMidiValueSequenceRef.current.includes(midiValue)) {
@@ -229,28 +228,27 @@ export default function MidiPianoDisplay({ content }) {
       return;
     }
 
-    // Note sequence mode only from here
+    // ___Note sequence mode only from here___
+
+    const abcNoteNameSequence = exerciseDataRef.current.abcNoteNameSequence;
 
     // Don't allow to input more notes than needed. Max note input number is number of solution notes - 1: First note (indication) can not be input or deleted.
-    if (inputAbcNoteNameSequence.current.length >= abcNoteNameSequence.length - 1) {
+    if (answerAbcNoteNameSequence.current.length >= abcNoteNameSequence.length - 1) {
       return;
     }
-
     const autoAbcNoteName = C.ABC_NOTE_NAMES[midiValue];
-    const solutionAbcNoteName = abcNoteNameSequence[inputAbcNoteNameSequence.current.length + 1];
-    const isCorrect = midiValue === midiValueSequence[inputAbcNoteNameSequence.current.length + 1];
+    const solutionAbcNoteName = abcNoteNameSequence[answerAbcNoteNameSequence.current.length + 1];
+    const solutionMidiValue = midiValueSequence[answerAbcNoteNameSequence.current.length + 1];
+    const isCorrect = midiValue === solutionMidiValue;
 
     // Make sure same accidental type note is rendered for chromatic notes as in solution
-    if (isCorrect) {
-      inputAbcNoteNameSequence.current.push(solutionAbcNoteName);
-    } else {
-      inputAbcNoteNameSequence.current.push(autoAbcNoteName);
-    }
+    answerAbcNoteNameSequence.current.push(isCorrect ? solutionAbcNoteName : autoAbcNoteName);
+
     updateAnswerAbc();
   };
 
   const deleteNote = () => {
-    inputAbcNoteNameSequence.current.pop();
+    answerAbcNoteNameSequence.current.pop();
     updateAnswerAbc();
   };
 
@@ -341,7 +339,7 @@ export default function MidiPianoDisplay({ content }) {
   };
 
   // Stored in browser document object to be called from sibling pianos.
-  // Disables MIDI device input when sibling piano input switch is set true.
+  // Disables MIDI device input when sibling piano midi input switch is set true.
   const disableInput = id => {
     if (id === pianoId) {
       return;
@@ -363,7 +361,7 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
-  // Disables MIDI input for sibling pianos when switch is set true
+  // Disable midi input for sibling pianos when switch is set true
   const manageSiblingPianosMidiInput = () => {
 
     if (pianoId === 'default' || !isMidiDeviceConnected || !isMidiInputEnabled.current) {
@@ -375,7 +373,7 @@ export default function MidiPianoDisplay({ content }) {
       document.midiPianoIds = [];
     }
 
-    // Checks if midi pianos have been deleted.
+    // Check if midi pianos have been deleted
     document.midiPianos = document.midiPianos.filter(piano => !!document.querySelector(`#${piano.id}`));
     document.midiPianoIds = [];
     document.midiPianos.forEach(piano => {
@@ -391,9 +389,8 @@ export default function MidiPianoDisplay({ content }) {
       disableInput
     });
 
-    for (let i = 0; i < document.midiPianos.length; i += 1) {
-      const midiPiano = document.midiPianos[i];
-      midiPiano.disableInput(pianoId);
+    for (const piano of document.midiPianos) {
+      piano.disableInput(pianoId);
     }
   };
 
@@ -449,7 +446,7 @@ export default function MidiPianoDisplay({ content }) {
         <InputNumber
           value={playExerciseStartIndex + 1}
           min={1}
-          max={abcNoteNameSequence.length}
+          max={exerciseData.abcNoteNameSequence.length}
           onChange={value => { setPlayExerciseStartIndex(value - 1); }}
           />
       </Form.Item>
@@ -460,7 +457,7 @@ export default function MidiPianoDisplay({ content }) {
 
   const renderEarTrainingControls = () => (
     <div className="MidiPiano-EarTrainingControls">
-      <h4>{`${t('earTraining')}: ${t(exerciseType)} ${usesWhiteKeysOnly(currentTest()) ? `(${t('whiteKeysOnly')})` : ''}`}</h4>
+      <h4>{`${t('earTraining')}: ${t(exerciseType)} ${u.usesWhiteKeysOnly(currentTest()) ? `(${t('whiteKeysOnly')})` : ''}`}</h4>
       <div className="MidiPiano-EarTrainingControlsItem">
         <Button onClick={playExercise} icon={<PlayIcon />} />
         <Button onClick={() => { isExercisePlayingRef.current = false; }} icon={<StopIcon />} />

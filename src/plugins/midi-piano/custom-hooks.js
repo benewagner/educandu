@@ -1,6 +1,6 @@
 import * as Tone from 'tone';
 import { C } from './constants.js';
-import { u } from './exercise-utils.js';
+import { u } from './utils.js';
 import HttpClient from '../../api-clients/http-client.js';
 import { create as createId } from '../../utils/unique-id.js';
 import { useEffect, useState, useCallback, useMemo } from 'react';
@@ -146,55 +146,35 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
   const currentTest = useCallback(() => content.tests[currentTestIndex], [content.tests, currentTestIndex]);
   const currentNoteSequence = useCallback(() => currentTest().customNoteSequences[currentExerciseIndex], [currentExerciseIndex, currentTest]);
 
-  // Used for all exercise modes except chord mode. NoteRange defined in editor becomes rendered piano keyRange.
+  // Used for all exercise modes except chord mode. NoteRange defined with slider in editor becomes rendered piano keyRange.
   // Checks if noteRange is too narrow for exercise and if so widens it.
-  const getKeyRange = useCallback(paramObj => {
-    const { intervalVectors, midiNoteNameSequence, noteRange } = paramObj;
+  const getKeyRange = useCallback(params => {
+    const { intervalVectors, midiNoteNameSequence, noteRange } = params;
     const test = currentTest();
-    const exerciseType = test.exerciseType;
 
     let firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.first);
     let lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.last);
 
-    if (u.isCustomNoteSequenceExercise(test)) {
+    [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = u.widenKeyRangeIfNeeded({ test, intervalVectors, noteRange, midiNoteNameSequence });
 
-      for (let i = 0; i < midiNoteNameSequence.length; i += 1) {
-        const midiValue = getMidiValueFromNoteName(midiNoteNameSequence[i]);
-        if (midiValue < firstKeyRangeMidiValue) {
-          firstKeyRangeMidiValue = midiValue;
-        }
-        if (midiValue > lastKeyRangeMidiValue) {
-          lastKeyRangeMidiValue = midiValue;
-        }
-      }
-    }
-
-    if (exerciseType === C.EXERCISE_TYPES.noteSequence && !test.isCustomNoteSequence) {
-      for (const vector of intervalVectors) {
-        if (firstKeyRangeMidiValue > lastKeyRangeMidiValue - vector) {
-          firstKeyRangeMidiValue = lastKeyRangeMidiValue - vector;
-        }
-        if (lastKeyRangeMidiValue < firstKeyRangeMidiValue + vector) {
-          lastKeyRangeMidiValue = firstKeyRangeMidiValue + vector;
-        }
-      }
-    }
+    // Make sure widened keyRange is part of actual piano key range
+    [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = u.shiftKeyRangeIfNeeded(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
 
     // Make sure first and last midi value belongs to white key
     firstKeyRangeMidiValue = C.WHITE_KEYS_MIDI_VALUES.includes(firstKeyRangeMidiValue) ? firstKeyRangeMidiValue : firstKeyRangeMidiValue - 1;
     lastKeyRangeMidiValue = C.WHITE_KEYS_MIDI_VALUES.includes(lastKeyRangeMidiValue) ? lastKeyRangeMidiValue : lastKeyRangeMidiValue + 1;
 
-    const keyRange = {};
-
     // Convert midi values to white key indices which are needed for rendering CustomPiano
-    keyRange.first = C.WHITE_KEYS_MIDI_VALUES.indexOf(firstKeyRangeMidiValue);
-    keyRange.last = C.WHITE_KEYS_MIDI_VALUES.indexOf(lastKeyRangeMidiValue);
+    const keyRange = {
+      first: C.WHITE_KEYS_MIDI_VALUES.indexOf(firstKeyRangeMidiValue),
+      last: C.WHITE_KEYS_MIDI_VALUES.indexOf(lastKeyRangeMidiValue)
+    };
 
     return keyRange;
 
   }, [currentTest]);
 
-  const getIntervalVectors = useCallback(intervalCheckboxStates => {
+  const getIntervalVectors = useCallback((test, intervalCheckboxStates) => {
 
     if (intervalCheckboxStates.all) {
       return C.INTERVAL_VECTORS.all;
@@ -206,6 +186,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
       if (typeof intervalCheckboxStates[interval].minor !== 'undefined') {
 
         /**
+         * In white keys only mode (random note sequence mode) is checked, you can not check minor or major type of interval in editor.
          * If white keys only and interval is checked, only minor interval type vector is included.
          * If minor interval type vector leads to black key, minor interval type vector + 1 (major interval type vector) will be used to generate new note.
          */
@@ -324,10 +305,11 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const bassNoteMidiValue = u.randomIntBetween(firstKeyRangeMidiValue, (firstKeyRangeMidiValue + lastKeyRangeMidiValue) / 2);
     midiValueSequence.push(bassNoteMidiValue);
 
-    const vector = u.randomArrayElem(chordVectors);
+    // For example, chordVector for dominantseventh chord is [4, 7, 10]
+    const chordVector = u.randomArrayElem(chordVectors);
 
-    for (let i = 0; i < vector.length; i += 1) {
-      const nextMidiValue = u.getNextChordMidiValue(currentTest(), bassNoteMidiValue, vector[i], keyRange);
+    for (let i = 0; i < chordVector.length; i += 1) {
+      const nextMidiValue = u.getNextChordMidiValue(currentTest(), bassNoteMidiValue, chordVector[i], keyRange);
       midiValueSequence.push(nextMidiValue);
     }
 
@@ -336,7 +318,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
     const abcNoteNameSequence = midiValueSequence.map(value => C.ABC_NOTE_NAMES[value]);
     const midiNoteNameSequence = midiValueSequence.map(value => C.MIDI_NOTE_NAMES[value]);
 
-    return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence, vector];
+    return [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence, chordVector];
   }, [currentTest]);
 
   const getKeyRangeForChordMode = useCallback((noteRange, chordVectors) => {
@@ -382,7 +364,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
 
       if (u.isRandomNoteSequenceExercise(test)) {
         const intervalCheckboxStates = test.noteSequenceCheckboxStates;
-        const intervalVectors = getIntervalVectors(intervalCheckboxStates);
+        const intervalVectors = getIntervalVectors(test, intervalCheckboxStates);
         const keyRange = getKeyRange({ intervalVectors, noteRange: test.noteRange });
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNoteSequenceMode(keyRange, intervalVectors);
         const solution = getSolution(abcNoteNameSequence);
@@ -401,7 +383,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex) {
 
       if (u.isIntervalExercise(test)) {
         const checkboxStates = test.intervalCheckboxStates;
-        const intervalVectors = getIntervalVectors(checkboxStates);
+        const intervalVectors = getIntervalVectors(test, checkboxStates);
         const keyRange = getKeyRange({ intervalVectors, noteRange: test.noteRange });
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForIntervalMode(keyRange, intervalVectors);
 
