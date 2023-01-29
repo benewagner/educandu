@@ -19,6 +19,7 @@ export default function CustomPiano(props) {
     test,
     colors,
     pianoId,
+    content,
     sampler,
     inputNote,
     activeNotes,
@@ -31,7 +32,8 @@ export default function CustomPiano(props) {
     isExercisePlayingRef,
     answerMidiValueSequence } = props;
 
-  const { keyRange, midiValueSequence } = exerciseData;
+  const { keyRange } = exerciseData ? exerciseData : content;
+  const { midiValueSequence } = exerciseData ? exerciseData : [];
   const indicationMidiValue = midiValueSequence ? midiValueSequence[0] : null;
   const piano = useRef(null);
   const exerciseType = test.exerciseType;
@@ -110,7 +112,7 @@ export default function CustomPiano(props) {
       }
     }
 
-    if (exerciseType === EXERCISE_TYPES.noteSequence) {
+    if (content.tests.length === 0 || exerciseType === EXERCISE_TYPES.noteSequence) {
       updateKeyStyle('Note on', midiValue);
     }
   };
@@ -199,13 +201,13 @@ CustomPiano.propTypes = {
   answerMidiValueSequence: PropTypes.array,
   canShowSolutionRef: PropTypes.object,
   colors: PropTypes.object.isRequired,
-  exerciseData: PropTypes.object.isRequired, // Required only because exerciseData provides keyRange, even if there is no test defined in editor
+  content: PropTypes.object.isRequired,
+  exerciseData: PropTypes.object,
   hasSamplerLoaded: PropTypes.bool.isRequired,
   inputNote: PropTypes.func,
   isExercisePlayingRef: PropTypes.object.isRequired,
   isNoteInputEnabled: PropTypes.object,
   keys: PropTypes.object.isRequired,
-  midiValueSequence: PropTypes.array,
   pianoId: PropTypes.string.isRequired,
   sampler: PropTypes.object,
   test: PropTypes.object,
@@ -216,9 +218,9 @@ CustomPiano.propTypes = {
 CustomPiano.defaultProps = {
   answerMidiValueSequence: [],
   canShowSolutionRef: {},
+  exerciseData: {},
   inputNote: () => {},
   isNoteInputEnabled: {},
-  midiValueSequence: null,
   sampler: {},
   test: { exerciseType: '' }
 };

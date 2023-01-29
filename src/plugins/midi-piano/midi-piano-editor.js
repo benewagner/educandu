@@ -31,7 +31,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   const midiPianoInfo = useService(MidiPianoInfo);
   const selectorPianoColors = { whiteKey: 'white', blackKey: 'black' };
   const [canRenderSelectorPiano, setCanRenderSelectorPiano] = useState(false);
-  const { tests, sourceUrl, sourceType, sampleType, midiTrackTitle } = content;
+  const { tests, sourceUrl, sourceType, midiTrackTitle } = content;
 
   const tipformatter = value => {
     const tooltips = { 1: t('noteB'), 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 0: 'A' };
@@ -218,11 +218,6 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     changeContent({ sourceType: value, sourceUrl: '' });
   };
 
-  const handleSampleTypeValueChanged = event => {
-    const { value } = event.target;
-    changeContent({ sampleType: value });
-  };
-
   const handleExerciseTypeValueChanged = (event, index) => {
     const value = event.target.value;
     const newTests = cloneDeep(tests);
@@ -310,15 +305,6 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     setCanRenderSelectorPiano(!canRenderSelectorPiano);
   };
 
-  const renderSampleTypeInput = (value, onChangeHandler) => (
-    <FormItem label="Samples" {...formItemLayout}>
-      <RadioGroup value={value} onChange={onChangeHandler}>
-        <RadioButton value="piano">{t('piano')}</RadioButton>
-        <RadioButton value="harpsichord">{t('harpsichord')}</RadioButton>
-      </RadioGroup>
-    </FormItem>
-  );
-
   const renderSourceTypeInput = (value, onChangeHandler) => (
     <FormItem label={t('common:source')} {...formItemLayout}>
       <RadioGroup value={value} onChange={onChangeHandler}>
@@ -357,12 +343,12 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   );
 
   const renderSelectorPiano = () => (
-    <div id="MidiPiano-XXX1">
-      <div id="MidiPiano-XXX2">
+    <div className="MidiPiano-selectorPianoContainer">
+      <div className="MidiPiano-selectorPianoWrapper">
         <div>
           {t('keyRangeSelectionText')}
         </div>
-        <div id="MidiPiano-selectorPianoWrapper">
+        <div className="MidiPiano-selectorPiano">
           {pianoLayout.map((elem, index) => {
             if (elem[0] === 0 && index < pianoLayout.length - 1) {
               return <KeyWhiteWithBlack updateKeyRangeSelection={updateKeyRangeSelection} key={createId()} index={index} colors={selectorPianoColors} />;
@@ -616,10 +602,9 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
   // constants.js für Sachen in defaultContent und so... XXX
 
   return (
-    <div className="MidiPianoEditor">
+    <div>
       <Form>
         {renderKeyRangeSelector(toggleSelectorPiano)}
-        {renderSampleTypeInput(sampleType, handleSampleTypeValueChanged)}
         <Divider>MIDI</Divider>
         {renderMidiTrackTitleInput(midiTrackTitle, handleMidiTrackTitleValueChanged)}
         {renderSourceTypeInput(sourceType, handleSourceTypeValueChanged)}

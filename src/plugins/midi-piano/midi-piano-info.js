@@ -72,7 +72,7 @@ class MidiPianoInfo {
       whiteKeysOnly: false,
       numberOfNotes: 4,
       clef: 'treble',
-      isCustomNoteSequence: true,
+      isCustomNoteSequence: false,
       customNoteSequences: [this.getDefaultCustomNoteSequence()],
       intervalAllowsLargeIntervals: false,
       chordAllowsLargeIntervals: false,
@@ -116,7 +116,6 @@ class MidiPianoInfo {
       sourceType: MIDI_SOURCE_TYPE.internal,
       sourceUrl: '',
       keyRange: { first: 12, last: 39 },
-      hasMidiFile: false,
       midiTrackTitle: '',
       colors: {
         blackKey: 'rgb(56, 56, 56)',
@@ -127,7 +126,7 @@ class MidiPianoInfo {
         wrong: '#FF8D8D'
       },
       sampleType: 'piano',
-      tests: [this.getDefaultTest()]
+      tests: []
     };
   }
 

@@ -4,7 +4,7 @@ export const randomIntBetween = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-const sortLowToHigh = array => {
+export const sortLowToHigh = array => {
   return array.sort((a, b) => a - b);
 };
 
@@ -12,16 +12,26 @@ export const randomArrayElem = array => {
   return array[randomIntBetween(0, array.length - 1)];
 };
 
-const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
-const getMidiValueFromNoteName = noteName => MIDI_NOTE_NAMES.indexOf(noteName);
-const getMidiValueFromMidiNoteName = midiNoteName => MIDI_NOTE_NAMES.indexOf(midiNoteName);
+export const getMidiValueFromWhiteKeyIndex = index => WHITE_KEYS_MIDI_VALUES[index];
+export const getMidiValueFromNoteName = noteName => MIDI_NOTE_NAMES.indexOf(noteName);
+export const getMidiValueFromMidiNoteName = midiNoteName => MIDI_NOTE_NAMES.indexOf(midiNoteName);
 
-const isIntervalExercise = test => test.exerciseType === EXERCISE_TYPES.interval;
-const isChordExercise = test => test.exerciseType === EXERCISE_TYPES.chord;
-const isNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence;
-const isRandomNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence && !test.isCustomNoteSequence;
-const isCustomNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence;
-const allowsLargeIntervals = test => test[`${test.exerciseType}AllowsLargeIntervals`];
+export const isIntervalExercise = test => test.exerciseType === EXERCISE_TYPES.interval;
+export const isChordExercise = test => test.exerciseType === EXERCISE_TYPES.chord;
+export const isNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence;
+export const isRandomNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence && !test.isCustomNoteSequence;
+export const isCustomNoteSequenceExercise = test => test.exerciseType === EXERCISE_TYPES.noteSequence && test.isCustomNoteSequence;
+export const allowsLargeIntervals = test => test[`${test.exerciseType}AllowsLargeIntervals`];
+
+export const getBorderKeyRangeMidiValues = noteRange => [getMidiValueFromWhiteKeyIndex(noteRange.first), getMidiValueFromWhiteKeyIndex(noteRange.last)];
+
+export const isAnswerComplete = params => {
+  const { test, answerMidiValueSequenceRef, midiValueSequence, answerAbcNoteNameSequenceRef, abcNoteNameSequence} = params;
+  if (isNoteSequenceExercise(test)) {
+    return answerAbcNoteNameSequenceRef.current.length >= abcNoteNameSequence.length - 1;
+  }
+  return answerMidiValueSequenceRef.current.length >= midiValueSequence.length - 1;
+};
 
 export function filterAbcString(string) {
   const charsToDelete = [' ', '|', '=', '(', ')', '[', ']', '-', 'z', 'x', '1', '2', '3', '4', '5', '6', '7', '8'];
@@ -156,17 +166,15 @@ export const usesWhiteKeysOnly = test => {
     && test.whiteKeysOnly;
 };
 
-const isInRange = (keyRange, midiValue) => {
-  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
-  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+export const isInRange = (keyRange, midiValue) => {
+  const [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = getBorderKeyRangeMidiValues(keyRange);
   return midiValue >= firstKeyRangeMidiValue && midiValue <= lastKeyRangeMidiValue;
 };
 
-const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
+export const isWhiteKey = midiValue => WHITE_KEYS_MIDI_VALUES.indexOf(midiValue) !== -1;
 
-const getIndicationMidiValueAndFirstVector = (test, keyRange, intervalVectors) => {
-  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
-  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+export const getIndicationMidiValueAndFirstVector = (test, keyRange, intervalVectors) => {
+  const [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = getBorderKeyRangeMidiValues(keyRange);
   let indicationMidiValue = randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
   const firstVector = randomArrayElem(intervalVectors);
   if (usesWhiteKeysOnly(test) && !isWhiteKey(indicationMidiValue)) {
@@ -183,20 +191,18 @@ const getIndicationMidiValueAndFirstVector = (test, keyRange, intervalVectors) =
   return [indicationMidiValue, firstVector];
 };
 
-const getIndicationMidiValue = keyRange => {
-  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
-  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+export const getIndicationMidiValue = keyRange => {
+  const [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = getBorderKeyRangeMidiValues(keyRange);
   const indicationMidiValue = randomIntBetween(firstKeyRangeMidiValue, lastKeyRangeMidiValue);
   return indicationMidiValue;
 };
 
-const getWhiteKey = (midiValue, vector) => {
+export const getWhiteKey = (midiValue, vector) => {
   return vector < 0 ? midiValue + vector - 1 : midiValue + vector + 1;
 };
 
-const getNextNoteSequenceVectorAndMidiValue = (test, currentMidiValue, keyRange, intervalVectors, firstVector, i) => {
-  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
-  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+export const getNextNoteSequenceVectorAndMidiValue = (test, currentMidiValue, keyRange, intervalVectors, firstVector, i) => {
+  const [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = getBorderKeyRangeMidiValues(keyRange);
   let newVector = i === 0 ? firstVector : randomArrayElem(intervalVectors) * randomArrayElem([-1, 1]);
   let nextMidiValue = currentMidiValue + newVector;
 
@@ -226,7 +232,7 @@ const getNextNoteSequenceVectorAndMidiValue = (test, currentMidiValue, keyRange,
   return nextMidiValue;
 };
 
-const getNextChordMidiValue = (test, bassNoteMidiValue, vector, keyRange) => {
+export const getNextChordMidiValue = (test, bassNoteMidiValue, vector, keyRange) => {
   const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
   let currentMidiValue = bassNoteMidiValue;
   let nextMidiValue = bassNoteMidiValue + vector;
@@ -244,7 +250,7 @@ const getNextChordMidiValue = (test, bassNoteMidiValue, vector, keyRange) => {
   return nextMidiValue;
 };
 
-const getVectorDirections = test => {
+export const getVectorDirections = test => {
   const directionCheckboxStates = test.directionCheckboxStates;
   if (directionCheckboxStates.up && !directionCheckboxStates.down) {
     return [true, false];
@@ -255,9 +261,9 @@ const getVectorDirections = test => {
   return [false, false];
 };
 
-const getVector = intervalVectors => randomArrayElem(intervalVectors);
+export const getVector = intervalVectors => randomArrayElem(intervalVectors);
 
-const getVectorWithDirection = (vector, useVectorUpOnly, useVectorDownOnly) => {
+export const getVectorWithDirection = (vector, useVectorUpOnly, useVectorDownOnly) => {
   let vectorWithDirection = vector;
   if (useVectorDownOnly) {
     vectorWithDirection *= -1;
@@ -268,9 +274,8 @@ const getVectorWithDirection = (vector, useVectorUpOnly, useVectorDownOnly) => {
   return vectorWithDirection;
 };
 
-const adjustIndicationMidiValue = (keyRange, vectorWithDirection) => {
-  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
-  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+export const adjustIndicationMidiValue = (keyRange, vectorWithDirection) => {
+  const [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = getBorderKeyRangeMidiValues(keyRange);
   let indicationMidiValue = Math.floor((firstKeyRangeMidiValue + lastKeyRangeMidiValue) / 2);
   let nextMidiValue = indicationMidiValue + vectorWithDirection;
   if (vectorWithDirection < 0) {
@@ -294,9 +299,8 @@ const adjustIndicationMidiValue = (keyRange, vectorWithDirection) => {
   return indicationMidiValue;
 };
 
-const getPossibleNextMidiValues = (indicationMidiValue, vectorWithDirection, keyRange) => {
-  const firstKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.first];
-  const lastKeyRangeMidiValue = WHITE_KEYS_MIDI_VALUES[keyRange.last];
+export const getPossibleNextMidiValues = (indicationMidiValue, vectorWithDirection, keyRange) => {
+  const [firstKeyRangeMidiValue, lastKeyRangeMidiValue] = getBorderKeyRangeMidiValues(keyRange);
   const arr = [];
   let modifiedVector = vectorWithDirection;
   if (modifiedVector < 0) {
@@ -314,7 +318,7 @@ const getPossibleNextMidiValues = (indicationMidiValue, vectorWithDirection, key
   return arr;
 };
 
-const widenKeyRangeIfNeeded = params => {
+export const widenKeyRangeIfNeeded = params => {
   const { noteRange, midiNoteNameSequence, test, intervalVectors } = params;
   let firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.first);
   let lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.last);
@@ -342,7 +346,7 @@ const widenKeyRangeIfNeeded = params => {
   return [firstKeyRangeMidiValue, lastKeyRangeMidiValue];
 };
 
-const shiftKeyRangeIfNeeded = (firstMidiVal, lastMidiVal) => {
+export const shiftKeyRangeIfNeeded = (firstMidiVal, lastMidiVal) => {
   let firstKeyRangeMidiValue = firstMidiVal;
   let lastKeyRangeMidiValue = lastMidiVal;
   const width = lastKeyRangeMidiValue - firstKeyRangeMidiValue;
@@ -353,33 +357,4 @@ const shiftKeyRangeIfNeeded = (firstMidiVal, lastMidiVal) => {
     lastKeyRangeMidiValue = width + 21;
   }
   return [firstKeyRangeMidiValue, lastKeyRangeMidiValue];
-};
-
-export const u = {
-  getVector,
-  isInRange,
-  getWhiteKey,
-  sortLowToHigh,
-  isKeyOutOfRange,
-  randomArrayElem,
-  isChordExercise,
-  randomIntBetween,
-  usesWhiteKeysOnly,
-  isIntervalExercise,
-  getVectorDirections,
-  allowsLargeIntervals,
-  playNotesSuccessively,
-  shiftKeyRangeIfNeeded,
-  widenKeyRangeIfNeeded,
-  getNextChordMidiValue,
-  getIndicationMidiValue,
-  isNoteSequenceExercise,
-  getVectorWithDirection,
-  playNotesSimultaneously,
-  getPossibleNextMidiValues,
-  adjustIndicationMidiValue,
-  isRandomNoteSequenceExercise,
-  isCustomNoteSequenceExercise,
-  getIndicationMidiValueAndFirstVector,
-  getNextNoteSequenceVectorAndMidiValue
 };
