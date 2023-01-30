@@ -259,5 +259,6 @@ diminishedTriad:
 augmentedTriad:
   en: Augmented triad
   de: Übermäßiger Dreiklang
-
-
+options:
+  en: Options
+  de: Optionen

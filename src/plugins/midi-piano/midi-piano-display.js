@@ -2,7 +2,6 @@
 import * as u from './utils.js';
 import { C } from './constants.js';
 import StopIcon from './stop-icon.js';
-import midiPlayerNs from 'midi-player-js';
 import CustomPiano from './custom-piano.js';
 import CustomSwitch from './custom-switch.js';
 import { useTranslation } from 'react-i18next';
@@ -17,12 +16,11 @@ import { useService } from '../../components/container-context.js';
 import { sectionDisplayProps } from '../../ui/default-prop-types.js';
 import PlayIcon from '../../components/icons/media-player/play-icon.js';
 import PauseIcon from '../../components/icons/media-player/pause-icon.js';
-import { useMidiLoader, usePianoId, useToneJsSampler, useMidiDevice, useExercise } from './custom-hooks.js';
+import { useMidiData, usePianoId, useToneJsSampler, useMidiDevice, useExercise, useMidiPlayer } from './custom-hooks.js';
 
 export default function MidiPianoDisplay({ content }) {
 
   const keys = useRef(null);
-  const player = useRef(null);
   const activeNotes = useRef([]);
   const RadioGroup = Radio.Group;
   const RadioButton = Radio.Button;
@@ -50,10 +48,11 @@ export default function MidiPianoDisplay({ content }) {
   const [currentExerciseIndex, setCurrentExerciseIndex] = useState(0);
 
   // Custom hooks returning state/ref variables
-  const midiData = useMidiLoader(src);
+  const midiData = useMidiData(src);
   const pianoId = usePianoId('default');
   const isMidiDeviceConnected = useMidiDevice();
-  const [sampler, hasSamplerLoaded, setupToneJsSampler] = useToneJsSampler(sampleType);
+  const [sampler, hasSamplerLoaded] = useToneJsSampler(sampleType);
+  const [midiPlayer, midiPlayerHandlerRef] = useMidiPlayer(midiData);
   const exerciseData = useExercise(content, currentTestIndex, currentExerciseIndex, content.keyRange);
 
   const {
@@ -113,22 +112,14 @@ export default function MidiPianoDisplay({ content }) {
     }
   };
 
-  async function qwert() {
-    if (!sampler) {
-      await setupToneJsSampler();
-    }
-  }
-
-  async function playOrStopNote(eventType, noteName) {
-
-    await qwert();
+  function playOrStopNote(eventType, noteName) {
 
     switch (eventType) {
       case 'Note on':
-        sampler.triggerAttack(noteName);
+        sampler.current.triggerAttack(noteName);
         break;
       case 'Note off':
-        sampler.triggerRelease(noteName);
+        sampler.current.triggerRelease(noteName);
         break;
       default:
         break;
@@ -142,11 +133,11 @@ export default function MidiPianoDisplay({ content }) {
     isExercisePlayingRef.current = true;
     const midiNoteNameSequence = exerciseDataRef.current.midiNoteNameSequence;
     if (exerciseType !== C.EXERCISE_TYPES.noteSequence && playExerciseMode.current === 'simultaneous') {
-      await u.playNotesSimultaneously(sampler, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef);
+      await u.playNotesSimultaneously(sampler.current, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef);
       return;
     }
 
-    u.playNotesSuccessively(sampler, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef, playExerciseStartIndex);
+    u.playNotesSuccessively(sampler.current, midiNoteNameSequence, noteDurationRef, isExercisePlayingRef, playExerciseStartIndex);
   };
 
   const resetEarTrainingControls = () => {
@@ -227,7 +218,7 @@ export default function MidiPianoDisplay({ content }) {
     if (!u.isNoteSequenceExercise(currentTest())) {
 
       // Toggle answer key
-      if (answerMidiValueSequence.current.includes(midiValue)) {
+      if (answerMidiValueSequenceRef.current.includes(midiValue)) {
         setAnswerMidiValueSequence(prev => {
           const arr = [...prev];
           const index = arr.indexOf(midiValue);
@@ -236,14 +227,15 @@ export default function MidiPianoDisplay({ content }) {
           return arr;
         });
       } else if (!isAnswerComplete) {
-        answerMidiValueSequence.current.push(midiValue);
+        answerMidiValueSequenceRef.current.push(midiValue);
         setAnswerMidiValueSequence(prev => {
           const arr = [...prev];
           arr.push(midiValue);
           return arr;
         });
+      } else {
+        return;
       }
-      return;
     }
 
     // ___Note sequence mode only from here___
@@ -308,47 +300,28 @@ export default function MidiPianoDisplay({ content }) {
     updateActiveNotes(eventType, midiValue);
   }
 
-  function instantiatePlayer() {
-    if (player.current) {
-      return;
-    }
-    player.current = new midiPlayerNs.Player();
-    player.current.on('midiEvent', message => {
-      handleMidiPlayerEvent(message);
-    });
-    player.current.on('endOfFile', () => {
-      player.current.stop();
-      resetAllKeyStyles();
-      updateActiveNotes('Reset');
-    });
-    player.current.loadArrayBuffer(midiData);
-  }
-
   const startMidiPlayer = () => {
-    if (player.current === null) {
-      instantiatePlayer();
-    }
-    if (!player.current.isPlaying()) {
-      player.current.play();
+    if (!midiPlayer.current.isPlaying()) {
+      midiPlayer.current.play();
     }
   };
 
   const pauseMidiPlayer = () => {
-    if (!player.current) {
+    if (!midiPlayer.current) {
       return;
     }
-    if (!player.current.isPlaying()) {
+    if (!midiPlayer.current.isPlaying()) {
       return;
     }
-    player.current.pause();
-    sampler.releaseAll();
+    midiPlayer.current.pause();
+    sampler.current.releaseAll();
   };
 
   const stopMidiPlayer = () => {
-    if (player.current) {
-      player.current.stop();
+    if (midiPlayer.current) {
+      midiPlayer.current.stop();
     }
-    sampler.releaseAll();
+    sampler.current.releaseAll();
     resetAllKeyStyles();
     updateActiveNotes('Reset');
   };
@@ -504,10 +477,18 @@ export default function MidiPianoDisplay({ content }) {
   });
 
   useEffect(() => {
+    midiPlayerHandlerRef.current.updateActiveNotes = updateActiveNotes;
+    midiPlayerHandlerRef.current.handleMidiPlayerEvent = handleMidiPlayerEvent;
+    midiPlayerHandlerRef.current.resetAllKeyStyles = resetAllKeyStyles;
+  }, []);
+
+  useEffect(() => {
     return function cleanUp() {
-      if (player.current && hasSamplerLoaded) {
-        player.current.stop();
-        sampler.releaseAll();
+      if (midiPlayer.current && hasSamplerLoaded && sampler) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        midiPlayer.current.stop();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        sampler.current.releaseAll();
       }
     };
   });
@@ -549,9 +530,9 @@ export default function MidiPianoDisplay({ content }) {
         )}
       </div>
       {[C.EXERCISE_TYPES.interval, C.EXERCISE_TYPES.chord].includes(exerciseType) && (
-        <div className="MidiPiano-OneOfThreeFlexColumns">
+        <div className="MidiPiano-threeFlexColumnsContainer">
           <div className="MidiPiano-OneOfThreeFlexColumns">
-            <div className="MidiPiano-SwitchContainer">
+            <div className="MidiPiano-switchContainer">
               <CustomSwitch handleSwitchClick={isChecked => { isNoteInputEnabled.current = isChecked; }} />
               <div>{t('noteInput')}</div>
             </div>

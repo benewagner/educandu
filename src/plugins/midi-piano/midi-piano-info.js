@@ -45,30 +45,32 @@ class MidiPianoInfo {
       all: false,
       prime: false,
       second: {
-        minor: false,
-        major: false
+        minor: true,
+        major: true
       },
       third: {
-        minor: false,
-        major: false
+        minor: true,
+        major: true
       },
-      fourth: false,
+      fourth: true,
       tritone: false,
-      fifth: false,
+      fifth: true,
       sixth: {
-        minor: false,
-        major: false
+        minor: true,
+        major: true
       },
       seventh: {
-        minor: false,
-        major: false
+        minor: true,
+        major: true
       },
       octave: false
     };
 
     return {
       exerciseType: '',
-      noteRange: { first: 12, last: 39 },
+      intervalNoteRange: { first: 12, last: 39 },
+      chordNoteRange: { first: 12, last: 39 },
+      noteSequenceNoteRange: { first: 19, last: 39 },
       whiteKeysOnly: false,
       numberOfNotes: 4,
       clef: 'treble',
@@ -82,8 +84,8 @@ class MidiPianoInfo {
         down: false
       },
       triadCheckboxStates: {
-        majorTriad: false,
-        minorTriad: false,
+        majorTriad: true,
+        minorTriad: true,
         diminished: false,
         augmented: false
       },
@@ -96,7 +98,7 @@ class MidiPianoInfo {
         diminishedSeventh: false
       },
       inversionCheckboxStates: {
-        fundamental: false,
+        fundamental: true,
         firstInversion: false,
         secondInversion: false,
         thirdInversion: false

@@ -119,11 +119,21 @@ export const EVENT_TYPES = {
   toggle: 'toggle'
 };
 
-export const TRIADS = ['majorTriad', 'minorTriad', 'diminished', 'augmented'];
+export const TRIADS = {
+  majorTriad: 'majorTriad',
+  minorTriad: 'minorTriad',
+  diminished: 'diminished',
+  augmented: 'augmented'
+};
 
 export const SEVENTH_CHORDS = ['majorTriadMinorSeventh', 'majorTriadMajorSeventh', 'minorTriadMinorSeventh', 'minorTriadMajorSeventh', 'halfDiminished', 'diminishedSeventh'];
 
-export const INVERSIONS = ['fundamental', 'firstInversion', 'secondInversion', 'thirdInversion'];
+export const INVERSIONS = {
+  fundamental: 'fundamental',
+  firstInversion: 'firstInversion',
+  secondInversion: 'secondInversion',
+  thirdInversion: 'thirdInversion'
+};
 
 export const CHORD_VECTORS = {
   triads: {

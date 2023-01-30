@@ -55,7 +55,7 @@ export default function CustomPiano(props) {
     if (!hasSamplerLoaded) {
       return;
     }
-    sampler.triggerAttack(getNoteNameFromMidiValue(midiValue));
+    sampler.current.triggerAttack(getNoteNameFromMidiValue(midiValue));
   };
 
   const stopNote = midiValue => {
@@ -63,7 +63,7 @@ export default function CustomPiano(props) {
       return;
     }
     setTimeout(() => {
-      sampler.triggerRelease(getNoteNameFromMidiValue(midiValue));
+      sampler.current.triggerRelease(getNoteNameFromMidiValue(midiValue));
     }, 150);
   };
 
@@ -131,13 +131,13 @@ export default function CustomPiano(props) {
   };
 
   useEffect(() => {
-    if (!hasSamplerLoaded || !sampler) {
+    if (!hasSamplerLoaded || !sampler.current) {
       return;
     }
     piano.current.addEventListener('mousedown', handleMouseDown);
     piano.current.addEventListener('mouseup', handleMouseUp);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasSamplerLoaded, sampler]);
+  }, [hasSamplerLoaded, sampler.current]);
 
   useEffect(() => {
     const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);

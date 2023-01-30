@@ -117,7 +117,7 @@
   transition: all 0.2s ease-in-out;
 }
 
-.MidiPiano-SwitchContainer {
+.MidiPiano-switchContainer {
   margin-bottom: 1rem;
   display: flex;
   gap: 0.5rem;
@@ -221,6 +221,7 @@
 .MidiPiano-SolutionAbcDisplay {
   position: absolute;
   left: 50%;
+  // max-width: 50% !important;
   text-align: left !important;
 }
 
@@ -229,6 +230,11 @@
   flex-direction: column;
   justify-content: center;
   min-height: 7rem;
+}
+
+.MidiPiano-threeFlexColumnsContainer {
+  display: flex;
+  width: 100%;
 }
 
 .MidiPiano-OneOfThreeFlexColumns {

@@ -2021,7 +2021,8 @@
       "majorChord": "Major triad",
       "minorChord": "Minor triad",
       "diminishedTriad": "Diminished triad",
-      "augmentedTriad": "Augmented triad"
+      "augmentedTriad": "Augmented triad",
+      "options": "Options"
     }
   },
   {
@@ -2114,7 +2115,8 @@
       "majorChord": "Dur-Dreiklang",
       "minorChord": "Moll-Dreiklang",
       "diminishedTriad": "Verminderter Dreiklang",
-      "augmentedTriad": "Übermäßiger Dreiklang"
+      "augmentedTriad": "Übermäßiger Dreiklang",
+      "options": "Optionen"
     }
   },
   {

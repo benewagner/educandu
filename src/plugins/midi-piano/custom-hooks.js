@@ -1,4 +1,3 @@
-// import * as Tone from 'tone';
 import { C } from './constants.js';
 import * as ut from './utils.js';
 import HttpClient from '../../api-clients/http-client.js';
@@ -40,7 +39,7 @@ export function useMidiDevice() {
 }
 
 // Load the midi file defined in midi-piano-editor.js
-export function useMidiLoader(src) {
+export function useMidiData(src) {
   const [midiData, setMidiData] = useState(null);
 
   useEffect(() => {
@@ -57,6 +56,33 @@ export function useMidiLoader(src) {
   return midiData;
 }
 
+export function useMidiPlayer(midiData) {
+  const midiPlayer = useRef(null);
+  const midiPlayerHandlerRef = useRef({
+    handleMidiPlayerEvent: () => {},
+    resetAllKeyStyles: () => {},
+    updateActiveNotes: () => {}
+  });
+
+  if (!midiPlayer.current && midiData) {
+    import('midi-player-js')
+      .then(module => {
+        midiPlayer.current = new module.default.Player();
+        midiPlayer.current.on('midiEvent', message => {
+          midiPlayerHandlerRef.current.handleMidiPlayerEvent(message);
+        });
+        midiPlayer.current.on('endOfFile', () => {
+          midiPlayer.current.stop();
+          midiPlayerHandlerRef.current.resetAllKeyStyles();
+          midiPlayerHandlerRef.current.updateActiveNotes('Reset');
+        });
+        midiPlayer.current.loadArrayBuffer(midiData);
+      });
+  }
+
+  return [midiPlayer, midiPlayerHandlerRef];
+}
+
 /**
  * This Hook initiates a Tone.js sampler used for playback of any notes.
  * The Sampler is stored on the browser document object so that it can be accessed by every piano on the page.
@@ -64,7 +90,7 @@ export function useMidiLoader(src) {
  */
 export function useToneJsSampler(sampleType) {
   const [hasSamplerLoaded, setHasSamplerLoaded] = useState(false);
-  const [sampler, setSampler] = useState(null);
+  const sampler = useRef(null);
 
   const setupToneJsSampler = useCallback(() => {
     import('tone')
@@ -104,9 +130,9 @@ export function useToneJsSampler(sampleType) {
           },
           onload: () => {
             setHasSamplerLoaded(true);
-            setSampler(document.toneJsSamplers[sampleType]);
+            sampler.current = document.toneJsSamplers[sampleType];
           },
-          baseUrl: `https://anmeldung-sprechstunde.herokuapp.com/instrument-samples/${sampleType}/` // Samples better be hosted in project. XXX
+          baseUrl: 'https://tonejs.github.io/audio/salamander/' // Samples better be hosted in project XXX
         }).toDestination();
       });
   }, [sampleType]);
@@ -116,7 +142,7 @@ export function useToneJsSampler(sampleType) {
     if (document.toneJsSamplers?.[sampleType]) {
       if (!hasSamplerLoaded) {
         setHasSamplerLoaded(true);
-        setSampler(document.toneJsSamplers[sampleType]);
+        sampler.current = document.toneJsSamplers[sampleType];
       }
       return;
     }
@@ -125,9 +151,11 @@ export function useToneJsSampler(sampleType) {
       document.toneJsSamplers = {};
     }
 
+    setupToneJsSampler();
+
   }, [hasSamplerLoaded, setHasSamplerLoaded, sampleType, setupToneJsSampler]);
 
-  return [sampler, hasSamplerLoaded, setupToneJsSampler];
+  return [sampler, hasSamplerLoaded];
 }
 
 // Set unique pianoId which does not start with a number character for use as CSS selector in updateMidiInputSwitches in midi-piano-display.js
@@ -264,7 +292,8 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex, def
     midiNoteNameSequence.push(C.MIDI_NOTE_NAMES[indicationMidiValue]);
 
     let currentMidiValue = indicationMidiValue;
-    const numberOfNotes = currentTest().numberOfNotes;
+    // - 1 since first note (indication) has already been generated
+    const numberOfNotes = currentTest().numberOfNotes - 1;
 
     for (let i = 0; i < numberOfNotes; i += 1) {
       const nextMidiValue = ut.getNextNoteSequenceVectorAndMidiValue(test, currentMidiValue, keyRange, intervalVectors, firstVector, i);
@@ -357,7 +386,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex, def
       if (ut.isRandomNoteSequenceExercise(test)) {
         const intervalCheckboxStates = test.noteSequenceCheckboxStates;
         const intervalVectors = getIntervalVectors(test, intervalCheckboxStates);
-        const keyRange = getKeyRange({ intervalVectors, noteRange: test.noteRange });
+        const keyRange = getKeyRange({ intervalVectors, noteRange: test.noteSequenceNoteRange });
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForRandomNoteSequenceMode(keyRange, intervalVectors);
         const solution = getSolution(abcNoteNameSequence);
 
@@ -376,7 +405,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex, def
       if (ut.isIntervalExercise(test)) {
         const checkboxStates = test.intervalCheckboxStates;
         const intervalVectors = getIntervalVectors(test, checkboxStates);
-        const keyRange = getKeyRange({ intervalVectors, noteRange: test.noteRange });
+        const keyRange = getKeyRange({ intervalVectors, noteRange: test.intervalNoteRange });
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence] = getSequencesForIntervalMode(keyRange, intervalVectors);
 
         return {
@@ -391,7 +420,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex, def
 
       if (ut.isChordExercise(test)) {
         const chordVectors = getChordVectors();
-        const keyRange = getKeyRangeForChordMode(test.noteRange, chordVectors);
+        const keyRange = getKeyRangeForChordMode(test.chordNoteRange, chordVectors);
         const [midiValueSequence, midiNoteNameSequence, abcNoteNameSequence, chordVector] = getSequencesAndChordVector(keyRange, chordVectors);
 
         return {

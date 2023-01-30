@@ -1,4 +1,4 @@
-import { WHITE_KEYS_MIDI_VALUES, EXERCISE_TYPES, NOTE_CONVERSION_MAP, MIDI_NOTE_NAMES } from './constants.js';
+import { WHITE_KEYS_MIDI_VALUES, EXERCISE_TYPES, NOTE_CONVERSION_MAP, MIDI_NOTE_NAMES, INVERSIONS, TRIADS } from './constants.js';
 
 export const hallo = 'Hallo';
 
@@ -28,7 +28,7 @@ export const allowsLargeIntervals = test => test[`${test.exerciseType}AllowsLarg
 export const getBorderKeyRangeMidiValues = noteRange => [getMidiValueFromWhiteKeyIndex(noteRange.first), getMidiValueFromWhiteKeyIndex(noteRange.last)];
 
 export const isAnswerComplete = params => {
-  const { test, answerMidiValueSequenceRef, midiValueSequence, answerAbcNoteNameSequenceRef, abcNoteNameSequence} = params;
+  const { test, answerMidiValueSequenceRef, midiValueSequence, answerAbcNoteNameSequenceRef, abcNoteNameSequence } = params;
   if (isNoteSequenceExercise(test)) {
     return answerAbcNoteNameSequenceRef.current.length >= abcNoteNameSequence.length - 1;
   }
@@ -321,9 +321,10 @@ export const getPossibleNextMidiValues = (indicationMidiValue, vectorWithDirecti
 };
 
 export const widenKeyRangeIfNeeded = params => {
-  const { noteRange, midiNoteNameSequence, test, intervalVectors } = params;
+  const { noteRange, midiNoteNameSequence, test, intervalVectors, chordVector } = params;
   let firstKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.first);
   let lastKeyRangeMidiValue = getMidiValueFromWhiteKeyIndex(noteRange.last);
+  const vectors = isChordExercise(test) ? chordVector : intervalVectors;
 
   if (isCustomNoteSequenceExercise(test)) {
     for (let i = 0; i < midiNoteNameSequence.length; i += 1) {
@@ -336,7 +337,7 @@ export const widenKeyRangeIfNeeded = params => {
       }
     }
   } else {
-    for (const vector of intervalVectors) {
+    for (const vector of vectors) {
       if (firstKeyRangeMidiValue > lastKeyRangeMidiValue - vector) {
         firstKeyRangeMidiValue = lastKeyRangeMidiValue - vector;
       }
@@ -359,4 +360,33 @@ export const shiftKeyRangeIfNeeded = (firstMidiVal, lastMidiVal) => {
     lastKeyRangeMidiValue = width + 21;
   }
   return [firstKeyRangeMidiValue, lastKeyRangeMidiValue];
+};
+
+export const ensureOneInversionIsChecked = (index, newTests) => {
+  let areAllInversionsUnchecked = true;
+  for (const key of Object.keys(newTests[index].inversionCheckboxStates)) {
+    if (newTests[index].inversionCheckboxStates[key]) {
+      areAllInversionsUnchecked = false;
+    }
+  }
+  if (areAllInversionsUnchecked) {
+    newTests[index].inversionCheckboxStates[INVERSIONS.fundamental] = true;
+  }
+};
+
+export const ensureOneChordIsChecked = (index, newTests) => {
+  let areAllChordsUnchecked = true;
+  for (const key of Object.keys(newTests[index].triadCheckboxStates)) {
+    if (newTests[index].triadCheckboxStates[key]) {
+      areAllChordsUnchecked = false;
+    }
+  }
+  for (const key of Object.keys(newTests[index].seventhChordCheckboxStates)) {
+    if (newTests[index].seventhChordCheckboxStates[key]) {
+      areAllChordsUnchecked = false;
+    }
+  }
+  if (areAllChordsUnchecked) {
+    newTests[index].triadCheckboxStates[TRIADS.majorTriad] = true;
+  }
 };

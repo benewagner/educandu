@@ -8,7 +8,6 @@ import { PlusOutlined } from '@ant-design/icons';
 import cloneDeep from '../../utils/clone-deep.js';
 import ItemPanel from '../../components/item-panel.js';
 import { KeyWhite, KeyWhiteWithBlack } from './keys.js';
-import { analyseABC, filterAbcString } from './utils.js';
 import AbcNotation from '../../components/abc-notation.js';
 import { create as createId } from '../../utils/unique-id.js';
 import { useService } from '../../components/container-context.js';
@@ -17,6 +16,7 @@ import { swapItemsAt, removeItemAt } from '../../utils/array-utils.js';
 import { Form, Input, Radio, Button, Slider, Checkbox, Divider } from 'antd';
 import { CDN_URL_PREFIX, MIDI_SOURCE_TYPE } from '../../domain/constants.js';
 import ResourcePicker from '../../components/resource-picker/resource-picker.js';
+import { analyseABC, filterAbcString, ensureOneInversionIsChecked, ensureOneChordIsChecked } from './utils.js';
 import { storageLocationPathToUrl, urlToStorageLocationPath } from '../../utils/storage-utils.js';
 import { EXERCISE_TYPES, INTERVAL_NAMES, TRIADS, SEVENTH_CHORDS, INVERSIONS } from './constants.js';
 
@@ -151,21 +151,56 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     changeContent({ tests: newTests });
   };
 
+  const handleAllChordOptionsStateChanged = (event, index) => {
+    const [checkedState, newTests] = getCheckboxStateAndNewTests(event);
+    const exerciseType = tests[index].exerciseType;
+
+    newTests[index].allChordOptions = checkedState;
+
+    for (const key of Object.keys(newTests[index].triadCheckboxStates)) {
+      newTests[index].triadCheckboxStates[key] = checkedState;
+    }
+    for (const key of Object.keys(newTests[index].seventhChordCheckboxStates)) {
+      newTests[index].seventhChordCheckboxStates[key] = checkedState;
+    }
+    for (const key of Object.keys(newTests[index].inversionCheckboxStates)) {
+      newTests[index].inversionCheckboxStates[key] = checkedState;
+    }
+    newTests[index][`${exerciseType}AllowsLargeIntervals`] = checkedState;
+
+    !checkedState && ensureOneInversionIsChecked(index, newTests);
+    !checkedState && ensureOneChordIsChecked(index, newTests);
+
+    changeContent({ tests: newTests });
+  };
+
   const handleTriadCheckboxStateChanged = (event, index, triad) => {
     const [checkedState, newTests] = getCheckboxStateAndNewTests(event);
     newTests[index].triadCheckboxStates[triad] = checkedState;
+    if (!checkedState) {
+      newTests[index].allChordOptions = checkedState;
+      ensureOneChordIsChecked(index, newTests);
+    }
     changeContent({ tests: newTests });
   };
 
   const handleSeventhChordCheckboxStateChanged = (event, index, chord) => {
     const [checkedState, newTests] = getCheckboxStateAndNewTests(event);
     newTests[index].seventhChordCheckboxStates[chord] = checkedState;
+    if (!checkedState) {
+      newTests[index].allChordOptions = checkedState;
+      ensureOneChordIsChecked(index, newTests);
+    }
     changeContent({ tests: newTests });
   };
 
   const handleInversionCheckboxStateChanged = (event, index, inversion) => {
     const [checkedState, newTests] = getCheckboxStateAndNewTests(event);
     newTests[index].inversionCheckboxStates[inversion] = checkedState;
+    if (!checkedState) {
+      newTests[index].allChordOptions = checkedState;
+      ensureOneInversionIsChecked(index, newTests);
+    }
     changeContent({ tests: newTests });
   };
 
@@ -189,9 +224,10 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const handleNoteRangeChanged = (event, index) => {
     const newTests = cloneDeep(tests);
+    const { exerciseType } = tests[index];
     // NoteRange is range of notes provided for ear training exercise. Will be turned into keyRange (part of piano to be rendered) in custom hook useExercise
     // Both noteRange and keyRange define first and last white key index (not midi values) of part of piano to be rendered
-    newTests[index].noteRange = { first: event[0], last: event[1] };
+    newTests[index][`${exerciseType}NoteRange`] = { first: event[0], last: event[1] };
     changeContent({ tests: newTests });
   };
 
@@ -298,6 +334,9 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     const [checkedState, newTests] = getCheckboxStateAndNewTests(event);
     const exerciseType = tests[index].exerciseType;
     newTests[index][`${exerciseType}AllowsLargeIntervals`] = checkedState;
+    if (!checkedState && exerciseType === EXERCISE_TYPES.chord) {
+      newTests[index].allChordOptions = checkedState;
+    }
     changeContent({ tests: newTests });
   };
 
@@ -351,9 +390,18 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
         <div className="MidiPiano-selectorPiano">
           {pianoLayout.map((elem, index) => {
             if (elem[0] === 0 && index < pianoLayout.length - 1) {
-              return <KeyWhiteWithBlack updateKeyRangeSelection={updateKeyRangeSelection} key={createId()} index={index} colors={selectorPianoColors} />;
+              return (
+                <KeyWhiteWithBlack
+                  updateKeyRangeSelection={updateKeyRangeSelection}
+                  key={createId()}
+                  midiValue={elem[1]}
+                  index={index}
+                  colors={selectorPianoColors}
+                  />
+              );
             }
-            return <KeyWhite updateKeyRangeSelection={updateKeyRangeSelection} key={createId()} index={index} colors={selectorPianoColors} />;
+            // eslint-disable-next-line max-len
+            return <KeyWhite updateKeyRangeSelection={updateKeyRangeSelection} key={createId()} midiValue={elem[1]} index={index} colors={selectorPianoColors} />;
           })}
         </div>
         <div>
@@ -374,6 +422,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const renderWhiteKeysCheckbox = index => (
     <Checkbox
+      style={{ marginTop: '1rem' }}
       defaultChecked={tests[index].whiteKeysOnly}
       onChange={event => handleWhiteKeysCheckboxStateChanged(event, index)}
       >
@@ -381,20 +430,23 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
     </Checkbox>
   );
 
-  const renderNoteRangeSelector = (testIndex, onAfterChangeHandler, noteRange, index) => (
-    <FormItem label={t('noteRange')} {...formItemLayout} hasFeedback>
-      <Slider
-        min={0}
-        max={51}
-        defaultValue={[noteRange.first, noteRange.last]}
-        onAfterChange={event => onAfterChangeHandler(event, testIndex, index)}
-        range
-        tipFormatter={tipformatter}
-        marks={{ 2: t('c1'), 9: t('c2'), 16: t('c3'), 23: t('c4'), 30: t('c5'), 37: t('c6'), 44: t('c7'), 51: t('c8') }}
-        />
-      {tests[testIndex].exerciseType === EXERCISE_TYPES.noteSequence && !tests[testIndex].isCustomNoteSequence && renderWhiteKeysCheckbox(testIndex)}
-    </FormItem>
-  );
+  const renderNoteRangeSelector = (testIndex, onAfterChangeHandler, noteRange, index) => {
+
+    return (
+      <FormItem label={t('noteRange')} {...formItemLayout} hasFeedback>
+        <Slider
+          min={0}
+          max={51}
+          defaultValue={[noteRange.first, noteRange.last]}
+          onAfterChange={event => onAfterChangeHandler(event, testIndex, index)}
+          range
+          tipFormatter={tipformatter}
+          marks={{ 2: t('c1'), 9: t('c2'), 16: t('c3'), 23: t('c4'), 30: t('c5'), 37: t('c6'), 44: t('c7'), 51: t('c8') }}
+          />
+        {tests[testIndex].exerciseType === EXERCISE_TYPES.noteSequence && !tests[testIndex].isCustomNoteSequence && renderWhiteKeysCheckbox(testIndex)}
+      </FormItem>
+    );
+  };
 
   const renderClefTypeSelector = (testIndex, clef, onChangeHandler, index) => (
     <FormItem label={t('clef')} {...formItemLayout}>
@@ -479,9 +531,18 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
 
   const renderChordSelector = index => (
     <React.Fragment>
+      <FormItem label={t('options')} {...formItemLayout} hasFeedback>
+        <Checkbox
+          key={createId()}
+          defaultChecked={tests[index].allChordOptions}
+          onChange={event => handleAllChordOptionsStateChanged(event, index)}
+          >
+          {t('all')}
+        </Checkbox>
+      </FormItem>
       <FormItem label={t('triads')} {...formItemLayout} hasFeedback>
         <div>
-          {TRIADS.map(triad => (
+          {Object.keys(TRIADS).map(triad => (
             <Checkbox
               key={createId()}
               defaultChecked={tests[index].triadCheckboxStates[triad]}
@@ -507,7 +568,7 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
       </FormItem>
       <FormItem label={t('inversions')} {...formItemLayout} hasFeedback>
         <div>
-          {INVERSIONS.map(inversion => (
+          {Object.keys(INVERSIONS).map(inversion => (
             <Checkbox
               key={createId()}
               defaultChecked={tests[index].inversionCheckboxStates[inversion]}
@@ -637,8 +698,8 @@ export default function MidiPianoEditor({ content, onContentChanged }) {
                 && renderClefTypeSelector(index, test.clef, handleClefTypeChanged)}
               {([EXERCISE_TYPES.interval, EXERCISE_TYPES.chord].includes(test.exerciseType)
                 || (test.exerciseType === EXERCISE_TYPES.noteSequence
-                && !test.isCustomNoteSequence))
-                && renderNoteRangeSelector(index, handleNoteRangeChanged, tests[index].noteRange)}
+                  && !test.isCustomNoteSequence))
+                  && renderNoteRangeSelector(index, handleNoteRangeChanged, test[`${test.exerciseType}NoteRange`])}
               {test.exerciseType === EXERCISE_TYPES.interval && renderIntervalSelector(test.intervalCheckboxStates, 'interval', index)}
               {test.exerciseType === EXERCISE_TYPES.chord && renderChordSelector(index)}
               {test.exerciseType === EXERCISE_TYPES.noteSequence && renderNoteSequenceSelector(test.numberOfNotes, index)}

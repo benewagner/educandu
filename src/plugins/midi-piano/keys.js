@@ -4,8 +4,6 @@ import { EXERCISE_TYPES } from './constants.js';
 
 const getStyle = (keyMidiValue, midiValueSequence, colors, canShowSolutionRef, answerMidiValueSequence, exerciseType) => {
 
-  // const midiValueSequence = exerciseData.midiValueSequence;
-
   if (!midiValueSequence) {
     return null;
   }
@@ -50,7 +48,6 @@ export function KeyWhite(props) {
     colors,
     midiValue,
     exerciseType,
-    // exerciseData,
     canShowSolutionRef,
     midiValueSequence,
     updateKeyRangeSelection,
@@ -74,7 +71,6 @@ export function KeyWhiteWithBlack(props) {
     colors,
     midiValue,
     exerciseType,
-    // exerciseData,
     canShowSolutionRef,
     midiValueSequence,
     updateKeyRangeSelection,
@@ -102,7 +98,6 @@ export function KeyWhiteWithBlack(props) {
 const keyProps = {
   canShowSolutionRef: PropTypes.object,
   colors: PropTypes.object.isRequired,
-  // exerciseData: PropTypes.object.isRequired, // For keyRange ... XXX
   exerciseType: PropTypes.string,
   answerMidiValueSequence: PropTypes.array,
   midiValue: PropTypes.number,
@@ -112,7 +107,6 @@ const keyProps = {
 
 const defaultKeyProps = {
   canShowSolutionRef: {},
-  // exerciseData: null,
   exerciseType: '',
   answerMidiValueSequence: [],
   midiValue: null,
