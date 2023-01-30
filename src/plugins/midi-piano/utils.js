@@ -36,9 +36,15 @@ export const isAnswerComplete = params => {
 };
 
 export function filterAbcString(string) {
-  const charsToDelete = [' ', '|', '=', '(', ')', '[', ']', '-', 'z', 'x', '1', '2', '3', '4', '5', '6', '7', '8'];
   let newString = string;
+  const validChars = ['^', '_', 'c', 'd', 'e', 'f', 'g', 'a', 'b', 'C', 'D', 'E', 'F', 'G', 'A', 'B', '\'', ','];
 
+  const charsToDelete = [];
+  for (let i = 0; i < newString.length; i += 1) {
+    if (!validChars.includes(newString[i])) {
+      !charsToDelete.includes(newString[i]) && charsToDelete.push(newString[i]);
+    }
+  }
   charsToDelete.forEach(elem => {
     newString = newString.replaceAll(elem, '');
   });

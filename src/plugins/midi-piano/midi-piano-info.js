@@ -78,7 +78,7 @@ class MidiPianoInfo {
       customNoteSequences: [this.getDefaultCustomNoteSequence()],
       intervalAllowsLargeIntervals: false,
       chordAllowsLargeIntervals: false,
-      noteSequenceAllowsLargeIntervals: true,
+      noteSequenceAllowsLargeIntervals: false,
       directionCheckboxStates: {
         up: true,
         down: false

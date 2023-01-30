@@ -137,7 +137,7 @@ export default function CustomPiano(props) {
     piano.current.addEventListener('mousedown', handleMouseDown);
     piano.current.addEventListener('mouseup', handleMouseUp);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasSamplerLoaded, sampler.current]);
+  }, [hasSamplerLoaded, sampler]);
 
   useEffect(() => {
     const keyElems = document.querySelectorAll(`#${pianoId} .MidiPiano-key`);

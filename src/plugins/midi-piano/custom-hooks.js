@@ -456,7 +456,7 @@ export function useExercise(content, currentTestIndex, currentExerciseIndex, def
 
   // No dependency needed since only needs to execute once
   const defaultData = useMemo(() => {
-    const keyRange = getData.keyRange;
+    const keyRange = getData().keyRange;
     return {
       abcNoteNameSequence: [],
       keyRange: keyRange ? keyRange : defaultKeyRange,
